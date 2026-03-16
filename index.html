@@ -170,33 +170,123 @@ body {
 /* ================================================================
    V3 — DELIVERIES TAB (משלוחים)
    ================================================================ */
-.delivery-card { background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);padding:16px;margin-bottom:10px;box-shadow:var(--sh-xs);transition:var(--tr); }
-.delivery-card:hover { box-shadow:var(--sh-sm); }
-.delivery-card.status-pending   { border-right:4px solid var(--c-gold); }
-.delivery-card.status-sent      { border-right:4px solid var(--c-blue); }
-.delivery-card.status-confirmed { border-right:4px solid var(--c-green-light); }
+/* ================================================================
+   V3 — DELIVERIES TAB (משלוחים)
+   ================================================================ */
+.delivery-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--sh-xs);
+  transition: var(--tr);
+  position: relative;
+  overflow: hidden;
+}
+.delivery-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 4px;
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  background: var(--border);
+}
+.delivery-card:hover { box-shadow: var(--sh-sm); transform: translateY(-1px); }
+.delivery-card.status-pending::before  { background: var(--c-gold); }
+.delivery-card.status-sent::before     { background: var(--c-blue); }
+.delivery-card.status-confirmed::before{ background: var(--c-green-light); }
 .delivery-header { display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:10px; }
-.delivery-id    { font-size:.72em;color:var(--text-muted);font-weight:700;letter-spacing:.04em; }
+.delivery-id    { font-size:.72em;color:var(--text-muted);font-weight:700;letter-spacing:.04em;margin-bottom:3px; }
 .delivery-title { font-weight:900;font-size:1em;color:var(--text);margin-bottom:3px; }
 .delivery-meta  { font-size:.79em;color:var(--text-muted); }
-.delivery-status-pill { padding:4px 12px;border-radius:var(--r-full);font-size:.72em;font-weight:800;white-space:nowrap;flex-shrink:0; }
-.pill-pending   { background:var(--c-orange-pale);color:var(--c-orange); }
-.pill-sent      { background:#e3f2fd;color:var(--c-blue); }
-.pill-confirmed { background:var(--c-green-pale);color:var(--c-green); }
-.delivery-items-list { font-size:.81em;color:var(--text-soft);margin-bottom:12px;line-height:1.8; }
+.delivery-status-pill {
+  padding: 5px 12px;
+  border-radius: var(--r-full);
+  font-size: .72em;
+  font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: .03em;
+}
+.pill-pending   { background: #fff8e1; color: #e65100; border: 1px solid #ffe0b2; }
+.pill-sent      { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+.pill-confirmed { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+.delivery-items-list {
+  font-size: .81em;
+  color: var(--text-soft);
+  margin-bottom: 12px;
+  line-height: 1.9;
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+}
 .delivery-actions { display:flex;gap:8px;flex-wrap:wrap; }
 
 /* delivery confirm modal */
 #delivery-confirm-modal {
-  position:fixed;inset:0;background:rgba(13,27,42,.75);backdrop-filter:blur(8px);
-  z-index:9600;display:none;align-items:center;justify-content:center;
+  position: fixed;
+  inset: 0;
+  background: rgba(13,27,42,.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 9600;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
 }
-#delivery-confirm-modal.show { display:flex; }
+#delivery-confirm-modal.show { display: flex; animation: fadeIn .2s ease; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
 .dcm-box {
-  background:var(--surface);border-radius:var(--r-lg);padding:26px 22px 20px;
-  width:94%;max-width:480px;box-shadow:var(--sh-xl);max-height:85vh;overflow-y:auto;
-  animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  padding: 28px 24px 22px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: var(--sh-xl);
+  max-height: 88vh;
+  overflow-y: auto;
+  animation: slideUp .25s cubic-bezier(.34,1.56,.64,1);
 }
+.dcm-item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.dcm-item-row:last-child { border-bottom: none; }
+.dcm-item-name { flex: 1; font-weight: 800; font-size: .9em; }
+.dcm-item-bc   { font-size: .72em; color: var(--text-muted); font-family: monospace; margin-top: 2px; }
+.dcm-sent-lbl  { font-size: .78em; color: var(--text-muted); white-space: nowrap; }
+.dcm-recv-input {
+  width: 68px;
+  padding: 7px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  font-family: 'Heebo', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--c-navy);
+  transition: var(--tr);
+}
+.dcm-recv-input:focus { border-color: var(--c-green); box-shadow: 0 0 0 3px rgba(27,94,32,.12); outline: none; }
+
+/* delivery item builder rows */
+.del-item-builder-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+  align-items: center;
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  transition: var(--tr);
+}
+.del-item-builder-row:hover { border-color: var(--border-dark); }
 @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
 
 /* ================================================================
@@ -2276,37 +2366,44 @@ tr:hover td { background: var(--bg); }
 
       <!-- ════════════ DELIVERIES TAB — משלוחים ════════════ -->
       <div id="tab-deliveries" class="tab-pane hidden">
+        <!-- Create new delivery -->
         <div class="card">
           <div class="card-title">📦 יצירת משלוח חדש</div>
           <div class="input-row">
-            <input type="text"  id="del-title"     class="app-input" placeholder="כותרת משלוח" style="flex:1;margin-bottom:0;">
-            <input type="text"  id="del-recipient" class="app-input" placeholder="שם מקבל" style="width:150px;margin-bottom:0;">
+            <input type="text"  id="del-title"     class="app-input" placeholder="כותרת המשלוח (חובה)" style="flex:1;margin-bottom:0;">
+            <input type="text"  id="del-recipient" class="app-input" placeholder="שם מקבל" style="width:145px;margin-bottom:0;">
           </div>
           <input type="email" id="del-email" class="app-input" placeholder="📧 אימייל מקבל (לשליחה אוטומטית)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0 6px;">
-            <span style="font-size:.85em;font-weight:700;color:var(--text-soft);">פריטי המשלוח:</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 8px;">
+            <span style="font-size:.85em;font-weight:800;color:var(--text-soft);">
+              פריטי המשלוח <span id="del-items-count-lbl" style="color:var(--text-muted);font-weight:600;"></span>
+            </span>
             <div style="display:flex;gap:6px;">
-              <button class="btn w-auto sm btn-blue" onclick="addDeliveryItemRow()">➕ שורה</button>
-              <button class="btn w-auto sm btn-gray"  onclick="addDeliveryItemFromScan()">📷 סרוק</button>
+              <button class="btn w-auto sm btn-blue" onclick="addDeliveryItemRow()">➕ הוסף שורה</button>
+              <button class="btn w-auto sm btn-gray" onclick="addDeliveryItemFromScan()">📷 סרוק ברקוד</button>
             </div>
           </div>
-          <div id="delivery-item-rows" style="margin-bottom:8px;"></div>
-          <textarea id="del-notes" class="app-input" placeholder="הערות (אופציונלי)" rows="2" style="resize:vertical;"></textarea>
-          <button class="btn btn-blue" style="margin-top:6px;" onclick="createDelivery()">🚚 צור ובצע משלוח</button>
+          <div id="delivery-item-rows" style="margin-bottom:10px;"></div>
+          <textarea id="del-notes" class="app-input" placeholder="הערות נוספות (אופציונלי)" rows="2" style="resize:vertical;margin-bottom:8px;"></textarea>
+          <button class="btn btn-blue" onclick="createDelivery()">🚚 צור ובצע משלוח</button>
         </div>
+
+        <!-- Deliveries list -->
         <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
             <div class="card-title" style="margin-bottom:0;">📋 היסטוריית משלוחים</div>
             <select class="app-select" id="del-filter" style="width:auto;margin-bottom:0;" onchange="renderDeliveries()">
               <option value="all">הכל</option>
-              <option value="pending">ממתין</option>
               <option value="sent">נשלח</option>
+              <option value="pending">ממתין</option>
               <option value="confirmed">אושר</option>
             </select>
           </div>
-          <div class="search-wrap" style="margin-bottom:10px;">
-            <span class="search-icon">📦</span>
-            <input type="text" class="search-input" id="del-search" placeholder="חפש לפי ברקוד / שם מוצר / כותרת..." oninput="renderDeliveries()">
+          <div class="search-wrap" style="margin-bottom:12px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="del-search"
+              placeholder="חפש לפי כותרת / שם מוצר / ברקוד / מקבל..."
+              oninput="renderDeliveries()">
             <button class="search-clear" onclick="document.getElementById('del-search').value='';renderDeliveries()">✕</button>
           </div>
           <div id="deliveries-list">
@@ -5266,27 +5363,45 @@ function listenDeliveries() {
 function addDeliveryItemRow(barcode, name) {
   const container = document.getElementById('delivery-item-rows');
   if (!container) return;
-  const rowId = 'drow_' + Date.now();
+  const rowId = 'drow_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
   const row = document.createElement('div');
   row.id = rowId;
-  row.style.cssText = 'display:flex;gap:8px;margin-bottom:6px;align-items:center;';
-  const opts = inv.map(i => `<option value="${esc(i.name)}" data-id="${esc(i.id)}" data-bc="${esc(i.barcode||'')}"></option>`).join('');
+  row.className = 'del-item-builder-row';
+  // Autocomplete options from current inventory
+  const opts = inv.map(i => `<option value="${esc(i.name)}">`).join('');
   row.innerHTML = `
-    <input type="text" class="app-input del-item-name" placeholder="שם מוצר" value="${esc(name||'')}" style="flex:1;margin-bottom:0;" list="del-item-list-${rowId}" oninput="onDelItemInput(this)">
-    <datalist id="del-item-list-${rowId}">${opts}</datalist>
-    <input type="number" class="app-input del-item-qty" placeholder="כמות" value="1" min="1" style="width:70px;margin-bottom:0;">
-    <input type="text" class="app-input del-item-bc" placeholder="ברקוד" value="${esc(barcode||'')}" style="width:100px;margin-bottom:0;">
-    <button class="btn btn-red sm w-auto" onclick="document.getElementById('${rowId}').remove()">✕</button>`;
+    <span style="font-size:1.1em;flex-shrink:0;">📦</span>
+    <input type="text"   class="app-input del-item-name" placeholder="שם מוצר..."
+      value="${esc(name||'')}" style="flex:1;margin-bottom:0;min-width:0;"
+      list="dlist_${rowId}" oninput="onDelItemInput(this,'${rowId}')">
+    <datalist id="dlist_${rowId}">${opts}</datalist>
+    <input type="number" class="app-input del-item-qty"  placeholder="כמות"
+      value="1" min="1" style="width:62px;margin-bottom:0;text-align:center;">
+    <input type="text"   class="app-input del-item-bc"   placeholder="ברקוד"
+      value="${esc(barcode||'')}" style="width:96px;margin-bottom:0;font-family:monospace;font-size:12px;">
+    <button class="btn btn-red sm w-auto" title="הסר שורה"
+      onclick="this.closest('.del-item-builder-row').remove();_updateDelRowCount()">✕</button>`;
   container.appendChild(row);
+  _updateDelRowCount();
+  // Focus name field
+  setTimeout(() => row.querySelector('.del-item-name')?.focus(), 80);
 }
 
-function onDelItemInput(input) {
-  const name = input.value;
+function _updateDelRowCount() {
+  const n = document.querySelectorAll('#delivery-item-rows .del-item-builder-row').length;
+  const lbl = document.querySelector('#del-items-count-lbl');
+  if (lbl) lbl.textContent = n ? `(${n} פריטים)` : '';
+}
+
+function onDelItemInput(input, rowId) {
+  const name  = input.value.trim();
+  if (!name) return;
   const found = inv.find(i => i.name === name);
-  if (found) {
-    const row = input.closest('div');
-    if (row) { const bcInput = row.querySelector('.del-item-bc'); if (bcInput && found.barcode) bcInput.value = found.barcode; }
-  }
+  if (!found) return;
+  const row = rowId ? document.getElementById(rowId) : input.closest('.del-item-builder-row');
+  if (!row) return;
+  const bcIn = row.querySelector('.del-item-bc');
+  if (bcIn && found.barcode && !bcIn.value) bcIn.value = found.barcode;
 }
 function addDeliveryItemFromScan() { openScanner('delivery-item'); }
 
@@ -5333,21 +5448,39 @@ function renderDeliveries() {
 
 function openDeliveryConfirm(deliveryId) {
   const d = _deliveries.find(x => x.id === deliveryId);
-  if (!d) return;
+  if (!d) return showToast('משלוח לא נמצא', 'error');
   _deliveryConfirmId = deliveryId;
-  document.getElementById('dcm-delivery-id').textContent = '#' + (d.delId||deliveryId) + ' — ' + (d.title||'');
+
+  const idEl = document.getElementById('dcm-delivery-id');
+  if (idEl) idEl.textContent = '#' + (d.delId || deliveryId.slice(-8).toUpperCase()) + ' — ' + (d.title || '');
+
   const el = document.getElementById('dcm-items-list');
-  el.innerHTML = (d.items||[]).map((it, idx) => `
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-      <div style="flex:1;">
-        <div style="font-weight:800;font-size:.9em;">${esc(it.name)}</div>
-        ${it.barcode ? `<div style="font-size:.75em;color:var(--text-muted);font-family:monospace;">📦 ${esc(it.barcode)}</div>` : ''}
-      </div>
-      <div style="font-size:.8em;color:var(--text-muted);">נשלח: <b>${it.qty}</b></div>
-      <input type="number" class="transfer-qty-input dcm-recv-qty" data-idx="${idx}" value="${it.qty}" min="0" style="width:64px;">
-    </div>`).join('');
-  document.getElementById('dcm-notes').value = '';
-  document.getElementById('delivery-confirm-modal').classList.add('show');
+  if (!el) return;
+
+  if (!(d.items||[]).length) {
+    el.innerHTML = '<div style="padding:12px;color:var(--text-muted);font-size:.85em;">אין פריטים במשלוח זה</div>';
+  } else {
+    el.innerHTML = (d.items||[]).map((it, idx) => `
+      <div class="dcm-item-row">
+        <div style="flex:1;min-width:0;">
+          <div class="dcm-item-name">${esc(it.name)}</div>
+          ${it.barcode ? `<div class="dcm-item-bc">📦 ${esc(it.barcode)}</div>` : ''}
+        </div>
+        <div class="dcm-sent-lbl">נשלח:&nbsp;<b>${it.qty}</b></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+          <div style="font-size:.68em;color:var(--text-muted);font-weight:700;">התקבל</div>
+          <input type="number" class="dcm-recv-input dcm-recv-qty" data-idx="${idx}"
+            value="${it.qty}" min="0" max="${(it.qty||1)*3}"
+            oninput="this.style.borderColor=+this.value===+${it.qty}?'var(--border)':+this.value<+${it.qty}?'var(--c-orange)':'var(--c-green)'">
+        </div>
+      </div>`).join('');
+  }
+
+  const notesEl = document.getElementById('dcm-notes');
+  if (notesEl) notesEl.value = '';
+
+  const modal = document.getElementById('delivery-confirm-modal');
+  if (modal) modal.classList.add('show');
 }
 
 function closeDeliveryConfirm() {
@@ -5356,39 +5489,58 @@ function closeDeliveryConfirm() {
 }
 
 async function confirmDeliverySubmit() {
-  if (!_deliveryConfirmId) return;
+  if (!_deliveryConfirmId) return showToast('⚠️ אין משלוח פעיל', 'warning');
   const d = _deliveries.find(x => x.id === _deliveryConfirmId);
-  if (!d) return;
-  const qtyInputs = document.querySelectorAll('.dcm-recv-qty');
+  if (!d) return showToast('⚠️ משלוח לא נמצא', 'error');
+
+  const btn = document.querySelector('#delivery-confirm-modal .btn-green');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ שומר...'; }
+
+  const qtyInputs = [...document.querySelectorAll('.dcm-recv-qty')];
   const receivedItems = (d.items||[]).map((it, idx) => ({
-    ...it, qtyReceived: parseInt(qtyInputs[idx]?.value||it.qty, 10)
+    ...it,
+    qtyReceived: Math.max(0, parseInt(qtyInputs[idx]?.value ?? it.qty, 10) || 0)
   }));
-  const notes = document.getElementById('dcm-notes').value.trim();
-  await db.ref('deliveries/' + _deliveryConfirmId).update({
-    status: 'confirmed', confirmedAt: Date.now(), confirmedBy: window.curU,
-    receivedItems, confirmNotes: notes
-  });
-  for (const it of receivedItems) {
-    if (it.itemId && it.qtyReceived > 0) {
-      try { await changeQuantity({ itemId: it.itemId, delta: it.qtyReceived, user: window.curU, reason: `אישור משלוח ${d.delId||_deliveryConfirmId}`, action: 'add' }); } catch(e){}
+  const notes = document.getElementById('dcm-notes')?.value?.trim() || '';
+
+  try {
+    // 1. Update delivery status in Firebase
+    await db.ref('deliveries/' + _deliveryConfirmId).update({
+      status: 'confirmed',
+      confirmedAt: Date.now(),
+      confirmedBy: window.curU || 'לא ידוע',
+      receivedItems,
+      confirmNotes: notes
+    });
+
+    // 2. Update inventory for each received item
+    for (const it of receivedItems) {
+      if (it.itemId && it.qtyReceived > 0) {
+        try {
+          await changeQuantity({
+            itemId: it.itemId,
+            delta: it.qtyReceived,
+            user: window.curU,
+            reason: `אישור משלוח ${d.delId || _deliveryConfirmId}`,
+            action: 'add'
+          });
+        } catch(e) { console.warn('qty update failed for', it.name, e); }
+      }
     }
-  }
-  // Send confirmation email to sender
-  if (d.createdBy && _ejsReady) {
-    const reportEmail = await db.ref('settings/reportEmail').once('value').then(s=>s.val());
-    if (reportEmail) {
-      const html = buildEmailHtml({
-        title: `✅ משלוח אושר — ${d.delId||_deliveryConfirmId}`,
-        subtitle: d.title||'',
-        body: `<p>המשלוח אושר ע"י <b>${esc(window.curU)}</b>.</p>${notes?`<p>הערות: ${esc(notes)}</p>`:''}`,
-        tableRows: [['פריט','נשלח','התקבל'], ...receivedItems.map(it=>[it.name,String(it.qty),String(it.qtyReceived)])],
-        type: 'delivery', badgeText: '✅ אושר', badgeColor: '#1b5e20'
-      });
-      ejsSend({ toEmail: reportEmail, toName: 'מנהל', subject: `✅ משלוח ${d.delId||_deliveryConfirmId} אושר`, htmlContent: html, type: 'delivery' }).catch(()=>{});
+
+    // 3. Send confirmation email (EmailJS)
+    if (_ejsReady) {
+      _sendDeliveryConfirmNotice(d, receivedItems, notes).catch(() => {});
     }
+
+    closeDeliveryConfirm();
+    showToast('✅ משלוח אושר והמלאי עודכן!');
+
+  } catch(e) {
+    console.error('confirmDeliverySubmit error:', e);
+    showToast('❌ שגיאה באישור המשלוח: ' + (e.message || e), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '✅ אשר משלוח'; }
   }
-  closeDeliveryConfirm();
-  showToast('✅ משלוח אושר והמלאי עודכן!');
 }
 
 // resendDeliveryEmail → EmailJS version defined below
@@ -6052,49 +6204,94 @@ async function createDelivery() {
   const recipient = document.getElementById('del-recipient')?.value?.trim();
   const email     = document.getElementById('del-email')?.value?.trim();
   const notes     = document.getElementById('del-notes')?.value?.trim();
-  if (!title) return showToast('⚠️ הזן כותרת למשלוח','warning');
-  const rows = document.querySelectorAll('#delivery-item-rows > div');
-  if (!rows.length) return showToast('⚠️ הוסף לפחות פריט אחד','warning');
+
+  if (!title) return showToast('⚠️ חובה למלא כותרת למשלוח', 'warning');
+
+  const rows = document.querySelectorAll('#delivery-item-rows .del-item-builder-row');
+  if (!rows.length) return showToast('⚠️ הוסף לפחות פריט אחד', 'warning');
+
   const items = [];
+  let hasEmpty = false;
   rows.forEach(row => {
     const name = row.querySelector('.del-item-name')?.value?.trim();
-    const qty  = parseInt(row.querySelector('.del-item-qty')?.value||'1',10);
+    const qty  = parseInt(row.querySelector('.del-item-qty')?.value || '1', 10);
     const bc   = row.querySelector('.del-item-bc')?.value?.trim();
-    const found = inv.find(i => i.name===name);
-    if (name) items.push({ name, qty:isNaN(qty)?1:qty, barcode:bc||found?.barcode||'', itemId:found?.id||'' });
-  });
-  if (!items.length) return showToast('⚠️ אין פריטים תקינים','warning');
-
-  const delId = 'DEL-' + Date.now().toString(36).toUpperCase().slice(-8);
-  const delivery = { delId, title, recipient:recipient||'', email:email||'', notes:notes||'', items, status:'sent', createdAt:Date.now(), createdBy:window.curU, station:CURRENT_SITE };
-  await db.ref('deliveries').push(delivery);
-
-  if (email) {
-    const confirmUrl = window.location.href.split('?')[0] + '?confirm_delivery=' + delId;
-    const html = buildEmailHtml({
-      type:'delivery', heroIcon:'📦',
-      title:`משלוח ${delId}`,
-      subtitle:title,
-      badgeText:`📦 משלוח מ${esc(CFG.headerText)}`, badgeColor:'#1a6eb5',
-      stats:[{ value:items.length, label:'פריטים', color:'#1a6eb5' }],
-      body:`<p>שלום ${esc(recipient)||''},</p>
-            <p>נשלח עבורך משלוח ציוד מ<strong>${esc(CFG.headerText)}</strong>.</p>
-            ${notes?`<p><strong>הערות:</strong> ${esc(notes)}</p>`:''}
-            <p>לחץ על הכפתור למטה לאישור קבלת המשלוח ועדכון הכמויות שהתקבלו.</p>`,
-      tableHeaders:['פריט','כמות','ברקוד'],
-      tableRows:items.map(it=>[it.name, String(it.qty), it.barcode||'—']),
-      cta:{ text:'✅ אשר קבלת משלוח', url:confirmUrl }
+    if (!name) { hasEmpty = true; return; }
+    const found = inv.find(i => i.name === name);
+    items.push({
+      name,
+      qty:    isNaN(qty) || qty < 1 ? 1 : qty,
+      barcode: bc || found?.barcode || '',
+      itemId:  found?.id || ''
     });
-    await ejsSend({ toEmail:email, toName:recipient||'', subject:`📦 משלוח ${delId} — ${title}`, htmlContent:html, type:'delivery' });
-  }
+  });
 
-  document.getElementById('del-title').value='';
-  document.getElementById('del-recipient').value='';
-  document.getElementById('del-email').value='';
-  document.getElementById('del-notes').value='';
-  document.getElementById('delivery-item-rows').innerHTML='';
-  addDeliveryItemRow();
-  showToast(`✅ משלוח ${delId} נוצר ונשלח!`);
+  if (hasEmpty)    return showToast('⚠️ יש שורות ריקות — מלא שם מוצר או הסר', 'warning');
+  if (!items.length) return showToast('⚠️ אין פריטים תקינים', 'warning');
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return showToast('⚠️ כתובת אימייל לא תקינה', 'warning');
+
+  const btn = document.querySelector('#tab-deliveries .btn-blue');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ שומר...'; }
+
+  try {
+    const delId = 'DEL-' + Date.now().toString(36).toUpperCase().slice(-8);
+    const delivery = {
+      delId, title,
+      recipient: recipient || '',
+      email:     email || '',
+      notes:     notes || '',
+      items,
+      status:    'sent',
+      createdAt: Date.now(),
+      createdBy: window.curU || '',
+      station:   CURRENT_SITE
+    };
+    await db.ref('deliveries').push(delivery);
+
+    // Send email to recipient if provided
+    if (email && _ejsReady) {
+      const confirmUrl = window.location.href.split('?')[0] + '?confirm_delivery=' + delId;
+      const html = buildEmailHtml({
+        type: 'delivery', heroIcon: '📦',
+        title: `משלוח ${delId}`,
+        subtitle: title,
+        badgeText: `📦 משלוח מ${esc(CFG.headerText)}`, badgeColor: '#1a6eb5',
+        stats: [{ value: items.length, label: 'פריטים', color: '#1a6eb5' },
+                { value: items.reduce((s,it)=>s+it.qty,0), label: 'יחידות', color: '#0288d1' }],
+        body: `<p>שלום ${esc(recipient) || ''},</p>
+               <p>נשלח עבורך משלוח ציוד מ<strong>${esc(CFG.headerText)}</strong>.</p>
+               ${notes ? `<p><strong>הערות:</strong> ${esc(notes)}</p>` : ''}
+               <p>לחץ על הכפתור למטה לאישור הקבלה ועדכון הכמויות שהתקבלו.</p>`,
+        tableHeaders: ['פריט', 'כמות', 'ברקוד'],
+        tableRows: items.map(it => [it.name, String(it.qty), it.barcode || '—']),
+        cta: { text: '✅ אשר קבלת משלוח', url: confirmUrl }
+      });
+      await ejsSend({
+        toEmail: email, toName: recipient || '',
+        subject: `📦 משלוח ${delId} — ${title}`,
+        htmlContent: html, type: 'delivery'
+      });
+    } else if (email && !_ejsReady) {
+      showToast('⚠️ EmailJS לא מוגדר — משלוח נשמר ללא שליחת אימייל', 'warning');
+    }
+
+    // Reset form
+    document.getElementById('del-title').value     = '';
+    document.getElementById('del-recipient').value = '';
+    document.getElementById('del-email').value     = '';
+    document.getElementById('del-notes').value     = '';
+    document.getElementById('delivery-item-rows').innerHTML = '';
+    addDeliveryItemRow(); // add fresh empty row
+
+    if (!email || !_ejsReady) showToast(`✅ משלוח ${delId} נוצר!`);
+
+  } catch(e) {
+    console.error('createDelivery error:', e);
+    showToast('❌ שגיאה: ' + (e.message || e), 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🚚 צור ובצע משלוח'; }
+  }
 }
 
 async function resendDeliveryEmail(deliveryId) {
@@ -6288,28 +6485,32 @@ window.updateStats = function(...rest) {
   renderTopItems();
 };
 
-/* 4. Patch _onScanFound — intercept scan for V3 overlay / delivery mode */
-const _origOnScanFound_v3 = window._onScanFound;
-window._onScanFound = async function(code, ...rest) {
-  /* Delivery item mode */
+/* 4. Patch _onScanFound — intercept scan for V3 overlay / delivery mode
+   Note: _onScanFound is a top-level function → its global binding IS window._onScanFound
+   We replace it so the scanner's arrow closure picks up the new version on next call */
+const _origOnScanFound_v3 = _onScanFound; // capture original
+window._onScanFound = async function(code) {
+  /* Delivery item mode — user scanned while adding items to a delivery */
   if (window._scannerDeliveryMode) {
     window._scannerDeliveryMode = false;
     closeScanner();
-    const found = inv.find(i=>(i.barcode||'').trim()===String(code).trim());
-    addDeliveryItemRow(found?.barcode||code, found?.name||'');
+    const found = inv.find(i => (i.barcode||'').trim() === String(code).trim());
+    addDeliveryItemRow(found?.barcode || code, found?.name || '');
+    if (found) showToast(`✅ נוסף: ${found.name}`);
+    else showToast(`⚠️ ברקוד לא מוכר — נוסף ידנית`, 'warning');
     return;
   }
   /* Find mode → V3 scan success overlay */
   if (_scanMode === 'find') {
-    const found = inv.find(i=>i.barcode && String(i.barcode).trim()===String(code).trim());
+    const found = inv.find(i => i.barcode && String(i.barcode).trim() === String(code).trim());
     if (found) {
       closeScanner();
       showScanSuccess(found);
       return;
     }
-    /* Not found — fall through to original */
+    /* Not found — fall through to original (shows error in scanner UI) */
   }
-  _origOnScanFound_v3.call(this, code, ...rest);
+  return _origOnScanFound_v3.call(this, code);
 };
 
 /* 5. Patch openScanner — support delivery-item mode */
@@ -6335,17 +6536,9 @@ window.openScanner = function(mode, ...rest) {
   setTimeout(() => clearInterval(check), 20000);
 })();
 
-/* 7. Patch confirmDeliverySubmit to send confirmation email */
-const _origConfirmDelivery_v3 = window.confirmDeliverySubmit;
-window.confirmDeliverySubmit = async function(...rest) {
-  /* capture state before calling original */
-  const d = _deliveries.find(x=>x.id===_deliveryConfirmId);
-  const qtyInputs = [...document.querySelectorAll('.dcm-recv-qty')];
-  const receivedItems = d ? (d.items||[]).map((it,idx)=>({ ...it, qtyReceived:parseInt(qtyInputs[idx]?.value||it.qty,10) })) : [];
-  const notes = document.getElementById('dcm-notes')?.value?.trim()||'';
-  await _origConfirmDelivery_v3.apply(this, rest);
-  if (d && _ejsReady) _sendDeliveryConfirmNotice(d, receivedItems, notes);
-};
+/* 7. (removed — confirmDeliverySubmit now directly calls _sendDeliveryConfirmNotice) */
+
+
 
 </script>
 </body>
