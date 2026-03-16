@@ -24,6 +24,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- Barcode Scanner -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
 <style>
 /* ================================================================
@@ -209,7 +211,140 @@ body {
 .transfer-qty-input { width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--r-xs);font-family:'Heebo',sans-serif;font-size:13px;text-align:center; }
 
 /* ================================================================
-   INTRO SPLASH
+   V3 — EMAILJS SETTINGS CARD
+   ================================================================ */
+.ejs-setup-card {
+  background: linear-gradient(135deg, #0d1b2a 0%, #1a3a5f 100%);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--r-lg);
+  padding: 24px 20px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.ejs-setup-card::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(33,150,243,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.ejs-setup-card .card-title { color: #fff; }
+.ejs-setup-card .card-title span { opacity: .55; }
+.ejs-label {
+  font-size: .78em;
+  font-weight: 700;
+  color: rgba(255,255,255,.6);
+  letter-spacing: .04em;
+  margin-bottom: 5px;
+  display: block;
+}
+.ejs-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid rgba(255,255,255,.15);
+  border-radius: var(--r-sm);
+  font-family: 'Heebo', sans-serif;
+  font-size: 13px;
+  background: rgba(255,255,255,.08);
+  color: white;
+  transition: var(--tr);
+  outline: none;
+  margin-bottom: 10px;
+  font-family: monospace;
+  letter-spacing: .03em;
+}
+.ejs-input:focus { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.13); }
+.ejs-input::placeholder { color: rgba(255,255,255,.3); font-family: 'Heebo', sans-serif; }
+.ejs-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  margin-bottom: 12px;
+  font-size: .82em;
+  font-weight: 700;
+  color: rgba(255,255,255,.7);
+}
+.ejs-status-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #90a4ae;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 0 #90a4ae;
+}
+.ejs-status-dot.connected { background: #69f0ae; animation: ejsPulse 1.8s infinite; box-shadow: 0 0 0 0 rgba(105,240,174,.7); }
+.ejs-status-dot.error     { background: #ff5252; }
+@keyframes ejsPulse { 0%,100%{box-shadow:0 0 0 0 rgba(105,240,174,.5)} 60%{box-shadow:0 0 0 7px rgba(105,240,174,0)} }
+.ejs-btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.ejs-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: var(--r-sm);
+  font-family: 'Heebo', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: var(--tr);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ejs-btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.ejs-btn-save  { background: #1a6eb5; color: #fff; }
+.ejs-btn-test  { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+.ejs-btn-docs  { background: rgba(255,255,255,.06); color: rgba(255,255,255,.6); font-size: .78em; border: 1px solid rgba(255,255,255,.1); }
+.ejs-divider   { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 14px 0; }
+.ejs-how-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  font-size: .79em;
+  color: rgba(255,255,255,.5);
+  line-height: 1.5;
+}
+.ejs-how-num {
+  background: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.8);
+  font-weight: 900;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: .85em;
+}
+.ejs-how-row b { color: rgba(255,255,255,.85); }
+.ejs-how-row a { color: #64b5f6; text-decoration: none; }
+.ejs-how-row a:hover { text-decoration: underline; }
+
+/* email send progress */
+.email-sending-overlay {
+  position: fixed; inset: 0; z-index: 20000;
+  background: rgba(13,27,42,.85);
+  backdrop-filter: blur(10px);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px;
+}
+.email-sending-overlay.show { display: flex; }
+.email-spin {
+  width: 60px; height: 60px;
+  border: 4px solid rgba(255,255,255,.15);
+  border-top-color: var(--c-blue-glow);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+.email-sending-title { color: #fff; font-size: 1.1em; font-weight: 900; }
+.email-sending-sub   { color: rgba(255,255,255,.5); font-size: .83em; }
+.email-success-check { font-size: 3.5em; animation: sosBadge .4s cubic-bezier(.34,1.56,.64,1) both; }
+
+/* INTRO SPLASH
    ================================================================ */
 #intro-splash {
   position:fixed;inset:0;z-index:99999;background:#000;overflow:hidden;
@@ -2273,28 +2408,87 @@ tr:hover td { background: var(--bg); }
           </div>
         </div>
 
-        <!-- Weekly Email Report Settings -->
-        <div class="card">
-          <div class="card-title">📧 דוח שבועי אוטומטי</div>
-          <p style="font-size:.8em;color:var(--text-muted);margin-bottom:12px;">דוח סיכום יישלח אוטומטית בכל יום בשעה שתגדיר</p>
-          <div class="setting-row">
-            <label>אימייל לדוח שבועי:</label>
-            <input type="email" id="set-report-email" class="sr-input" placeholder="example@email.com" style="flex:1;">
-            <button class="btn w-auto sm btn-blue" onclick="saveReportEmail()">שמור</button>
+        <!-- EmailJS Configuration + Weekly Report -->
+        <div class="ejs-setup-card">
+          <div class="card-title" style="margin-bottom:16px;">
+            📧 EmailJS — שליחת אימייל אמיתית
+            <span style="font-size:.7em;font-weight:600;margin-right:6px;">גרסה 3.0</span>
           </div>
-          <div class="setting-row">
-            <label>שעת שליחה (יומי):</label>
-            <input type="time" id="set-report-time" class="sr-input" value="20:00" style="width:110px;">
-            <button class="btn w-auto sm btn-blue" onclick="saveReportTime()">שמור</button>
+
+          <!-- Status row -->
+          <div class="ejs-status-row" id="ejs-status-row">
+            <div class="ejs-status-dot" id="ejs-dot"></div>
+            <span id="ejs-status-text">לא מחובר — הזן את המפתחות כדי להפעיל</span>
           </div>
-          <div class="setting-row">
-            <label>אימייל למשלוחים:</label>
-            <input type="email" id="set-delivery-email" class="sr-input" placeholder="logistics@email.com" style="flex:1;">
-            <button class="btn w-auto sm btn-blue" onclick="saveDeliveryEmail()">שמור</button>
+
+          <!-- How to get keys -->
+          <div style="margin-bottom:14px;">
+            <div class="ejs-how-row">
+              <div class="ejs-how-num">1</div>
+              <div>היכנס ל <a href="https://www.emailjs.com" target="_blank">emailjs.com</a> → צור חשבון חינמי</div>
+            </div>
+            <div class="ejs-how-row">
+              <div class="ejs-how-num">2</div>
+              <div><b>Email Services</b> → Add Service → Gmail/Outlook → העתק <b>Service ID</b></div>
+            </div>
+            <div class="ejs-how-row">
+              <div class="ejs-how-num">3</div>
+              <div><b>Email Templates</b> → Create Template → קבל <b>Template ID</b> (ראה הוראות מתחת)</div>
+            </div>
+            <div class="ejs-how-row">
+              <div class="ejs-how-num">4</div>
+              <div><b>Account</b> → General → העתק <b>Public Key</b></div>
+            </div>
           </div>
-          <div style="display:flex;gap:8px;margin-top:6px;">
-            <button class="btn btn-green w-auto sm" onclick="sendWeeklyReportNow()">📤 שלח דוח עכשיו</button>
-            <button class="btn btn-gray   w-auto sm" onclick="previewWeeklyReport()">👁️ תצוגה מקדימה</button>
+
+          <hr class="ejs-divider">
+
+          <!-- Keys -->
+          <label class="ejs-label">🔑 Public Key</label>
+          <input type="text" id="ejs-public-key" class="ejs-input" placeholder="user_xxxxxxxxxxxxxxxxxxxx">
+
+          <label class="ejs-label">📡 Service ID</label>
+          <input type="text" id="ejs-service-id" class="ejs-input" placeholder="service_xxxxxxx">
+
+          <label class="ejs-label">📝 Template ID (לאימיילים כלליים)</label>
+          <input type="text" id="ejs-template-id" class="ejs-input" placeholder="template_xxxxxxx">
+
+          <hr class="ejs-divider">
+
+          <!-- Template instructions -->
+          <div style="background:rgba(255,255,255,.05);border-radius:var(--r-sm);padding:12px;margin-bottom:14px;">
+            <div style="font-size:.78em;font-weight:800;color:rgba(255,255,255,.7);margin-bottom:8px;">📝 הגדרת Template ב-EmailJS:</div>
+            <div style="font-size:.75em;color:rgba(255,255,255,.45);line-height:1.9;font-family:monospace;">
+              Subject: {{subject}}<br>
+              Body fields: {{to_email}}, {{to_name}},<br>
+              {{content}}, {{station}}, {{date}}
+            </div>
+          </div>
+
+          <!-- Recipient settings -->
+          <label class="ejs-label">📧 אימייל לדוחות שבועיים</label>
+          <input type="email" id="set-report-email" class="ejs-input" placeholder="manager@mda.org.il">
+
+          <label class="ejs-label">📧 אימייל למשלוחים / לוגיסטיקה</label>
+          <input type="email" id="set-delivery-email" class="ejs-input" placeholder="logistics@mda.org.il">
+
+          <label class="ejs-label">📧 אימייל להזמנות ציוד</label>
+          <input type="email" id="set-orders-email" class="ejs-input" placeholder="supply@mda.org.il">
+
+          <hr class="ejs-divider">
+
+          <!-- Schedule -->
+          <label class="ejs-label">⏰ שליחת דוח יומי אוטומטי בשעה</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+            <input type="time" id="set-report-time" class="ejs-input" value="20:00" style="width:120px;margin-bottom:0;">
+            <div style="font-size:.79em;color:rgba(255,255,255,.45);">כל יום בסוף שיחה</div>
+          </div>
+
+          <div class="ejs-btn-row">
+            <button class="ejs-btn ejs-btn-save"  onclick="saveEjsSettings()">💾 שמור הגדרות</button>
+            <button class="ejs-btn ejs-btn-test"  onclick="testEmailJs()">🧪 שלח טסט</button>
+            <button class="ejs-btn ejs-btn-test"  onclick="sendWeeklyReportNow()">📤 שלח דוח עכשיו</button>
+            <button class="ejs-btn ejs-btn-docs"  onclick="previewWeeklyReport()">👁️ תצוגה מקדימה</button>
           </div>
         </div>
         <div class="card">
@@ -2447,6 +2641,14 @@ tr:hover td { background: var(--bg); }
 <div id="imgViewer" onclick="this.style.display='none'" style="position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:10001;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
   <img id="imgViewer-img" src="" alt="" style="max-width:94vw;max-height:80vh;border-radius:var(--r-md);box-shadow:var(--sh-xl);object-fit:contain;">
   <button onclick="event.stopPropagation();document.getElementById('imgViewer').style.display='none';" style="background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.2);border-radius:var(--r-full);padding:9px 28px;font-family:'Heebo',sans-serif;font-weight:800;cursor:pointer;font-size:.9em;">סגור</button>
+</div>
+
+<!-- Email Sending Progress Overlay -->
+<div class="email-sending-overlay" id="email-progress-overlay">
+  <div class="email-spin" id="email-spin-el"></div>
+  <div class="email-success-check hidden" id="email-check-el">✅</div>
+  <div class="email-sending-title" id="email-progress-title">שולח אימייל...</div>
+  <div class="email-sending-sub"   id="email-progress-sub">אנא המתן</div>
 </div>
 
 <!-- Toast -->
@@ -5034,27 +5236,7 @@ function toggleOrderCart() {
 }
 function closeOrderCart() { document.getElementById('order-cart-panel')?.classList.remove('open'); }
 
-async function sendOrderByEmail() {
-  const items = Object.values(orderCart);
-  if (!items.length) return showToast('⚠️ ההזמנה ריקה — הוסף פריטים', 'warning');
-  const emailSetting = await db.ref('settings/deliveryEmail').once('value').then(s=>s.val());
-  const emailTo = emailSetting || prompt('אימייל לשליחה:') || '';
-  if (!emailTo) return;
-  const subject = encodeURIComponent(`🛒 הזמנת ציוד — ${CFG.headerText} — ${new Date().toLocaleDateString('he-IL')}`);
-  const lines = items.map(({item}) => {
-    const qty = Number.isFinite(item.qty)?item.qty:0;
-    const thr = getThreshold(item);
-    return `• ${item.name} (במלאי: ${qty}, סף: ${thr})${item.barcode?' ['+item.barcode+']':''}`;
-  }).join('%0D%0A');
-  const body = encodeURIComponent(`שלום,%0D%0A%0D%0Aאנא הזמינו את הפריטים הבאים עבור ${CFG.headerText}:%0D%0A%0D%0A`) + lines + encodeURIComponent(`%0D%0A%0D%0Aתאריך: ${new Date().toLocaleDateString('he-IL')}%0D%0Aמערכת: ${CFG.headerText}`);
-  window.open(`mailto:${emailTo}?subject=${subject}&body=${body}`, '_blank');
-  // Save order to Firebase
-  await db.ref('orders').push({ items: items.map(({item})=>({id:item.id,name:item.name,qty:Number.isFinite(item.qty)?item.qty:0,thr:getThreshold(item),barcode:item.barcode||''})), sentAt: Date.now(), sentBy: window.curU, station: CURRENT_SITE });
-  orderCart = {};
-  renderOrdersTab();
-  renderCartPanel();
-  showToast('📧 פתיחת אימייל... ✅');
-}
+// sendOrderByEmail, createDelivery, resendDeliveryEmail → defined later (EmailJS versions)
 
 function exportOrderCsv() {
   const items = Object.values(orderCart);
@@ -5075,9 +5257,7 @@ let _deliveryConfirmId = null;
 function listenDeliveries() {
   db.ref('deliveries').on('value', snap => {
     _deliveries = [];
-    if (snap.val()) {
-      snap.forEach(c => { _deliveries.push({ id: c.key, ...c.val() }); });
-    }
+    if (snap.val()) { snap.forEach(c => { _deliveries.push({ id: c.key, ...c.val() }); }); }
     _deliveries.sort((a,b) => b.createdAt - a.createdAt);
     renderDeliveries();
   });
@@ -5090,7 +5270,6 @@ function addDeliveryItemRow(barcode, name) {
   const row = document.createElement('div');
   row.id = rowId;
   row.style.cssText = 'display:flex;gap:8px;margin-bottom:6px;align-items:center;';
-  // Build datalist options
   const opts = inv.map(i => `<option value="${esc(i.name)}" data-id="${esc(i.id)}" data-bc="${esc(i.barcode||'')}"></option>`).join('');
   row.innerHTML = `
     <input type="text" class="app-input del-item-name" placeholder="שם מוצר" value="${esc(name||'')}" style="flex:1;margin-bottom:0;" list="del-item-list-${rowId}" oninput="onDelItemInput(this)">
@@ -5106,55 +5285,12 @@ function onDelItemInput(input) {
   const found = inv.find(i => i.name === name);
   if (found) {
     const row = input.closest('div');
-    if (row) {
-      const bcInput = row.querySelector('.del-item-bc');
-      if (bcInput && found.barcode) bcInput.value = found.barcode;
-    }
+    if (row) { const bcInput = row.querySelector('.del-item-bc'); if (bcInput && found.barcode) bcInput.value = found.barcode; }
   }
 }
+function addDeliveryItemFromScan() { openScanner('delivery-item'); }
 
-function addDeliveryItemFromScan() {
-  openScanner('delivery-item');
-}
-
-async function createDelivery() {
-  const title     = document.getElementById('del-title')?.value?.trim();
-  const recipient = document.getElementById('del-recipient')?.value?.trim();
-  const email     = document.getElementById('del-email')?.value?.trim();
-  const notes     = document.getElementById('del-notes')?.value?.trim();
-  if (!title) return showToast('⚠️ הזן כותרת למשלוח', 'warning');
-  const rows = document.querySelectorAll('#delivery-item-rows > div');
-  if (!rows.length) return showToast('⚠️ הוסף לפחות פריט אחד', 'warning');
-  const items = [];
-  rows.forEach(row => {
-    const name = row.querySelector('.del-item-name')?.value?.trim();
-    const qty  = parseInt(row.querySelector('.del-item-qty')?.value||'1',10);
-    const bc   = row.querySelector('.del-item-bc')?.value?.trim();
-    const found = inv.find(i => i.name === name);
-    if (name) items.push({ name, qty: isNaN(qty)?1:qty, barcode: bc||found?.barcode||'', itemId: found?.id||'' });
-  });
-  if (!items.length) return showToast('⚠️ אין פריטים תקינים', 'warning');
-  const delId = 'DEL-' + Date.now().toString(36).toUpperCase();
-  const delivery = { delId, title, recipient: recipient||'', email: email||'', notes: notes||'', items, status: 'sent', createdAt: Date.now(), createdBy: window.curU, station: CURRENT_SITE };
-  await db.ref('deliveries').push(delivery);
-  // Send email
-  if (email) {
-    const subject = encodeURIComponent(`🚚 משלוח ${delId} — ${title}`);
-    const itemLines = items.map(it => `• ${it.name} × ${it.qty}${it.barcode?' ['+it.barcode+']':''}`).join('%0D%0A');
-    const confirmUrl = encodeURIComponent(window.location.href + '?confirm_delivery=' + delId);
-    const body = encodeURIComponent(`שלום ${recipient||''},\n\nנשלח משלוח עבורך:\n\n`) + itemLines +
-      encodeURIComponent(`\n\nהערות: ${notes||'—'}\n\nלאישור המשלוח לחץ כאן:\n`) + confirmUrl;
-    window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
-  }
-  // Reset form
-  document.getElementById('del-title').value = '';
-  document.getElementById('del-recipient').value = '';
-  document.getElementById('del-email').value = '';
-  document.getElementById('del-notes').value = '';
-  document.getElementById('delivery-item-rows').innerHTML = '';
-  addDeliveryItemRow();
-  showToast(`✅ משלוח ${delId} נוצר ונשלח!`);
-}
+// createDelivery → EmailJS version defined below
 
 function renderDeliveries() {
   const el = document.getElementById('deliveries-list');
@@ -5185,7 +5321,9 @@ function renderDeliveries() {
       <div class="delivery-items-list">${esc(itemLines)}</div>
       ${d.notes ? `<div style="font-size:.79em;color:var(--text-muted);margin-bottom:10px;">הערות: ${esc(d.notes)}</div>` : ''}
       <div class="delivery-actions">
-        ${d.status !== 'confirmed' ? `<button class="btn sm w-auto btn-green" onclick="openDeliveryConfirm('${d.id}')">✅ אשר משלוח</button>` : `<span style="font-size:.78em;color:var(--c-green);font-weight:800;">✅ אושר${d.confirmedAt?' ב-'+new Date(d.confirmedAt).toLocaleDateString('he-IL'):''}</span>`}
+        ${d.status !== 'confirmed'
+          ? `<button class="btn sm w-auto btn-green" onclick="openDeliveryConfirm('${d.id}')">✅ אשר משלוח</button>`
+          : `<span style="font-size:.78em;color:var(--c-green);font-weight:800;">✅ אושר${d.confirmedAt?' ב-'+new Date(d.confirmedAt).toLocaleDateString('he-IL'):''}</span>`}
         ${d.email && d.status !== 'confirmed' ? `<button class="btn sm w-auto btn-blue" onclick="resendDeliveryEmail('${d.id}')">📧 שלח שוב</button>` : ''}
         <button class="btn sm w-auto btn-gray" onclick="exportDeliveryCsv('${d.id}')">📥 CSV</button>
       </div>
@@ -5230,24 +5368,30 @@ async function confirmDeliverySubmit() {
     status: 'confirmed', confirmedAt: Date.now(), confirmedBy: window.curU,
     receivedItems, confirmNotes: notes
   });
-  // Update inventory for received items
   for (const it of receivedItems) {
     if (it.itemId && it.qtyReceived > 0) {
       try { await changeQuantity({ itemId: it.itemId, delta: it.qtyReceived, user: window.curU, reason: `אישור משלוח ${d.delId||_deliveryConfirmId}`, action: 'add' }); } catch(e){}
+    }
+  }
+  // Send confirmation email to sender
+  if (d.createdBy && _ejsReady) {
+    const reportEmail = await db.ref('settings/reportEmail').once('value').then(s=>s.val());
+    if (reportEmail) {
+      const html = buildEmailHtml({
+        title: `✅ משלוח אושר — ${d.delId||_deliveryConfirmId}`,
+        subtitle: d.title||'',
+        body: `<p>המשלוח אושר ע"י <b>${esc(window.curU)}</b>.</p>${notes?`<p>הערות: ${esc(notes)}</p>`:''}`,
+        tableRows: [['פריט','נשלח','התקבל'], ...receivedItems.map(it=>[it.name,String(it.qty),String(it.qtyReceived)])],
+        type: 'delivery', badgeText: '✅ אושר', badgeColor: '#1b5e20'
+      });
+      ejsSend({ toEmail: reportEmail, toName: 'מנהל', subject: `✅ משלוח ${d.delId||_deliveryConfirmId} אושר`, htmlContent: html, type: 'delivery' }).catch(()=>{});
     }
   }
   closeDeliveryConfirm();
   showToast('✅ משלוח אושר והמלאי עודכן!');
 }
 
-async function resendDeliveryEmail(deliveryId) {
-  const d = _deliveries.find(x => x.id === deliveryId);
-  if (!d || !d.email) return showToast('אין אימייל למשלוח זה', 'warning');
-  const subject = encodeURIComponent(`🚚 משלוח ${d.delId||deliveryId} — ${d.title}`);
-  const itemLines = (d.items||[]).map(it => `• ${it.name} × ${it.qty}`).join('%0D%0A');
-  const body = encodeURIComponent(`שלום ${d.recipient||''},\n\nתזכורת: נשלח משלוח עבורך:\n\n`) + itemLines;
-  window.open(`mailto:${d.email}?subject=${subject}&body=${body}`, '_blank');
-}
+// resendDeliveryEmail → EmailJS version defined below
 
 function exportDeliveryCsv(deliveryId) {
   const d = _deliveries.find(x => x.id === deliveryId);
@@ -5432,74 +5576,459 @@ function exportComparisonCsv() {
 /* ================================================================
    V3 — WEEKLY EMAIL REPORT
    ================================================================ */
-async function saveReportEmail() {
-  const v = document.getElementById('set-report-email')?.value?.trim();
-  if (!v) return showToast('הזן אימייל', 'warning');
-  await db.ref('settings/reportEmail').set(v);
-  showToast('✅ אימייל דוח נשמר');
-}
-async function saveReportTime() {
-  const v = document.getElementById('set-report-time')?.value;
-  if (!v) return;
-  await db.ref('settings/reportTime').set(v);
-  showToast('✅ שעת שליחה נשמרה');
-}
-async function saveDeliveryEmail() {
-  const v = document.getElementById('set-delivery-email')?.value?.trim();
-  if (!v) return showToast('הזן אימייל', 'warning');
-  await db.ref('settings/deliveryEmail').set(v);
-  showToast('✅ אימייל משלוחים נשמר');
+/* ================================================================
+   V3 — EMAILJS ENGINE
+   ================================================================ */
+let _ejsReady = false;
+let _ejsCfg   = { publicKey: '', serviceId: '', templateId: '' };
+
+async function loadEjsSettings() {
+  const snap = await db.ref('settings/emailjs').once('value');
+  const cfg  = snap.val() || {};
+  _ejsCfg = {
+    publicKey:  cfg.publicKey  || '',
+    serviceId:  cfg.serviceId  || '',
+    templateId: cfg.templateId || '',
+  };
+  const [rEmail, rTime, dEmail, oEmail] = await Promise.all([
+    db.ref('settings/reportEmail').once('value').then(s=>s.val()||''),
+    db.ref('settings/reportTime').once('value').then(s=>s.val()||'20:00'),
+    db.ref('settings/deliveryEmail').once('value').then(s=>s.val()||''),
+    db.ref('settings/ordersEmail').once('value').then(s=>s.val()||''),
+  ]);
+  const set = (id, v) => { const el=document.getElementById(id); if(el) el.value=v; };
+  set('ejs-public-key',    _ejsCfg.publicKey);
+  set('ejs-service-id',    _ejsCfg.serviceId);
+  set('ejs-template-id',   _ejsCfg.templateId);
+  set('set-report-email',  rEmail);
+  set('set-report-time',   rTime);
+  set('set-delivery-email',dEmail);
+  set('set-orders-email',  oEmail);
+  _initEmailJs();
 }
 
+function _initEmailJs() {
+  if (!_ejsCfg.publicKey) { _ejsReady=false; _ejsUpdateStatus('none'); return; }
+  try {
+    emailjs.init({ publicKey: _ejsCfg.publicKey });
+    _ejsReady = true;
+    _ejsUpdateStatus('connected');
+  } catch(e) { _ejsReady=false; _ejsUpdateStatus('error'); }
+}
+
+function _ejsUpdateStatus(state) {
+  const dot  = document.getElementById('ejs-dot');
+  const text = document.getElementById('ejs-status-text');
+  if (!dot || !text) return;
+  const map = {
+    none:      { cls:'',          txt:'לא מחובר — הזן את המפתחות' },
+    connected: { cls:'connected', txt:'✅ מחובר ומוכן לשליחה' },
+    error:     { cls:'error',     txt:'❌ שגיאה — בדוק מפתחות' },
+    testing:   { cls:'',          txt:'🧪 בודק חיבור...' },
+  };
+  const s = map[state] || map.none;
+  dot.className = 'ejs-status-dot ' + s.cls;
+  text.textContent = s.txt;
+}
+
+async function saveEjsSettings() {
+  const pub = document.getElementById('ejs-public-key')?.value?.trim();
+  const svc = document.getElementById('ejs-service-id')?.value?.trim();
+  const tpl = document.getElementById('ejs-template-id')?.value?.trim();
+  const rEmail = document.getElementById('set-report-email')?.value?.trim();
+  const rTime  = document.getElementById('set-report-time')?.value || '20:00';
+  const dEmail = document.getElementById('set-delivery-email')?.value?.trim();
+  const oEmail = document.getElementById('set-orders-email')?.value?.trim();
+  if (!pub || !svc || !tpl) return showToast('⚠️ מלא את כל שלושת המפתחות', 'warning');
+  await Promise.all([
+    db.ref('settings/emailjs').set({ publicKey: pub, serviceId: svc, templateId: tpl }),
+    db.ref('settings/reportEmail').set(rEmail||''),
+    db.ref('settings/reportTime').set(rTime),
+    db.ref('settings/deliveryEmail').set(dEmail||''),
+    db.ref('settings/ordersEmail').set(oEmail||''),
+  ]);
+  _ejsCfg = { publicKey: pub, serviceId: svc, templateId: tpl };
+  _initEmailJs();
+  showToast('✅ הגדרות EmailJS נשמרו!');
+}
+
+/* Core send function */
+async function ejsSend({ toEmail, toName='', subject, htmlContent, type='general' }) {
+  if (!_ejsReady) {
+    showToast('⚠️ EmailJS לא מוגדר — עבור להגדרות', 'warning');
+    return false;
+  }
+  _emailProgressShow('שולח אימייל...', `אל: ${toEmail}`);
+  try {
+    const params = {
+      to_email:  toEmail,
+      to_name:   toName || toEmail,
+      subject:   subject,
+      content:   htmlContent,
+      station:   CFG.headerText,
+      date:      new Date().toLocaleDateString('he-IL'),
+      sent_by:   window.curU || 'מערכת',
+      type:      type,
+    };
+    await emailjs.send(_ejsCfg.serviceId, _ejsCfg.templateId, params);
+    _emailProgressSuccess('נשלח בהצלחה! ✅', toEmail);
+    return true;
+  } catch(err) {
+    _emailProgressHide();
+    showToast('❌ שגיאה בשליחה: ' + (err?.text || err?.message || JSON.stringify(err)), 'error');
+    console.error('EmailJS error:', err);
+    return false;
+  }
+}
+
+function _emailProgressShow(title, sub) {
+  const ov  = document.getElementById('email-progress-overlay');
+  const sp  = document.getElementById('email-spin-el');
+  const chk = document.getElementById('email-check-el');
+  const t   = document.getElementById('email-progress-title');
+  const s   = document.getElementById('email-progress-sub');
+  if (!ov) return;
+  sp.classList.remove('hidden');
+  chk.classList.add('hidden');
+  t.textContent = title;
+  s.textContent = sub;
+  ov.classList.add('show');
+}
+function _emailProgressSuccess(title, sub) {
+  const sp  = document.getElementById('email-spin-el');
+  const chk = document.getElementById('email-check-el');
+  const t   = document.getElementById('email-progress-title');
+  const s   = document.getElementById('email-progress-sub');
+  if(sp) sp.classList.add('hidden');
+  if(chk){ chk.classList.remove('hidden'); chk.textContent='✅'; }
+  if(t) t.textContent = title;
+  if(s) s.textContent = sub;
+  setTimeout(_emailProgressHide, 1800);
+}
+function _emailProgressHide() {
+  document.getElementById('email-progress-overlay')?.classList.remove('show');
+}
+
+async function testEmailJs() {
+  const pub = document.getElementById('ejs-public-key')?.value?.trim();
+  const svc = document.getElementById('ejs-service-id')?.value?.trim();
+  const tpl = document.getElementById('ejs-template-id')?.value?.trim();
+  const toEmail = document.getElementById('set-report-email')?.value?.trim();
+  if (!pub || !svc || !tpl) return showToast('⚠️ מלא את כל המפתחות תחילה', 'warning');
+  if (!toEmail) return showToast('⚠️ הזן אימייל יעד לטסט', 'warning');
+  _ejsUpdateStatus('testing');
+  await saveEjsSettings();
+  const sent = await ejsSend({
+    toEmail,
+    toName: 'מנהל המערכת',
+    subject: `🧪 טסט — מערכת מלאי ${CFG.headerText}`,
+    htmlContent: buildEmailHtml({
+      title: '🧪 אימייל טסט',
+      subtitle: 'החיבור ל-EmailJS עובד מצוין!',
+      body: `<p>שלום,</p><p>אימייל זה נשלח מ<b>מערכת מלאי ${esc(CFG.headerText)}</b> כבדיקת חיבור.</p><p>EmailJS פועל תקין ✅</p>`,
+      type: 'test',
+      ctaText: '', ctaUrl: ''
+    }),
+    type: 'test'
+  });
+  if (sent) _ejsUpdateStatus('connected');
+  else _ejsUpdateStatus('error');
+}
+
+/* ================================================================
+   V3 — HTML EMAIL BUILDER
+   Builds beautiful Hebrew RTL HTML emails
+   ================================================================ */
+function buildEmailHtml({ title, subtitle='', body='', tableRows=[], ctaText='', ctaUrl='', type='general', badgeText='', badgeColor='#1a6eb5' }) {
+  const stationName = CFG.headerText;
+  const logoUrl     = CFG.logoUrl;
+  const date        = new Date().toLocaleDateString('he-IL', { year:'numeric', month:'long', day:'numeric' });
+  const accentColor = type === 'alert' ? '#d32f2f' : type === 'delivery' ? '#1a6eb5' : type === 'order' ? '#e65100' : type === 'report' ? '#1b5e20' : '#1a6eb5';
+
+  const tableHtml = tableRows.length ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:16px 0;direction:rtl;">
+      <thead>
+        <tr style="background:${accentColor};color:#fff;">
+          ${tableRows[0].map(h=>`<th style="padding:10px 12px;font-family:Arial,sans-serif;font-size:12px;font-weight:700;text-align:right;">${h}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRows.slice(1).map((row,i)=>`
+          <tr style="background:${i%2===0?'#f8fafc':'#fff'};">
+            ${row.map(c=>`<td style="padding:9px 12px;font-family:Arial,sans-serif;font-size:12px;color:#333;border-bottom:1px solid #e8ecf0;text-align:right;">${c}</td>`).join('')}
+          </tr>`).join('')}
+      </tbody>
+    </table>` : '';
+
+  const ctaHtml = ctaText && ctaUrl ? `
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${ctaUrl}" style="display:inline-block;background:${accentColor};color:#fff;padding:13px 32px;border-radius:8px;font-family:Arial,sans-serif;font-weight:700;font-size:14px;text-decoration:none;">
+        ${ctaText}
+      </a>
+    </div>` : '';
+
+  const badgeHtml = badgeText ? `<span style="display:inline-block;background:${badgeColor};color:#fff;padding:3px 12px;border-radius:999px;font-size:11px;font-weight:700;margin-bottom:8px;">${badgeText}</span><br>` : '';
+
+  return `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f0f4f8;direction:rtl;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:24px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5f 100%);padding:28px 32px;border-radius:16px 16px 0 0;text-align:right;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <img src="${logoUrl}" width="50" height="50" style="border-radius:10px;vertical-align:middle;margin-left:12px;" alt="">
+                  <span style="color:#fff;font-family:Arial,sans-serif;font-size:18px;font-weight:900;vertical-align:middle;">${stationName}</span>
+                </td>
+                <td align="left" style="color:rgba(255,255,255,.45);font-family:Arial,sans-serif;font-size:11px;">${date}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ACCENT BAR -->
+        <tr><td style="height:5px;background:${accentColor};"></td></tr>
+
+        <!-- BODY -->
+        <tr>
+          <td style="background:#fff;padding:32px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+            ${badgeHtml}
+            <h1 style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:22px;font-weight:900;color:#0d1b2a;">${title}</h1>
+            ${subtitle ? `<p style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:13px;color:#8a96a8;">${subtitle}</p>` : ''}
+            <div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;">${body}</div>
+            ${tableHtml}
+            ${ctaHtml}
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="padding:20px 0;text-align:center;">
+            <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#aab;direction:rtl;">
+              נשלח מ<b>מערכת מלאי ${stationName}</b> גרסה 3.0 · ${date}<br>
+              לשאלות צור קשר עם מנהל המערכת
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+/* ================================================================
+   V3 — ORDERS EMAIL (EmailJS)
+   ================================================================ */
+async function sendOrderByEmail() {
+  const items = Object.values(orderCart);
+  if (!items.length) return showToast('⚠️ ההזמנה ריקה', 'warning');
+  const ordersEmail = await db.ref('settings/ordersEmail').once('value').then(s=>s.val());
+  const toEmail = ordersEmail || await (async()=>{ const v=await asyncPrompt('אימייל לשליחה','אימייל יעד להזמנה:',''); return v; })();
+  if (!toEmail) return;
+
+  const tableRows = [
+    ['שם מוצר', 'קטגוריה', 'במלאי', 'סף מינימום', 'ברקוד'],
+    ...items.map(({item}) => [
+      item.name,
+      item.category || '—',
+      String(Number.isFinite(item.qty)?item.qty:0),
+      String(getThreshold(item)),
+      item.barcode || '—'
+    ])
+  ];
+
+  const bodyHtml = `
+    <p>שלום,</p>
+    <p>להלן רשימת הפריטים שיש לרכוש עבור <b>${esc(CFG.headerText)}</b>:</p>`;
+
+  const html = buildEmailHtml({
+    title: '🛒 הזמנת ציוד',
+    subtitle: `${items.length} פריטים · ${new Date().toLocaleDateString('he-IL')}`,
+    body: bodyHtml,
+    tableRows,
+    type: 'order',
+    badgeText: 'דרוש מילוי מלאי',
+    badgeColor: '#e65100',
+    ctaText: '', ctaUrl: ''
+  });
+
+  const sent = await ejsSend({ toEmail, toName: 'ספק / מחסן', subject: `🛒 הזמנת ציוד — ${CFG.headerText} — ${new Date().toLocaleDateString('he-IL')}`, htmlContent: html, type: 'order' });
+  if (sent) {
+    await db.ref('orders').push({ items: items.map(({item})=>({id:item.id,name:item.name,qty:Number.isFinite(item.qty)?item.qty:0,thr:getThreshold(item)})), sentAt: Date.now(), sentBy: window.curU, station: CURRENT_SITE, toEmail });
+    orderCart = {};
+    renderOrdersTab(); renderCartPanel();
+  }
+}
+
+/* ================================================================
+   V3 — DELIVERY EMAIL (EmailJS)
+   ================================================================ */
+async function createDelivery() {
+  const title     = document.getElementById('del-title')?.value?.trim();
+  const recipient = document.getElementById('del-recipient')?.value?.trim();
+  const email     = document.getElementById('del-email')?.value?.trim();
+  const notes     = document.getElementById('del-notes')?.value?.trim();
+  if (!title) return showToast('⚠️ הזן כותרת למשלוח', 'warning');
+  const rows = document.querySelectorAll('#delivery-item-rows > div');
+  if (!rows.length) return showToast('⚠️ הוסף לפחות פריט אחד', 'warning');
+  const items = [];
+  rows.forEach(row => {
+    const name = row.querySelector('.del-item-name')?.value?.trim();
+    const qty  = parseInt(row.querySelector('.del-item-qty')?.value||'1',10);
+    const bc   = row.querySelector('.del-item-bc')?.value?.trim();
+    const found = inv.find(i => i.name === name);
+    if (name) items.push({ name, qty: isNaN(qty)?1:qty, barcode: bc||found?.barcode||'', itemId: found?.id||'' });
+  });
+  if (!items.length) return showToast('⚠️ אין פריטים תקינים', 'warning');
+  const delId = 'DEL-' + Date.now().toString(36).toUpperCase();
+  const delivery = { delId, title, recipient: recipient||'', email: email||'', notes: notes||'', items, status: 'sent', createdAt: Date.now(), createdBy: window.curU, station: CURRENT_SITE };
+  const dbRef = await db.ref('deliveries').push(delivery);
+
+  if (email) {
+    const confirmUrl = `${window.location.href.split('?')[0]}?confirm_delivery=${delId}`;
+    const tableRows  = [
+      ['פריט', 'כמות', 'ברקוד'],
+      ...items.map(it => [it.name, String(it.qty), it.barcode || '—'])
+    ];
+    const html = buildEmailHtml({
+      title: `📦 משלוח ${delId}`,
+      subtitle: title,
+      body: `<p>שלום ${esc(recipient)||''},</p><p>נשלח עבורך משלוח ציוד מ<b>${esc(CFG.headerText)}</b>.</p>${notes?`<p><b>הערות:</b> ${esc(notes)}</p>`:''}`,
+      tableRows,
+      type: 'delivery',
+      badgeText: '🚚 משלוח יוצא',
+      badgeColor: '#1a6eb5',
+      ctaText: '✅ אשר קבלת משלוח',
+      ctaUrl: confirmUrl
+    });
+    await ejsSend({ toEmail: email, toName: recipient||'', subject: `📦 משלוח ${delId} — ${title}`, htmlContent: html, type: 'delivery' });
+  }
+
+  // Reset form
+  document.getElementById('del-title').value = '';
+  document.getElementById('del-recipient').value = '';
+  document.getElementById('del-email').value = '';
+  document.getElementById('del-notes').value = '';
+  document.getElementById('delivery-item-rows').innerHTML = '';
+  addDeliveryItemRow();
+  showToast(`✅ משלוח ${delId} נוצר ונשלח!`);
+}
+
+async function resendDeliveryEmail(deliveryId) {
+  const d = _deliveries.find(x => x.id === deliveryId);
+  if (!d || !d.email) return showToast('אין אימייל למשלוח זה', 'warning');
+  const confirmUrl = `${window.location.href.split('?')[0]}?confirm_delivery=${d.delId||deliveryId}`;
+  const tableRows  = [['פריט','כמות','ברקוד'], ...(d.items||[]).map(it=>[it.name,String(it.qty),it.barcode||'—'])];
+  const html = buildEmailHtml({
+    title: `📦 תזכורת — משלוח ${d.delId||deliveryId}`,
+    subtitle: d.title||'',
+    body: `<p>שלום ${esc(d.recipient)||''},</p><p>תזכורת: ממתינים לאישור קבלת המשלוח.</p>`,
+    tableRows, type: 'delivery', badgeText: '⏳ ממתין לאישור', badgeColor: '#e65100',
+    ctaText: '✅ אשר קבלת משלוח', ctaUrl: confirmUrl
+  });
+  await ejsSend({ toEmail: d.email, toName: d.recipient||'', subject: `📦 תזכורת: משלוח ${d.delId||deliveryId}`, htmlContent: html, type: 'delivery' });
+}
+
+/* ================================================================
+   V3 — WEEKLY / DAILY REPORT EMAIL (EmailJS)
+   ================================================================ */
 function buildWeeklyReportBody() {
   const since = Date.now() - 7 * 86400000;
   const actions = logs.filter(l => l.timestamp >= since);
   const outItems = inv.filter(i => (Number.isFinite(i.qty)?i.qty:0) === 0);
   const lowItems = inv.filter(i => { const q=Number.isFinite(i.qty)?i.qty:0; return q>0 && q<=getThreshold(i); });
-  // Top used
   const counts = {};
-  actions.filter(l=>l.action==='take'||l.action==='sub').forEach(l => { counts[l.itemName||l.itemId] = (counts[l.itemName||l.itemId]||0)+1; });
+  actions.filter(l=>l.action==='take'||l.action==='sub').forEach(l => { const k=l.itemName||l.itemId||''; counts[k]=(counts[k]||0)+1; });
   const top5 = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  return {
-    subject: `📊 דוח שבועי — ${CFG.headerText} — ${new Date().toLocaleDateString('he-IL')}`,
-    lines: [
-      `📊 דוח שבועי מערכת מלאי — ${CFG.headerText}`,
-      `תאריך: ${new Date().toLocaleDateString('he-IL')}`,
-      '',
-      `📦 סה"כ פעולות השבוע: ${actions.length}`,
-      `🚨 פריטים שאזלו: ${outItems.length}`,
-      `⚠️ פריטים במלאי נמוך: ${lowItems.length}`,
-      '',
-      '🔥 פריטים שנלקחו הכי הרבה:',
-      ...top5.map(([name, n]) => `  • ${name}: ${n} פעמים`),
-      '',
-      '🚨 חסרים:',
-      ...outItems.slice(0,10).map(i => `  • ${i.name} (קטגוריה: ${i.category||'—'})`),
-      '',
-      '⚠️ מלאי נמוך:',
-      ...lowItems.slice(0,10).map(i => `  • ${i.name}: ${i.qty} מתוך ${getThreshold(i)}`),
-    ]
-  };
+  return { outItems, lowItems, actions, top5 };
 }
 
 async function sendWeeklyReportNow() {
-  const emailSetting = await db.ref('settings/reportEmail').once('value').then(s=>s.val());
-  const email = emailSetting || prompt('אימייל לשליחה:') || '';
-  if (!email) return;
-  const { subject, lines } = buildWeeklyReportBody();
-  const body = encodeURIComponent(lines.join('\n'));
-  window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${body}`, '_blank');
-  showToast('📧 דוח נשלח!');
+  const reportEmail = await db.ref('settings/reportEmail').once('value').then(s=>s.val());
+  const toEmail = reportEmail || await (async()=>{ const v=await asyncPrompt('שלח דוח','אימייל יעד:',''); return v; })();
+  if (!toEmail) return;
+
+  const { outItems, lowItems, actions, top5 } = buildWeeklyReportBody();
+  const takesCount = actions.filter(l=>l.action==='take'||l.action==='sub').length;
+  const addsCount  = actions.filter(l=>l.action==='add').length;
+
+  // Stat boxes as table
+  const statsHtml = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;direction:rtl;">
+      <tr>
+        ${[
+          { n: actions.length,  l: 'פעולות השבוע', c: '#1a6eb5' },
+          { n: takesCount,      l: 'הוצאות',       c: '#e65100' },
+          { n: addsCount,       l: 'הוספות',        c: '#1b5e20' },
+          { n: outItems.length, l: '🚨 אזל',        c: '#d32f2f' },
+          { n: lowItems.length, l: '⚠️ נמוך',      c: '#f9a825' },
+        ].map(s=>`
+          <td align="center" style="padding:4px;">
+            <div style="background:${s.c}15;border:1.5px solid ${s.c}40;border-radius:10px;padding:12px 8px;min-width:70px;">
+              <div style="font-size:22px;font-weight:900;color:${s.c};font-family:Arial,sans-serif;">${s.n}</div>
+              <div style="font-size:10px;color:#666;font-family:Arial,sans-serif;">${s.l}</div>
+            </div>
+          </td>`).join('')}
+      </tr>
+    </table>`;
+
+  const top5Html = top5.length ? `
+    <h3 style="font-family:Arial,sans-serif;font-size:14px;color:#0d1b2a;margin:20px 0 8px;">🔥 פריטים שנלקחו הכי הרבה</h3>
+    ${top5.map(([name,n],i)=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:${i%2?'#f8fafc':'#fff'};border-radius:6px;margin-bottom:4px;direction:rtl;">
+        <span style="font-family:Arial,sans-serif;font-size:16px;">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]}</span>
+        <span style="flex:1;font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#333;">${esc(name)}</span>
+        <span style="background:#1a6eb5;color:#fff;padding:2px 10px;border-radius:999px;font-family:Arial,sans-serif;font-size:11px;font-weight:800;">${n}✕</span>
+      </div>`).join('')}` : '';
+
+  const outHtml = outItems.length ? `
+    <h3 style="font-family:Arial,sans-serif;font-size:14px;color:#d32f2f;margin:20px 0 8px;">🚨 פריטים שאזלו</h3>
+    ${outItems.slice(0,8).map(i=>`<div style="padding:6px 10px;background:#ffebee;border-right:3px solid #d32f2f;border-radius:4px;margin-bottom:4px;font-family:Arial,sans-serif;font-size:12px;color:#333;">${esc(i.name)} <span style="color:#999;">(${esc(i.category||'—')})</span></div>`).join('')}` : '';
+
+  const lowHtml = lowItems.length ? `
+    <h3 style="font-family:Arial,sans-serif;font-size:14px;color:#e65100;margin:20px 0 8px;">⚠️ מלאי נמוך</h3>
+    ${lowItems.slice(0,8).map(i=>`<div style="padding:6px 10px;background:#fff3e0;border-right:3px solid #e65100;border-radius:4px;margin-bottom:4px;font-family:Arial,sans-serif;font-size:12px;color:#333;">${esc(i.name)} — <b>${i.qty}</b> מתוך ${getThreshold(i)}</div>`).join('')}` : '';
+
+  const body = statsHtml + top5Html + outHtml + lowHtml +
+    `<p style="font-family:Arial,sans-serif;font-size:12px;color:#aaa;margin-top:20px;">דוח זה נוצר אוטומטית ב-${new Date().toLocaleString('he-IL')}</p>`;
+
+  const html = buildEmailHtml({
+    title: `📊 דוח שבועי — ${CFG.headerText}`,
+    subtitle: `${new Date().toLocaleDateString('he-IL', {weekday:'long',year:'numeric',month:'long',day:'numeric'})}`,
+    body,
+    type: 'report',
+    badgeText: 'דוח שבועי אוטומטי',
+    badgeColor: '#1b5e20'
+  });
+
+  await ejsSend({ toEmail, toName: 'מנהל', subject: `📊 דוח שבועי — ${CFG.headerText} — ${new Date().toLocaleDateString('he-IL')}`, htmlContent: html, type: 'report' });
 }
 
 function previewWeeklyReport() {
-  const { lines } = buildWeeklyReportBody();
-  const txt = lines.join('\n');
+  const { outItems, lowItems, actions, top5 } = buildWeeklyReportBody();
   const w = window.open('', '_blank');
-  w.document.write(`<pre style="font-family:Arial,sans-serif;direction:rtl;padding:24px;line-height:1.8;">${txt}</pre>`);
+  if (!w) return showToast('אפשר חלונות קופצים', 'warning');
+  w.document.write(buildEmailHtml({
+    title: `📊 תצוגה מקדימה — דוח שבועי`,
+    subtitle: new Date().toLocaleDateString('he-IL', {year:'numeric',month:'long',day:'numeric'}),
+    body: `<p>פעולות השבוע: <b>${actions.length}</b> | אזל: <b>${outItems.length}</b> | נמוך: <b>${lowItems.length}</b></p>
+           <p>Top items: ${top5.map(([n,c])=>`${esc(n)} (${c})`).join(', ')||'—'}</p>`,
+    type: 'report', badgeText: 'תצוגה מקדימה', badgeColor: '#666'
+  }));
+  w.document.close();
 }
 
-// Auto daily report scheduler (checks every minute)
+/* ================================================================
+   V3 — REPORT SCHEDULER (daily auto-send)
+   ================================================================ */
 let _reportTimer = null;
 async function initReportScheduler() {
   if (_reportTimer) clearInterval(_reportTimer);
@@ -5507,13 +6036,14 @@ async function initReportScheduler() {
     try {
       const reportTime = await db.ref('settings/reportTime').once('value').then(s=>s.val()||'20:00');
       const email      = await db.ref('settings/reportEmail').once('value').then(s=>s.val());
-      if (!email) return;
+      if (!email || !_ejsReady) return;
       const [hh, mm] = reportTime.split(':').map(Number);
       const now = new Date();
       if (now.getHours() === hh && now.getMinutes() === mm) {
-        const lastSent = parseInt(localStorage.getItem('lastReportSent_'+CURRENT_SITE)||'0',10);
+        const key = 'lastReport_' + CURRENT_SITE;
+        const lastSent = parseInt(localStorage.getItem(key)||'0', 10);
         if (Date.now() - lastSent > 23 * 3600000) {
-          localStorage.setItem('lastReportSent_'+CURRENT_SITE, Date.now());
+          localStorage.setItem(key, String(Date.now()));
           await sendWeeklyReportNow();
         }
       }
@@ -5522,18 +6052,9 @@ async function initReportScheduler() {
 }
 
 /* ================================================================
-   V3 — LOAD SETTINGS INTO UI
+   V3 — LOAD ALL V3 SETTINGS
    ================================================================ */
-async function loadV3Settings() {
-  const [rEmail, rTime, dEmail] = await Promise.all([
-    db.ref('settings/reportEmail').once('value').then(s=>s.val()||''),
-    db.ref('settings/reportTime').once('value').then(s=>s.val()||'20:00'),
-    db.ref('settings/deliveryEmail').once('value').then(s=>s.val()||''),
-  ]);
-  const reEl = document.getElementById('set-report-email');   if(reEl) reEl.value = rEmail;
-  const rtEl = document.getElementById('set-report-time');    if(rtEl) rtEl.value = rTime;
-  const deEl = document.getElementById('set-delivery-email'); if(deEl) deEl.value = dEmail;
-}
+async function loadV3Settings() { await loadEjsSettings(); }
 
 /* ================================================================
    V3 — HOOK INTO EXISTING ADMIN INIT
