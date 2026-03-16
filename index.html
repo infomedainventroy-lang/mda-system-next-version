@@ -3627,7 +3627,6 @@ function checkLowStock() {
     return `${q===0?'🚨':'⚠️'} <b>${esc(i.name)}</b> — נותרו <b style="color:var(--c-red)">${q}</b>`;
   }).join('<br>');
   const ab = document.getElementById('admin-alert-banner');
-  const al = document.getElementById('admin-alert-list');
   if (ab && al) {
     if (low.length) { ab.classList.add('show'); al.innerHTML = makeList(low); }
     else ab.classList.remove('show');
