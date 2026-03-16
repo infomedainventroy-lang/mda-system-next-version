@@ -5573,139 +5573,133 @@ function exportComparisonCsv() {
   showToast('⚠️ בצע השוואה תחילה', 'warning');
 }
 
+
 /* ================================================================
-   V3 — WEEKLY EMAIL REPORT
-   ================================================================ */
-/* ================================================================
-   V3 — EMAILJS ENGINE
+   V3 — EMAILJS ENGINE (Fixed & Complete)
    ================================================================ */
 let _ejsReady = false;
 let _ejsCfg   = { publicKey: '', serviceId: '', templateId: '' };
+let _v3AdminInited = false;
 
+/* ── Load & init EmailJS from Firebase settings ── */
 async function loadEjsSettings() {
-  const snap = await db.ref('settings/emailjs').once('value');
-  const cfg  = snap.val() || {};
-  _ejsCfg = {
-    publicKey:  cfg.publicKey  || '',
-    serviceId:  cfg.serviceId  || '',
-    templateId: cfg.templateId || '',
-  };
-  const [rEmail, rTime, dEmail, oEmail] = await Promise.all([
-    db.ref('settings/reportEmail').once('value').then(s=>s.val()||''),
-    db.ref('settings/reportTime').once('value').then(s=>s.val()||'20:00'),
-    db.ref('settings/deliveryEmail').once('value').then(s=>s.val()||''),
-    db.ref('settings/ordersEmail').once('value').then(s=>s.val()||''),
-  ]);
-  const set = (id, v) => { const el=document.getElementById(id); if(el) el.value=v; };
-  set('ejs-public-key',    _ejsCfg.publicKey);
-  set('ejs-service-id',    _ejsCfg.serviceId);
-  set('ejs-template-id',   _ejsCfg.templateId);
-  set('set-report-email',  rEmail);
-  set('set-report-time',   rTime);
-  set('set-delivery-email',dEmail);
-  set('set-orders-email',  oEmail);
-  _initEmailJs();
+  try {
+    const snap = await db.ref('settings/emailjs').once('value');
+    const cfg  = snap.val() || {};
+    _ejsCfg = { publicKey: cfg.publicKey||'', serviceId: cfg.serviceId||'', templateId: cfg.templateId||'' };
+
+    const get = path => db.ref(path).once('value').then(s => s.val()||'');
+    const [rEmail, rTime, dEmail, oEmail] = await Promise.all([
+      get('settings/reportEmail'), get('settings/reportTime'),
+      get('settings/deliveryEmail'), get('settings/ordersEmail'),
+    ]);
+    const set = (id,v) => { const el=document.getElementById(id); if(el) el.value=v||''; };
+    set('ejs-public-key',    _ejsCfg.publicKey);
+    set('ejs-service-id',    _ejsCfg.serviceId);
+    set('ejs-template-id',   _ejsCfg.templateId);
+    set('set-report-email',  rEmail);
+    set('set-report-time',   rTime || '20:00');
+    set('set-delivery-email',dEmail);
+    set('set-orders-email',  oEmail);
+    _doInitEmailJs();
+  } catch(e) { console.error('loadEjsSettings:', e); }
 }
 
-function _initEmailJs() {
-  if (!_ejsCfg.publicKey) { _ejsReady=false; _ejsUpdateStatus('none'); return; }
+function _doInitEmailJs() {
+  if (!_ejsCfg.publicKey) { _ejsReady=false; _ejsSetStatus('none'); return; }
   try {
     emailjs.init({ publicKey: _ejsCfg.publicKey });
     _ejsReady = true;
-    _ejsUpdateStatus('connected');
-  } catch(e) { _ejsReady=false; _ejsUpdateStatus('error'); }
+    _ejsSetStatus('connected');
+  } catch(e) { _ejsReady=false; _ejsSetStatus('error'); }
 }
 
-function _ejsUpdateStatus(state) {
+function _ejsSetStatus(state) {
   const dot  = document.getElementById('ejs-dot');
   const text = document.getElementById('ejs-status-text');
-  if (!dot || !text) return;
+  if (!dot||!text) return;
   const map = {
-    none:      { cls:'',          txt:'לא מחובר — הזן את המפתחות' },
-    connected: { cls:'connected', txt:'✅ מחובר ומוכן לשליחה' },
-    error:     { cls:'error',     txt:'❌ שגיאה — בדוק מפתחות' },
+    none:      { cls:'',          txt:'לא מחובר — הזן מפתחות והצלח 🔑' },
+    connected: { cls:'connected', txt:'✅ מחובר ומוכן — אימיילים יישלחו אוטומטית' },
+    error:     { cls:'error',     txt:'❌ שגיאה בחיבור — בדוק מפתחות' },
     testing:   { cls:'',          txt:'🧪 בודק חיבור...' },
+    sending:   { cls:'connected', txt:'📤 שולח...' },
   };
-  const s = map[state] || map.none;
-  dot.className = 'ejs-status-dot ' + s.cls;
+  const s = map[state]||map.none;
+  dot.className = 'ejs-status-dot '+(s.cls||'');
   text.textContent = s.txt;
 }
 
 async function saveEjsSettings() {
-  const pub = document.getElementById('ejs-public-key')?.value?.trim();
-  const svc = document.getElementById('ejs-service-id')?.value?.trim();
-  const tpl = document.getElementById('ejs-template-id')?.value?.trim();
-  const rEmail = document.getElementById('set-report-email')?.value?.trim();
-  const rTime  = document.getElementById('set-report-time')?.value || '20:00';
-  const dEmail = document.getElementById('set-delivery-email')?.value?.trim();
-  const oEmail = document.getElementById('set-orders-email')?.value?.trim();
-  if (!pub || !svc || !tpl) return showToast('⚠️ מלא את כל שלושת המפתחות', 'warning');
+  const pub  = document.getElementById('ejs-public-key')?.value?.trim()||'';
+  const svc  = document.getElementById('ejs-service-id')?.value?.trim()||'';
+  const tpl  = document.getElementById('ejs-template-id')?.value?.trim()||'';
+  const rEm  = document.getElementById('set-report-email')?.value?.trim()||'';
+  const rTm  = document.getElementById('set-report-time')?.value||'20:00';
+  const dEm  = document.getElementById('set-delivery-email')?.value?.trim()||'';
+  const oEm  = document.getElementById('set-orders-email')?.value?.trim()||'';
+  if (!pub||!svc||!tpl) return showToast('⚠️ מלא Public Key + Service ID + Template ID', 'warning');
   await Promise.all([
-    db.ref('settings/emailjs').set({ publicKey: pub, serviceId: svc, templateId: tpl }),
-    db.ref('settings/reportEmail').set(rEmail||''),
-    db.ref('settings/reportTime').set(rTime),
-    db.ref('settings/deliveryEmail').set(dEmail||''),
-    db.ref('settings/ordersEmail').set(oEmail||''),
+    db.ref('settings/emailjs').set({ publicKey:pub, serviceId:svc, templateId:tpl }),
+    db.ref('settings/reportEmail').set(rEm),
+    db.ref('settings/reportTime').set(rTm),
+    db.ref('settings/deliveryEmail').set(dEm),
+    db.ref('settings/ordersEmail').set(oEm),
   ]);
-  _ejsCfg = { publicKey: pub, serviceId: svc, templateId: tpl };
-  _initEmailJs();
-  showToast('✅ הגדרות EmailJS נשמרו!');
+  _ejsCfg = { publicKey:pub, serviceId:svc, templateId:tpl };
+  _doInitEmailJs();
+  showToast('✅ הגדרות EmailJS נשמרו בהצלחה!');
 }
 
-/* Core send function */
+/* ── Core send via EmailJS ── */
 async function ejsSend({ toEmail, toName='', subject, htmlContent, type='general' }) {
-  if (!_ejsReady) {
-    showToast('⚠️ EmailJS לא מוגדר — עבור להגדרות', 'warning');
-    return false;
-  }
-  _emailProgressShow('שולח אימייל...', `אל: ${toEmail}`);
+  if (!_ejsReady) { showToast('⚠️ EmailJS לא מוגדר — עבור להגדרות','warning'); return false; }
+  if (!toEmail)   { showToast('⚠️ אין אימייל יעד','warning'); return false; }
+  _showEmailProgress('📤 שולח אימייל...', toEmail);
   try {
-    const params = {
+    await emailjs.send(_ejsCfg.serviceId, _ejsCfg.templateId, {
       to_email:  toEmail,
-      to_name:   toName || toEmail,
+      to_name:   toName||toEmail,
       subject:   subject,
       content:   htmlContent,
       station:   CFG.headerText,
-      date:      new Date().toLocaleDateString('he-IL'),
-      sent_by:   window.curU || 'מערכת',
+      date:      new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric'}),
+      sent_by:   window.curU||'מערכת',
       type:      type,
-    };
-    await emailjs.send(_ejsCfg.serviceId, _ejsCfg.templateId, params);
-    _emailProgressSuccess('נשלח בהצלחה! ✅', toEmail);
+    });
+    _showEmailSuccess('✅ נשלח בהצלחה!', toEmail);
     return true;
   } catch(err) {
-    _emailProgressHide();
-    showToast('❌ שגיאה בשליחה: ' + (err?.text || err?.message || JSON.stringify(err)), 'error');
+    _hideEmailProgress();
+    const msg = err?.text || err?.message || JSON.stringify(err);
+    showToast('❌ שגיאה: '+msg, 'error');
     console.error('EmailJS error:', err);
     return false;
   }
 }
 
-function _emailProgressShow(title, sub) {
-  const ov  = document.getElementById('email-progress-overlay');
-  const sp  = document.getElementById('email-spin-el');
-  const chk = document.getElementById('email-check-el');
-  const t   = document.getElementById('email-progress-title');
-  const s   = document.getElementById('email-progress-sub');
-  if (!ov) return;
-  sp.classList.remove('hidden');
-  chk.classList.add('hidden');
-  t.textContent = title;
-  s.textContent = sub;
+function _showEmailProgress(title, sub) {
+  const ov = document.getElementById('email-progress-overlay'); if(!ov) return;
+  const sp = document.getElementById('email-spin-el');
+  const ck = document.getElementById('email-check-el');
+  document.getElementById('email-progress-title').textContent = title||'שולח...';
+  document.getElementById('email-progress-sub').textContent   = sub||'';
+  if(sp) sp.style.display='block';
+  if(ck) ck.style.display='none';
   ov.classList.add('show');
 }
-function _emailProgressSuccess(title, sub) {
-  const sp  = document.getElementById('email-spin-el');
-  const chk = document.getElementById('email-check-el');
-  const t   = document.getElementById('email-progress-title');
-  const s   = document.getElementById('email-progress-sub');
-  if(sp) sp.classList.add('hidden');
-  if(chk){ chk.classList.remove('hidden'); chk.textContent='✅'; }
-  if(t) t.textContent = title;
-  if(s) s.textContent = sub;
-  setTimeout(_emailProgressHide, 1800);
+function _showEmailSuccess(title, sub) {
+  const sp = document.getElementById('email-spin-el');
+  const ck = document.getElementById('email-check-el');
+  const t  = document.getElementById('email-progress-title');
+  const s  = document.getElementById('email-progress-sub');
+  if(sp) sp.style.display='none';
+  if(ck){ ck.style.display='block'; ck.textContent='✅'; }
+  if(t) t.textContent=title;
+  if(s) s.textContent=sub;
+  setTimeout(_hideEmailProgress, 2200);
 }
-function _emailProgressHide() {
+function _hideEmailProgress() {
   document.getElementById('email-progress-overlay')?.classList.remove('show');
 }
 
@@ -5713,338 +5707,544 @@ async function testEmailJs() {
   const pub = document.getElementById('ejs-public-key')?.value?.trim();
   const svc = document.getElementById('ejs-service-id')?.value?.trim();
   const tpl = document.getElementById('ejs-template-id')?.value?.trim();
-  const toEmail = document.getElementById('set-report-email')?.value?.trim();
-  if (!pub || !svc || !tpl) return showToast('⚠️ מלא את כל המפתחות תחילה', 'warning');
-  if (!toEmail) return showToast('⚠️ הזן אימייל יעד לטסט', 'warning');
-  _ejsUpdateStatus('testing');
+  const to  = document.getElementById('set-report-email')?.value?.trim();
+  if (!pub||!svc||!tpl) return showToast('⚠️ מלא מפתחות תחילה','warning');
+  if (!to) return showToast('⚠️ הזן אימייל יעד (שדה דוחות)','warning');
+  _ejsSetStatus('testing');
   await saveEjsSettings();
-  const sent = await ejsSend({
-    toEmail,
-    toName: 'מנהל המערכת',
-    subject: `🧪 טסט — מערכת מלאי ${CFG.headerText}`,
-    htmlContent: buildEmailHtml({
-      title: '🧪 אימייל טסט',
-      subtitle: 'החיבור ל-EmailJS עובד מצוין!',
-      body: `<p>שלום,</p><p>אימייל זה נשלח מ<b>מערכת מלאי ${esc(CFG.headerText)}</b> כבדיקת חיבור.</p><p>EmailJS פועל תקין ✅</p>`,
-      type: 'test',
-      ctaText: '', ctaUrl: ''
-    }),
-    type: 'test'
+  const html = buildEmailHtml({
+    type:'test', title:'🧪 בדיקת חיבור — EmailJS',
+    subtitle:`מערכת מלאי ${CFG.headerText}`,
+    heroIcon:'🔬',
+    stats:[], items:[],
+    body:`<p style="margin:0 0 12px;">שלום,</p>
+          <p style="margin:0 0 12px;">אימייל זה אומת בהצלחה ממערכת מלאי <strong>${esc(CFG.headerText)}</strong>.</p>
+          <p style="margin:0;">כל ההגדרות תקינות ✅ — אימיילים אוטומטיים יעבדו כרגיל.</p>`,
+    cta:null
   });
-  if (sent) _ejsUpdateStatus('connected');
-  else _ejsUpdateStatus('error');
+  const ok = await ejsSend({ toEmail:to, toName:'מנהל', subject:`🧪 טסט — מערכת מלאי ${CFG.headerText}`, htmlContent:html, type:'test' });
+  _ejsSetStatus(ok ? 'connected' : 'error');
 }
 
 /* ================================================================
    V3 — HTML EMAIL BUILDER
-   Builds beautiful Hebrew RTL HTML emails
+   Beautiful, responsive, RTL Hebrew emails
    ================================================================ */
-function buildEmailHtml({ title, subtitle='', body='', tableRows=[], ctaText='', ctaUrl='', type='general', badgeText='', badgeColor='#1a6eb5' }) {
-  const stationName = CFG.headerText;
-  const logoUrl     = CFG.logoUrl;
-  const date        = new Date().toLocaleDateString('he-IL', { year:'numeric', month:'long', day:'numeric' });
-  const accentColor = type === 'alert' ? '#d32f2f' : type === 'delivery' ? '#1a6eb5' : type === 'order' ? '#e65100' : type === 'report' ? '#1b5e20' : '#1a6eb5';
+function buildEmailHtml({ type='general', title, subtitle='', heroIcon='📧',
+  stats=[], body='', tableHeaders=[], tableRows=[], cta=null,
+  badgeText='', badgeColor='#1a6eb5', accentColor=null }) {
 
-  const tableHtml = tableRows.length ? `
-    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:16px 0;direction:rtl;">
+  const accent = accentColor || {
+    order:'#e65100', delivery:'#1a6eb5', report:'#1b5e20',
+    alert:'#d32f2f', test:'#6a1b9a', confirm:'#1b5e20'
+  }[type] || '#1a6eb5';
+
+  const logo    = CFG.logoUrl || '';
+  const station = CFG.headerText || '';
+  const date    = new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+
+  /* Stats boxes */
+  const statsHtml = stats.length ? `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+    style="margin:0 0 28px;direction:rtl;">
+    <tr>
+      ${stats.map(s=>`
+      <td align="center" style="padding:0 4px;">
+        <div style="background:${s.color||accent}18;border:2px solid ${s.color||accent}35;
+                    border-radius:14px;padding:14px 8px;min-width:80px;">
+          <div style="font-family:Arial,sans-serif;font-size:28px;font-weight:900;
+                      color:${s.color||accent};line-height:1;">${s.value}</div>
+          <div style="font-family:Arial,sans-serif;font-size:11px;color:#64748b;
+                      margin-top:4px;font-weight:600;">${s.label}</div>
+        </div>
+      </td>`).join('')}
+    </tr>
+  </table>` : '';
+
+  /* Table */
+  const tableHtml = tableRows.length && tableHeaders.length ? `
+  <div style="border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;margin:0 0 24px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="direction:rtl;border-collapse:collapse;">
       <thead>
-        <tr style="background:${accentColor};color:#fff;">
-          ${tableRows[0].map(h=>`<th style="padding:10px 12px;font-family:Arial,sans-serif;font-size:12px;font-weight:700;text-align:right;">${h}</th>`).join('')}
+        <tr style="background:${accent};">
+          ${tableHeaders.map(h=>`
+          <th style="padding:11px 14px;font-family:Arial,sans-serif;font-size:12px;
+                     font-weight:800;color:#fff;text-align:right;
+                     border-left:1px solid rgba(255,255,255,.15);">${h}</th>`).join('')}
         </tr>
       </thead>
       <tbody>
-        ${tableRows.slice(1).map((row,i)=>`
-          <tr style="background:${i%2===0?'#f8fafc':'#fff'};">
-            ${row.map(c=>`<td style="padding:9px 12px;font-family:Arial,sans-serif;font-size:12px;color:#333;border-bottom:1px solid #e8ecf0;text-align:right;">${c}</td>`).join('')}
-          </tr>`).join('')}
+        ${tableRows.map((row,i)=>`
+        <tr style="background:${i%2===0?'#f8fafc':'#fff'};">
+          ${row.map((c,ci)=>`
+          <td style="padding:10px 14px;font-family:Arial,sans-serif;font-size:13px;
+                     color:#334155;border-bottom:1px solid #e2e8f0;text-align:right;
+                     ${ci===0?'font-weight:700;':''}">${c}</td>`).join('')}
+        </tr>`).join('')}
       </tbody>
-    </table>` : '';
+    </table>
+  </div>` : '';
 
-  const ctaHtml = ctaText && ctaUrl ? `
-    <div style="text-align:center;margin:24px 0;">
-      <a href="${ctaUrl}" style="display:inline-block;background:${accentColor};color:#fff;padding:13px 32px;border-radius:8px;font-family:Arial,sans-serif;font-weight:700;font-size:14px;text-decoration:none;">
-        ${ctaText}
-      </a>
-    </div>` : '';
+  /* CTA Button */
+  const ctaHtml = cta ? `
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0"
+    style="margin:28px auto 0;direction:rtl;">
+    <tr>
+      <td align="center"
+        style="background:${accent};border-radius:10px;
+               box-shadow:0 4px 15px ${accent}55;">
+        <a href="${cta.url||'#'}"
+          style="display:block;padding:15px 36px;font-family:Arial,sans-serif;
+                 font-size:15px;font-weight:900;color:#fff;text-decoration:none;
+                 letter-spacing:.02em;">${cta.text}</a>
+      </td>
+    </tr>
+  </table>` : '';
 
-  const badgeHtml = badgeText ? `<span style="display:inline-block;background:${badgeColor};color:#fff;padding:3px 12px;border-radius:999px;font-size:11px;font-weight:700;margin-bottom:8px;">${badgeText}</span><br>` : '';
+  /* Badge */
+  const badgeHtml = badgeText ? `
+  <div style="margin:0 0 18px;">
+    <span style="display:inline-block;background:${badgeColor}18;
+                 border:1.5px solid ${badgeColor}45;border-radius:999px;
+                 padding:5px 16px;font-family:Arial,sans-serif;font-size:12px;
+                 font-weight:800;color:${badgeColor};letter-spacing:.04em;">
+      ${badgeText}
+    </span>
+  </div>` : '';
 
   return `<!DOCTYPE html>
-<html dir="rtl" lang="he">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f0f4f8;direction:rtl;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:24px 0;">
-    <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+<html dir="rtl" lang="he" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>${esc(title)}</title>
+</head>
+<body style="margin:0;padding:0;background:#eef2f7;font-family:Arial,sans-serif;direction:rtl;">
 
-        <!-- HEADER -->
+<!-- WRAPPER -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+  style="background:#eef2f7;padding:28px 12px;">
+<tr><td align="center">
+
+<!-- CONTAINER -->
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+  style="max-width:600px;width:100%;">
+
+  <!-- ═══ PRE-HEADER ═══ -->
+  <tr>
+    <td style="padding:0 0 8px;font-family:Arial,sans-serif;font-size:11px;
+               color:#94a3b8;text-align:center;direction:rtl;">
+      ${esc(title)} · ${esc(station)} · ${date}
+    </td>
+  </tr>
+
+  <!-- ═══ HEADER ═══ -->
+  <tr>
+    <td style="background:linear-gradient(140deg,#0a1628 0%,#0d2246 45%,#163366 100%);
+               border-radius:20px 20px 0 0;padding:0;overflow:hidden;">
+
+      <!-- Decorative top line -->
+      <div style="height:4px;background:linear-gradient(90deg,${accent} 0%,${accent}99 50%,#ffffff22 100%);"></div>
+
+      <!-- Header content -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+        style="padding:28px 32px 24px;">
         <tr>
-          <td style="background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5f 100%);padding:28px 32px;border-radius:16px 16px 0 0;text-align:right;">
-            <table width="100%" cellpadding="0" cellspacing="0">
+          <!-- Logo + name -->
+          <td style="vertical-align:middle;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td>
-                  <img src="${logoUrl}" width="50" height="50" style="border-radius:10px;vertical-align:middle;margin-left:12px;" alt="">
-                  <span style="color:#fff;font-family:Arial,sans-serif;font-size:18px;font-weight:900;vertical-align:middle;">${stationName}</span>
+                <td style="padding-left:12px;vertical-align:middle;">
+                  ${logo ? `<img src="${logo}" width="48" height="48"
+                    style="border-radius:10px;border:2px solid rgba(255,255,255,.2);
+                           box-shadow:0 4px 14px rgba(0,0,0,.4);display:block;"
+                    alt="${esc(station)}">` : `<div style="width:48px;height:48px;background:${accent};border-radius:10px;
+                       display:flex;align-items:center;justify-content:center;
+                       font-size:24px;line-height:48px;text-align:center;">🏥</div>`}
                 </td>
-                <td align="left" style="color:rgba(255,255,255,.45);font-family:Arial,sans-serif;font-size:11px;">${date}</td>
+                <td style="vertical-align:middle;">
+                  <div style="font-family:Arial,sans-serif;font-size:17px;font-weight:900;
+                              color:#fff;line-height:1.2;">${esc(station)}</div>
+                  <div style="font-family:Arial,sans-serif;font-size:10px;font-weight:600;
+                              color:rgba(255,255,255,.45);letter-spacing:.1em;margin-top:3px;
+                              text-transform:uppercase;">מערכת ניהול מלאי · v3.0</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+          <!-- Date badge -->
+          <td align="left" style="vertical-align:top;">
+            <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+                        border-radius:8px;padding:7px 12px;text-align:center;">
+              <div style="font-family:Arial,sans-serif;font-size:18px;font-weight:900;
+                          color:#fff;line-height:1;">
+                ${new Date().getDate()}
+              </div>
+              <div style="font-family:Arial,sans-serif;font-size:9px;color:rgba(255,255,255,.5);
+                          letter-spacing:.06em;text-transform:uppercase;margin-top:2px;">
+                ${new Date().toLocaleDateString('he-IL',{month:'short'})}
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Hero section -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+        style="padding:0 32px 32px;">
+        <tr>
+          <td>
+            <!-- Divider -->
+            <div style="height:1px;background:rgba(255,255,255,.1);margin-bottom:22px;"></div>
+            <!-- Hero icon + title -->
+            <div style="font-size:36px;margin-bottom:10px;">${heroIcon}</div>
+            <h1 style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:24px;
+                       font-weight:900;color:#fff;line-height:1.25;">
+              ${esc(title)}
+            </h1>
+            ${subtitle ? `<p style="margin:0;font-family:Arial,sans-serif;font-size:13px;
+                              color:rgba(255,255,255,.5);">${esc(subtitle)}</p>` : ''}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- ═══ ACCENT BAR ═══ -->
+  <tr>
+    <td style="height:5px;background:linear-gradient(90deg,${accent} 0%,${accent}bb 60%,${accent}44 100%);"></td>
+  </tr>
+
+  <!-- ═══ BODY ═══ -->
+  <tr>
+    <td style="background:#fff;padding:32px 32px 28px;direction:rtl;">
+
+      <!-- Sent by pill -->
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0"
+        style="margin-bottom:22px;">
+        <tr>
+          <td style="background:#f1f5f9;border-radius:999px;padding:6px 14px 6px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="font-size:13px;padding-left:6px;">👤</td>
+                <td style="font-family:Arial,sans-serif;font-size:12px;font-weight:700;color:#64748b;">
+                  נשלח ע"י:&nbsp;<strong style="color:#0f172a;">${esc(window.curU||'מערכת')}</strong>
+                  &nbsp;·&nbsp;<span style="color:#94a3b8;">${date}</span>
+                </td>
               </tr>
             </table>
           </td>
         </tr>
-
-        <!-- ACCENT BAR -->
-        <tr><td style="height:5px;background:${accentColor};"></td></tr>
-
-        <!-- BODY -->
-        <tr>
-          <td style="background:#fff;padding:32px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,.08);">
-            ${badgeHtml}
-            <h1 style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:22px;font-weight:900;color:#0d1b2a;">${title}</h1>
-            ${subtitle ? `<p style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:13px;color:#8a96a8;">${subtitle}</p>` : ''}
-            <div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;">${body}</div>
-            ${tableHtml}
-            ${ctaHtml}
-          </td>
-        </tr>
-
-        <!-- FOOTER -->
-        <tr>
-          <td style="padding:20px 0;text-align:center;">
-            <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#aab;direction:rtl;">
-              נשלח מ<b>מערכת מלאי ${stationName}</b> גרסה 3.0 · ${date}<br>
-              לשאלות צור קשר עם מנהל המערכת
-            </p>
-          </td>
-        </tr>
-
       </table>
-    </td></tr>
-  </table>
+
+      ${badgeHtml}
+      ${statsHtml}
+
+      <!-- Main body text -->
+      <div style="font-family:Arial,sans-serif;font-size:14px;color:#334155;
+                  line-height:1.8;direction:rtl;margin-bottom:${tableRows.length||cta?'24px':'0'};">
+        ${body}
+      </div>
+
+      ${tableHtml}
+      ${ctaHtml}
+
+    </td>
+  </tr>
+
+  <!-- ═══ DIVIDER ═══ -->
+  <tr>
+    <td style="height:3px;background:linear-gradient(90deg,#e2e8f0,${accent}44,#e2e8f0);"></td>
+  </tr>
+
+  <!-- ═══ FOOTER ═══ -->
+  <tr>
+    <td style="background:linear-gradient(135deg,#0a1628 0%,#0d1f3c 100%);
+               border-radius:0 0 20px 20px;padding:24px 32px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="vertical-align:middle;">
+            <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:800;
+                        color:rgba(255,255,255,.8);margin-bottom:4px;">${esc(station)}</div>
+            <div style="font-family:Arial,sans-serif;font-size:11px;color:rgba(255,255,255,.35);
+                        line-height:1.6;">
+              מערכת ניהול מלאי v3.0<br>
+              שלח אוטומטית · ${date}
+            </div>
+          </td>
+          <td align="left" style="vertical-align:middle;">
+            <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+                        border-radius:10px;padding:10px 16px;text-align:center;">
+              <div style="font-size:22px;line-height:1;">🚑</div>
+              <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:800;
+                          color:rgba(255,255,255,.4);letter-spacing:.12em;margin-top:4px;">מד"א</div>
+            </div>
+          </td>
+        </tr>
+      </table>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06);
+                  font-family:Arial,sans-serif;font-size:10px;color:rgba(255,255,255,.2);
+                  text-align:center;direction:rtl;">
+        הודעה זו נשלחה אוטומטית ממערכת מלאי ${esc(station)} · לא להשיב לאימייל זה
+      </div>
+    </td>
+  </tr>
+
+  <!-- Bottom spacing -->
+  <tr><td style="height:24px;"></td></tr>
+
+</table>
+<!-- /CONTAINER -->
+
+</td></tr>
+</table>
+<!-- /WRAPPER -->
+
 </body>
 </html>`;
 }
 
 /* ================================================================
-   V3 — ORDERS EMAIL (EmailJS)
+   V3 — ORDER EMAIL
    ================================================================ */
 async function sendOrderByEmail() {
   const items = Object.values(orderCart);
-  if (!items.length) return showToast('⚠️ ההזמנה ריקה', 'warning');
-  const ordersEmail = await db.ref('settings/ordersEmail').once('value').then(s=>s.val());
-  const toEmail = ordersEmail || await (async()=>{ const v=await asyncPrompt('אימייל לשליחה','אימייל יעד להזמנה:',''); return v; })();
+  if (!items.length) return showToast('⚠️ ההזמנה ריקה — הוסף פריטים','warning');
+  const ordersEmail = await db.ref('settings/ordersEmail').once('value').then(s=>s.val()||'');
+  const toEmail = ordersEmail || await asyncPrompt('שלח הזמנה','אימייל יעד:','');
   if (!toEmail) return;
 
-  const tableRows = [
-    ['שם מוצר', 'קטגוריה', 'במלאי', 'סף מינימום', 'ברקוד'],
-    ...items.map(({item}) => [
-      item.name,
-      item.category || '—',
-      String(Number.isFinite(item.qty)?item.qty:0),
-      String(getThreshold(item)),
-      item.barcode || '—'
-    ])
-  ];
-
-  const bodyHtml = `
-    <p>שלום,</p>
-    <p>להלן רשימת הפריטים שיש לרכוש עבור <b>${esc(CFG.headerText)}</b>:</p>`;
+  const tableHeaders = ['שם מוצר','קטגוריה','במלאי','סף מינ׳','ברקוד'];
+  const tableRows    = items.map(({item})=>[
+    item.name, item.category||'—',
+    String(Number.isFinite(item.qty)?item.qty:0),
+    String(getThreshold(item)),
+    item.barcode||'—'
+  ]);
 
   const html = buildEmailHtml({
-    title: '🛒 הזמנת ציוד',
-    subtitle: `${items.length} פריטים · ${new Date().toLocaleDateString('he-IL')}`,
-    body: bodyHtml,
-    tableRows,
-    type: 'order',
-    badgeText: 'דרוש מילוי מלאי',
-    badgeColor: '#e65100',
-    ctaText: '', ctaUrl: ''
+    type:'order', heroIcon:'🛒',
+    title:`הזמנת ציוד — ${CFG.headerText}`,
+    subtitle:`${items.length} פריטים · ${new Date().toLocaleDateString('he-IL')}`,
+    badgeText:'🛒 דרוש מילוי מלאי', badgeColor:'#e65100',
+    stats:[
+      { value:items.length, label:'פריטים', color:'#e65100' },
+      { value:items.filter(({item})=>(Number.isFinite(item.qty)?item.qty:0)===0).length, label:'אזל לחלוטין', color:'#d32f2f' },
+    ],
+    body:`<p>שלום,</p><p>להלן רשימת הפריטים שיש לרכוש עבור <strong>${esc(CFG.headerText)}</strong>. אנא הכן ושלח את הציוד בהקדם האפשרי.</p>`,
+    tableHeaders, tableRows, cta:null
   });
 
-  const sent = await ejsSend({ toEmail, toName: 'ספק / מחסן', subject: `🛒 הזמנת ציוד — ${CFG.headerText} — ${new Date().toLocaleDateString('he-IL')}`, htmlContent: html, type: 'order' });
+  const sent = await ejsSend({ toEmail, toName:'ספק', subject:`🛒 הזמנת ציוד — ${CFG.headerText} — ${new Date().toLocaleDateString('he-IL')}`, htmlContent:html, type:'order' });
   if (sent) {
-    await db.ref('orders').push({ items: items.map(({item})=>({id:item.id,name:item.name,qty:Number.isFinite(item.qty)?item.qty:0,thr:getThreshold(item)})), sentAt: Date.now(), sentBy: window.curU, station: CURRENT_SITE, toEmail });
+    await db.ref('orders').push({ items:items.map(({item})=>({id:item.id,name:item.name,qty:Number.isFinite(item.qty)?item.qty:0,thr:getThreshold(item)})), sentAt:Date.now(), sentBy:window.curU, station:CURRENT_SITE, toEmail });
     orderCart = {};
     renderOrdersTab(); renderCartPanel();
   }
 }
 
 /* ================================================================
-   V3 — DELIVERY EMAIL (EmailJS)
+   V3 — DELIVERY EMAIL
    ================================================================ */
 async function createDelivery() {
   const title     = document.getElementById('del-title')?.value?.trim();
   const recipient = document.getElementById('del-recipient')?.value?.trim();
   const email     = document.getElementById('del-email')?.value?.trim();
   const notes     = document.getElementById('del-notes')?.value?.trim();
-  if (!title) return showToast('⚠️ הזן כותרת למשלוח', 'warning');
+  if (!title) return showToast('⚠️ הזן כותרת למשלוח','warning');
   const rows = document.querySelectorAll('#delivery-item-rows > div');
-  if (!rows.length) return showToast('⚠️ הוסף לפחות פריט אחד', 'warning');
+  if (!rows.length) return showToast('⚠️ הוסף לפחות פריט אחד','warning');
   const items = [];
   rows.forEach(row => {
     const name = row.querySelector('.del-item-name')?.value?.trim();
     const qty  = parseInt(row.querySelector('.del-item-qty')?.value||'1',10);
     const bc   = row.querySelector('.del-item-bc')?.value?.trim();
-    const found = inv.find(i => i.name === name);
-    if (name) items.push({ name, qty: isNaN(qty)?1:qty, barcode: bc||found?.barcode||'', itemId: found?.id||'' });
+    const found = inv.find(i => i.name===name);
+    if (name) items.push({ name, qty:isNaN(qty)?1:qty, barcode:bc||found?.barcode||'', itemId:found?.id||'' });
   });
-  if (!items.length) return showToast('⚠️ אין פריטים תקינים', 'warning');
-  const delId = 'DEL-' + Date.now().toString(36).toUpperCase();
-  const delivery = { delId, title, recipient: recipient||'', email: email||'', notes: notes||'', items, status: 'sent', createdAt: Date.now(), createdBy: window.curU, station: CURRENT_SITE };
-  const dbRef = await db.ref('deliveries').push(delivery);
+  if (!items.length) return showToast('⚠️ אין פריטים תקינים','warning');
+
+  const delId = 'DEL-' + Date.now().toString(36).toUpperCase().slice(-8);
+  const delivery = { delId, title, recipient:recipient||'', email:email||'', notes:notes||'', items, status:'sent', createdAt:Date.now(), createdBy:window.curU, station:CURRENT_SITE };
+  await db.ref('deliveries').push(delivery);
 
   if (email) {
-    const confirmUrl = `${window.location.href.split('?')[0]}?confirm_delivery=${delId}`;
-    const tableRows  = [
-      ['פריט', 'כמות', 'ברקוד'],
-      ...items.map(it => [it.name, String(it.qty), it.barcode || '—'])
-    ];
+    const confirmUrl = window.location.href.split('?')[0] + '?confirm_delivery=' + delId;
     const html = buildEmailHtml({
-      title: `📦 משלוח ${delId}`,
-      subtitle: title,
-      body: `<p>שלום ${esc(recipient)||''},</p><p>נשלח עבורך משלוח ציוד מ<b>${esc(CFG.headerText)}</b>.</p>${notes?`<p><b>הערות:</b> ${esc(notes)}</p>`:''}`,
-      tableRows,
-      type: 'delivery',
-      badgeText: '🚚 משלוח יוצא',
-      badgeColor: '#1a6eb5',
-      ctaText: '✅ אשר קבלת משלוח',
-      ctaUrl: confirmUrl
+      type:'delivery', heroIcon:'📦',
+      title:`משלוח ${delId}`,
+      subtitle:title,
+      badgeText:`📦 משלוח מ${esc(CFG.headerText)}`, badgeColor:'#1a6eb5',
+      stats:[{ value:items.length, label:'פריטים', color:'#1a6eb5' }],
+      body:`<p>שלום ${esc(recipient)||''},</p>
+            <p>נשלח עבורך משלוח ציוד מ<strong>${esc(CFG.headerText)}</strong>.</p>
+            ${notes?`<p><strong>הערות:</strong> ${esc(notes)}</p>`:''}
+            <p>לחץ על הכפתור למטה לאישור קבלת המשלוח ועדכון הכמויות שהתקבלו.</p>`,
+      tableHeaders:['פריט','כמות','ברקוד'],
+      tableRows:items.map(it=>[it.name, String(it.qty), it.barcode||'—']),
+      cta:{ text:'✅ אשר קבלת משלוח', url:confirmUrl }
     });
-    await ejsSend({ toEmail: email, toName: recipient||'', subject: `📦 משלוח ${delId} — ${title}`, htmlContent: html, type: 'delivery' });
+    await ejsSend({ toEmail:email, toName:recipient||'', subject:`📦 משלוח ${delId} — ${title}`, htmlContent:html, type:'delivery' });
   }
 
-  // Reset form
-  document.getElementById('del-title').value = '';
-  document.getElementById('del-recipient').value = '';
-  document.getElementById('del-email').value = '';
-  document.getElementById('del-notes').value = '';
-  document.getElementById('delivery-item-rows').innerHTML = '';
+  document.getElementById('del-title').value='';
+  document.getElementById('del-recipient').value='';
+  document.getElementById('del-email').value='';
+  document.getElementById('del-notes').value='';
+  document.getElementById('delivery-item-rows').innerHTML='';
   addDeliveryItemRow();
   showToast(`✅ משלוח ${delId} נוצר ונשלח!`);
 }
 
 async function resendDeliveryEmail(deliveryId) {
-  const d = _deliveries.find(x => x.id === deliveryId);
-  if (!d || !d.email) return showToast('אין אימייל למשלוח זה', 'warning');
-  const confirmUrl = `${window.location.href.split('?')[0]}?confirm_delivery=${d.delId||deliveryId}`;
-  const tableRows  = [['פריט','כמות','ברקוד'], ...(d.items||[]).map(it=>[it.name,String(it.qty),it.barcode||'—'])];
+  const d = _deliveries.find(x => x.id===deliveryId);
+  if (!d||!d.email) return showToast('אין אימייל למשלוח זה','warning');
+  const confirmUrl = window.location.href.split('?')[0] + '?confirm_delivery=' + (d.delId||deliveryId);
   const html = buildEmailHtml({
-    title: `📦 תזכורת — משלוח ${d.delId||deliveryId}`,
-    subtitle: d.title||'',
-    body: `<p>שלום ${esc(d.recipient)||''},</p><p>תזכורת: ממתינים לאישור קבלת המשלוח.</p>`,
-    tableRows, type: 'delivery', badgeText: '⏳ ממתין לאישור', badgeColor: '#e65100',
-    ctaText: '✅ אשר קבלת משלוח', ctaUrl: confirmUrl
+    type:'delivery', heroIcon:'📦',
+    title:`תזכורת: משלוח ${d.delId||deliveryId}`,
+    subtitle:d.title||'',
+    badgeText:'⏳ ממתין לאישורך', badgeColor:'#e65100',
+    body:`<p>שלום ${esc(d.recipient)||''},</p><p>תזכורת — משלוח ממתין לאישורך.</p>`,
+    tableHeaders:['פריט','כמות'],
+    tableRows:(d.items||[]).map(it=>[it.name, String(it.qty)]),
+    cta:{ text:'✅ אשר קבלת משלוח', url:confirmUrl }
   });
-  await ejsSend({ toEmail: d.email, toName: d.recipient||'', subject: `📦 תזכורת: משלוח ${d.delId||deliveryId}`, htmlContent: html, type: 'delivery' });
+  await ejsSend({ toEmail:d.email, toName:d.recipient||'', subject:`📦 תזכורת: משלוח ${d.delId||deliveryId}`, htmlContent:html, type:'delivery' });
+}
+
+/* ── Delivery confirmed → notify sender ── */
+async function _sendDeliveryConfirmNotice(d, receivedItems, notes) {
+  const reportEmail = await db.ref('settings/reportEmail').once('value').then(s=>s.val()||'');
+  if (!reportEmail || !_ejsReady) return;
+  const html = buildEmailHtml({
+    type:'confirm', heroIcon:'✅',
+    title:`משלוח ${d.delId||d.id} אושר`,
+    subtitle:d.title||'',
+    badgeText:'✅ התקבל ואושר', badgeColor:'#1b5e20',
+    body:`<p>המשלוח אושר ע"י <strong>${esc(window.curU)}</strong>.</p>${notes?`<p><strong>הערות:</strong> ${esc(notes)}</p>`:''}`,
+    tableHeaders:['פריט','נשלח','התקבל'],
+    tableRows:receivedItems.map(it=>[it.name, String(it.qty), String(it.qtyReceived||it.qty)]),
+    stats:[
+      { value:receivedItems.length, label:'פריטים', color:'#1b5e20' },
+      { value:receivedItems.reduce((s,it)=>s+(it.qtyReceived||it.qty),0), label:'סה"כ יחידות', color:'#1a6eb5' },
+    ],
+    cta:null
+  });
+  ejsSend({ toEmail:reportEmail, toName:'מנהל', subject:`✅ משלוח ${d.delId||d.id} אושר — ${d.title}`, htmlContent:html, type:'confirm' }).catch(()=>{});
 }
 
 /* ================================================================
-   V3 — WEEKLY / DAILY REPORT EMAIL (EmailJS)
+   V3 — WEEKLY / DAILY REPORT EMAIL
    ================================================================ */
-function buildWeeklyReportBody() {
-  const since = Date.now() - 7 * 86400000;
-  const actions = logs.filter(l => l.timestamp >= since);
-  const outItems = inv.filter(i => (Number.isFinite(i.qty)?i.qty:0) === 0);
-  const lowItems = inv.filter(i => { const q=Number.isFinite(i.qty)?i.qty:0; return q>0 && q<=getThreshold(i); });
-  const counts = {};
-  actions.filter(l=>l.action==='take'||l.action==='sub').forEach(l => { const k=l.itemName||l.itemId||''; counts[k]=(counts[k]||0)+1; });
-  const top5 = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  return { outItems, lowItems, actions, top5 };
-}
-
 async function sendWeeklyReportNow() {
-  const reportEmail = await db.ref('settings/reportEmail').once('value').then(s=>s.val());
-  const toEmail = reportEmail || await (async()=>{ const v=await asyncPrompt('שלח דוח','אימייל יעד:',''); return v; })();
+  const reportEmail = await db.ref('settings/reportEmail').once('value').then(s=>s.val()||'');
+  const toEmail = reportEmail || await asyncPrompt('שלח דוח','אימייל יעד:','');
   if (!toEmail) return;
 
-  const { outItems, lowItems, actions, top5 } = buildWeeklyReportBody();
-  const takesCount = actions.filter(l=>l.action==='take'||l.action==='sub').length;
-  const addsCount  = actions.filter(l=>l.action==='add').length;
+  const since    = Date.now() - 7*86400000;
+  const actions  = logs.filter(l=>l.timestamp>=since);
+  const outItems = inv.filter(i=>(Number.isFinite(i.qty)?i.qty:0)===0);
+  const lowItems = inv.filter(i=>{ const q=Number.isFinite(i.qty)?i.qty:0; return q>0&&q<=getThreshold(i); });
+  const takes    = actions.filter(l=>l.action==='take'||l.action==='sub');
+  const adds     = actions.filter(l=>l.action==='add');
+  const counts   = {};
+  takes.forEach(l=>{ const k=l.item||l.itemName||l.itemId||''; if(k) counts[k]=(counts[k]||0)+1; });
+  const top5     = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
 
-  // Stat boxes as table
-  const statsHtml = `
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;direction:rtl;">
-      <tr>
-        ${[
-          { n: actions.length,  l: 'פעולות השבוע', c: '#1a6eb5' },
-          { n: takesCount,      l: 'הוצאות',       c: '#e65100' },
-          { n: addsCount,       l: 'הוספות',        c: '#1b5e20' },
-          { n: outItems.length, l: '🚨 אזל',        c: '#d32f2f' },
-          { n: lowItems.length, l: '⚠️ נמוך',      c: '#f9a825' },
-        ].map(s=>`
-          <td align="center" style="padding:4px;">
-            <div style="background:${s.c}15;border:1.5px solid ${s.c}40;border-radius:10px;padding:12px 8px;min-width:70px;">
-              <div style="font-size:22px;font-weight:900;color:${s.c};font-family:Arial,sans-serif;">${s.n}</div>
-              <div style="font-size:10px;color:#666;font-family:Arial,sans-serif;">${s.l}</div>
-            </div>
-          </td>`).join('')}
-      </tr>
-    </table>`;
-
-  const top5Html = top5.length ? `
-    <h3 style="font-family:Arial,sans-serif;font-size:14px;color:#0d1b2a;margin:20px 0 8px;">🔥 פריטים שנלקחו הכי הרבה</h3>
+  const top5Body = top5.length ? `
+    <h3 style="font-family:Arial,sans-serif;font-size:14px;font-weight:800;
+               color:#0f172a;margin:24px 0 10px;">🔥 פריטים שנלקחו הכי הרבה</h3>
     ${top5.map(([name,n],i)=>`
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:${i%2?'#f8fafc':'#fff'};border-radius:6px;margin-bottom:4px;direction:rtl;">
-        <span style="font-family:Arial,sans-serif;font-size:16px;">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]}</span>
-        <span style="flex:1;font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#333;">${esc(name)}</span>
-        <span style="background:#1a6eb5;color:#fff;padding:2px 10px;border-radius:999px;font-family:Arial,sans-serif;font-size:11px;font-weight:800;">${n}✕</span>
-      </div>`).join('')}` : '';
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;
+                background:${i%2?'#f8fafc':'#fff'};border-radius:8px;
+                margin-bottom:5px;direction:rtl;border:1px solid #e2e8f0;">
+      <span style="font-size:18px;">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]}</span>
+      <span style="flex:1;font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#1e293b;">${esc(name)}</span>
+      <span style="background:#1a6eb5;color:#fff;padding:3px 12px;border-radius:999px;
+                   font-family:Arial,sans-serif;font-size:11px;font-weight:800;">${n}✕</span>
+    </div>`).join('')}` : '';
 
-  const outHtml = outItems.length ? `
-    <h3 style="font-family:Arial,sans-serif;font-size:14px;color:#d32f2f;margin:20px 0 8px;">🚨 פריטים שאזלו</h3>
-    ${outItems.slice(0,8).map(i=>`<div style="padding:6px 10px;background:#ffebee;border-right:3px solid #d32f2f;border-radius:4px;margin-bottom:4px;font-family:Arial,sans-serif;font-size:12px;color:#333;">${esc(i.name)} <span style="color:#999;">(${esc(i.category||'—')})</span></div>`).join('')}` : '';
-
-  const lowHtml = lowItems.length ? `
-    <h3 style="font-family:Arial,sans-serif;font-size:14px;color:#e65100;margin:20px 0 8px;">⚠️ מלאי נמוך</h3>
-    ${lowItems.slice(0,8).map(i=>`<div style="padding:6px 10px;background:#fff3e0;border-right:3px solid #e65100;border-radius:4px;margin-bottom:4px;font-family:Arial,sans-serif;font-size:12px;color:#333;">${esc(i.name)} — <b>${i.qty}</b> מתוך ${getThreshold(i)}</div>`).join('')}` : '';
-
-  const body = statsHtml + top5Html + outHtml + lowHtml +
-    `<p style="font-family:Arial,sans-serif;font-size:12px;color:#aaa;margin-top:20px;">דוח זה נוצר אוטומטית ב-${new Date().toLocaleString('he-IL')}</p>`;
+  const alertBody = (outItems.length||lowItems.length) ? `
+    ${outItems.length?`
+    <h3 style="font-family:Arial,sans-serif;font-size:13px;font-weight:800;
+               color:#d32f2f;margin:20px 0 8px;">🚨 פריטים שאזלו (${outItems.length})</h3>
+    ${outItems.slice(0,10).map(i=>`
+    <div style="padding:7px 12px 7px 10px;background:#fff5f5;
+                border-right:3px solid #d32f2f;border-radius:4px;
+                margin-bottom:4px;font-family:Arial,sans-serif;font-size:12px;color:#1e293b;">
+      ${esc(i.name)} <span style="color:#94a3b8;">(${esc(i.category||'—')})</span>
+    </div>`).join('')}`:''}
+    ${lowItems.length?`
+    <h3 style="font-family:Arial,sans-serif;font-size:13px;font-weight:800;
+               color:#e65100;margin:20px 0 8px;">⚠️ מלאי נמוך (${lowItems.length})</h3>
+    ${lowItems.slice(0,10).map(i=>`
+    <div style="padding:7px 12px 7px 10px;background:#fff8f0;
+                border-right:3px solid #e65100;border-radius:4px;
+                margin-bottom:4px;font-family:Arial,sans-serif;font-size:12px;color:#1e293b;">
+      ${esc(i.name)} —
+      <strong>${i.qty}</strong> מתוך <strong>${getThreshold(i)}</strong>
+    </div>`).join('')}`:''}` : '';
 
   const html = buildEmailHtml({
-    title: `📊 דוח שבועי — ${CFG.headerText}`,
-    subtitle: `${new Date().toLocaleDateString('he-IL', {weekday:'long',year:'numeric',month:'long',day:'numeric'})}`,
-    body,
-    type: 'report',
-    badgeText: 'דוח שבועי אוטומטי',
-    badgeColor: '#1b5e20'
+    type:'report', heroIcon:'📊',
+    title:`דוח שבועי — ${CFG.headerText}`,
+    subtitle:new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric',weekday:'long'}),
+    badgeText:'📊 דוח שבועי אוטומטי', badgeColor:'#1b5e20',
+    stats:[
+      { value:actions.length,  label:'פעולות',  color:'#1a6eb5' },
+      { value:takes.length,    label:'הוצאות',   color:'#e65100' },
+      { value:adds.length,     label:'הוספות',    color:'#1b5e20' },
+      { value:outItems.length, label:'🚨 אזל',   color:'#d32f2f' },
+      { value:lowItems.length, label:'⚠️ נמוך',  color:'#f9a825' },
+    ],
+    body:`<p>שלום,</p><p>להלן סיכום פעילות המלאי ב-7 ימים האחרונים עבור <strong>${esc(CFG.headerText)}</strong>.</p>
+          ${top5Body}${alertBody}`,
+    cta: null
   });
 
-  await ejsSend({ toEmail, toName: 'מנהל', subject: `📊 דוח שבועי — ${CFG.headerText} — ${new Date().toLocaleDateString('he-IL')}`, htmlContent: html, type: 'report' });
+  await ejsSend({ toEmail, toName:'מנהל', subject:`📊 דוח שבועי — ${CFG.headerText} — ${new Date().toLocaleDateString('he-IL')}`, htmlContent:html, type:'report' });
 }
 
 function previewWeeklyReport() {
-  const { outItems, lowItems, actions, top5 } = buildWeeklyReportBody();
-  const w = window.open('', '_blank');
-  if (!w) return showToast('אפשר חלונות קופצים', 'warning');
-  w.document.write(buildEmailHtml({
-    title: `📊 תצוגה מקדימה — דוח שבועי`,
-    subtitle: new Date().toLocaleDateString('he-IL', {year:'numeric',month:'long',day:'numeric'}),
-    body: `<p>פעולות השבוע: <b>${actions.length}</b> | אזל: <b>${outItems.length}</b> | נמוך: <b>${lowItems.length}</b></p>
-           <p>Top items: ${top5.map(([n,c])=>`${esc(n)} (${c})`).join(', ')||'—'}</p>`,
-    type: 'report', badgeText: 'תצוגה מקדימה', badgeColor: '#666'
-  }));
-  w.document.close();
+  const w = window.open('','_blank');
+  if (!w) return showToast('אפשר חלונות קופצים','warning');
+  const since    = Date.now()-7*86400000;
+  const actions  = logs.filter(l=>l.timestamp>=since);
+  const outItems = inv.filter(i=>(Number.isFinite(i.qty)?i.qty:0)===0);
+  const lowItems = inv.filter(i=>{ const q=Number.isFinite(i.qty)?i.qty:0; return q>0&&q<=getThreshold(i); });
+  const html = buildEmailHtml({
+    type:'report', heroIcon:'📊',
+    title:`תצוגה מקדימה — דוח שבועי`,
+    subtitle:CFG.headerText,
+    badgeText:'👁️ תצוגה מקדימה בלבד', badgeColor:'#64748b',
+    stats:[{ value:actions.length, label:'פעולות', color:'#1a6eb5' },{ value:outItems.length, label:'🚨 אזל', color:'#d32f2f' },{ value:lowItems.length, label:'⚠️ נמוך', color:'#f9a825' }],
+    body:`<p>זוהי תצוגה מקדימה של הדוח השבועי.</p>`,
+    cta:null
+  });
+  w.document.write(html); w.document.close();
 }
 
 /* ================================================================
-   V3 — REPORT SCHEDULER (daily auto-send)
+   V3 — DAILY REPORT SCHEDULER
    ================================================================ */
 let _reportTimer = null;
-async function initReportScheduler() {
+function initReportScheduler() {
   if (_reportTimer) clearInterval(_reportTimer);
   _reportTimer = setInterval(async () => {
     try {
+      if (!_ejsReady) return;
       const reportTime = await db.ref('settings/reportTime').once('value').then(s=>s.val()||'20:00');
-      const email      = await db.ref('settings/reportEmail').once('value').then(s=>s.val());
-      if (!email || !_ejsReady) return;
-      const [hh, mm] = reportTime.split(':').map(Number);
+      const email      = await db.ref('settings/reportEmail').once('value').then(s=>s.val()||'');
+      if (!email) return;
+      const [hh,mm] = reportTime.split(':').map(Number);
       const now = new Date();
-      if (now.getHours() === hh && now.getMinutes() === mm) {
-        const key = 'lastReport_' + CURRENT_SITE;
-        const lastSent = parseInt(localStorage.getItem(key)||'0', 10);
-        if (Date.now() - lastSent > 23 * 3600000) {
+      if (now.getHours()===hh && now.getMinutes()===mm) {
+        const key = 'lastReport_'+CURRENT_SITE;
+        if (Date.now()-parseInt(localStorage.getItem(key)||'0',10) > 23*3600000) {
           localStorage.setItem(key, String(Date.now()));
-          await sendWeeklyReportNow();
+          sendWeeklyReportNow();
         }
       }
     } catch(e){}
@@ -6052,100 +6252,100 @@ async function initReportScheduler() {
 }
 
 /* ================================================================
-   V3 — LOAD ALL V3 SETTINGS
+   V3 — INIT (hooks into existing functions properly)
    ================================================================ */
-async function loadV3Settings() { await loadEjsSettings(); }
 
-/* ================================================================
-   V3 — HOOK INTO EXISTING ADMIN INIT
-   ================================================================ */
-const _origInitAdmin = window.initAdmin;
-window.initAdmin = function(...args) {
-  if (_origInitAdmin) _origInitAdmin.apply(this, args);
-  listenDeliveries();
-  loadTransferLogs();
-  loadV3Settings();
-  initReportScheduler();
-  // Add initial delivery row
-  setTimeout(() => {
-    if (document.getElementById('delivery-item-rows')?.children.length === 0) addDeliveryItemRow();
-  }, 500);
+/* 1. Patch showApp — fires when admin logs in */
+const _origShowApp_v3 = window.showApp;
+window.showApp = function(screenId, ...rest) {
+  _origShowApp_v3.call(this, screenId, ...rest);
+  if (screenId === 'scr-admin' && !_v3AdminInited) {
+    _v3AdminInited = true;
+    listenDeliveries();
+    loadTransferLogs();
+    loadEjsSettings();
+    initReportScheduler();
+    setTimeout(() => {
+      if (!document.getElementById('delivery-item-rows')?.children.length) addDeliveryItemRow();
+    }, 600);
+  }
 };
 
-// Also hook into dashboard render to show top items
-const _origRenderDash = window.renderDashboard;
-window.renderDashboard = function(...args) {
-  if (_origRenderDash) _origRenderDash.apply(this, args);
+/* 2. Patch showTab — render correct data when switching to V3 tabs */
+const _origShowTab_v3 = window.showTab;
+window.showTab = function(id, btn, ...rest) {
+  _origShowTab_v3.call(this, id, btn, ...rest);
+  if (id === 'tab-orders')    renderOrdersTab();
+  if (id === 'tab-deliveries'){ renderDeliveries(); if (!document.getElementById('delivery-item-rows')?.children.length) addDeliveryItemRow(); }
+  if (id === 'tab-transfer')  loadTransferLogs();
+  if (id === 'tab-dash')      { setTimeout(renderTopItems, 100); }
+};
+
+/* 3. Patch updateStats — show top items on dashboard */
+const _origUpdateStats_v3 = window.updateStats;
+window.updateStats = function(...rest) {
+  _origUpdateStats_v3.apply(this, rest);
   renderTopItems();
 };
 
-// Ensure top items render when logs are loaded
-const _origOnLogsLoaded = window.onLogsLoaded;
-window.onLogsLoaded = function(...args) {
-  if (_origOnLogsLoaded) _origOnLogsLoaded.apply(this, args);
-  renderTopItems();
+/* 4. Patch _onScanFound — intercept scan for V3 overlay / delivery mode */
+const _origOnScanFound_v3 = window._onScanFound;
+window._onScanFound = async function(code, ...rest) {
+  /* Delivery item mode */
+  if (window._scannerDeliveryMode) {
+    window._scannerDeliveryMode = false;
+    closeScanner();
+    const found = inv.find(i=>(i.barcode||'').trim()===String(code).trim());
+    addDeliveryItemRow(found?.barcode||code, found?.name||'');
+    return;
+  }
+  /* Find mode → V3 scan success overlay */
+  if (_scanMode === 'find') {
+    const found = inv.find(i=>i.barcode && String(i.barcode).trim()===String(code).trim());
+    if (found) {
+      closeScanner();
+      showScanSuccess(found);
+      return;
+    }
+    /* Not found — fall through to original */
+  }
+  _origOnScanFound_v3.call(this, code, ...rest);
 };
 
-/* ================================================================
-   V3 — OVERRIDE openScanner to support "find" + delivery item mode
-   ================================================================ */
-const _origOpenScanner = window.openScanner;
+/* 5. Patch openScanner — support delivery-item mode */
+const _origOpenScanner_v3 = window.openScanner;
 window.openScanner = function(mode, ...rest) {
   if (mode === 'delivery-item') {
-    // Use existing scanner but intercept result
-    _origOpenScanner.call(this, 'find', ...rest);
     window._scannerDeliveryMode = true;
+    _origOpenScanner_v3.call(this, 'find', ...rest);
     return;
   }
   window._scannerDeliveryMode = false;
-  _origOpenScanner.call(this, mode, ...rest);
+  _origOpenScanner_v3.call(this, mode, ...rest);
 };
 
-// Patch the barcode found callback to show success overlay
-const _origHandleScan = window._onScanSuccess || window.handleScanSuccess;
-// We'll patch via a MutationObserver approach on scan-status
-(function patchScanCallback() {
-  const origFn = window.handleBarcodeFound || window.onBarcodeFound;
-  if (origFn) {
-    window._v3_origBarcodeFound = origFn;
-    window.handleBarcodeFound = window.onBarcodeFound = function(code, ...a) {
-      if (window._scannerDeliveryMode) {
-        window._scannerDeliveryMode = false;
-        closeScanner();
-        const found = inv.find(i=>(i.barcode||'').trim()===code.trim());
-        if (found) addDeliveryItemRow(found.barcode, found.name);
-        else       addDeliveryItemRow(code, '');
-        return;
-      }
-      const found = inv.find(i=>(i.barcode||'').trim()===code.trim());
-      if (found) {
-        const scanModal = document.getElementById('scan-modal');
-        if (scanModal && scanModal.style.display !== 'none') {
-          closeScanner();
-          showScanSuccess(found);
-          return;
-        }
-      }
-      window._v3_origBarcodeFound && window._v3_origBarcodeFound.call(this, code, ...a);
-    };
-  }
+/* 6. Handle ?confirm_delivery= URL param */
+(function checkDeliveryParam() {
+  const delId = new URLSearchParams(window.location.search).get('confirm_delivery');
+  if (!delId) return;
+  const check = setInterval(() => {
+    const d = _deliveries.find(x => x.delId===delId || x.id===delId);
+    if (d) { clearInterval(check); openDeliveryConfirm(d.id); }
+  }, 800);
+  setTimeout(() => clearInterval(check), 20000);
 })();
 
-/* Handle URL param ?confirm_delivery= */
-(function checkDeliveryConfirmParam() {
-  const params = new URLSearchParams(window.location.search);
-  const delId = params.get('confirm_delivery');
-  if (!delId) return;
-  // Wait for app to load then open confirm modal
-  const check = setInterval(() => {
-    const d = _deliveries.find(x => x.delId === delId || x.id === delId);
-    if (d) {
-      clearInterval(check);
-      openDeliveryConfirm(d.id);
-    }
-  }, 1000);
-  setTimeout(() => clearInterval(check), 15000);
-})();
+/* 7. Patch confirmDeliverySubmit to send confirmation email */
+const _origConfirmDelivery_v3 = window.confirmDeliverySubmit;
+window.confirmDeliverySubmit = async function(...rest) {
+  /* capture state before calling original */
+  const d = _deliveries.find(x=>x.id===_deliveryConfirmId);
+  const qtyInputs = [...document.querySelectorAll('.dcm-recv-qty')];
+  const receivedItems = d ? (d.items||[]).map((it,idx)=>({ ...it, qtyReceived:parseInt(qtyInputs[idx]?.value||it.qty,10) })) : [];
+  const notes = document.getElementById('dcm-notes')?.value?.trim()||'';
+  await _origConfirmDelivery_v3.apply(this, rest);
+  if (d && _ejsReady) _sendDeliveryConfirmNotice(d, receivedItems, notes);
+};
 
 </script>
 </body>
