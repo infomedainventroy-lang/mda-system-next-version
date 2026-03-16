@@ -358,57 +358,58 @@ body {
   position: fixed; inset: 0; z-index: 99000;
   background: linear-gradient(160deg, #0a1628 0%, #0d2246 100%);
   display: none; flex-direction: column; align-items: center;
-  justify-content: flex-start; padding: 32px 20px 20px;
-  direction: rtl; overflow-y: auto;
+  justify-content: flex-start; padding: 28px 20px 24px;
+  direction: rtl; overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 #phone-scan-page.show { display: flex; }
-.psp-logo  { width: 64px; height: 64px; border-radius: 14px; margin-bottom: 14px; border: 2px solid rgba(255,255,255,.2); }
-.psp-title { font-size: 1.4em; font-weight: 900; color: #fff; margin-bottom: 6px; text-align: center; }
-.psp-sub   { font-size: .82em; color: rgba(255,255,255,.5); margin-bottom: 24px; text-align: center; line-height: 1.6; }
+.psp-logo  { width: 60px; height: 60px; border-radius: 14px; margin-bottom: 12px; border: 2px solid rgba(255,255,255,.2); object-fit: cover; }
+.psp-title { font-size: 1.3em; font-weight: 900; color: #fff; margin-bottom: 5px; text-align: center; }
+.psp-sub   { font-size: .8em; color: rgba(255,255,255,.5); margin-bottom: 20px; text-align: center; line-height: 1.5; }
 .psp-scanner-wrap {
-  width: 100%; max-width: 340px; border-radius: 20px; overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0,0,0,.5); margin-bottom: 16px;
-  border: 2px solid rgba(255,255,255,.15); position: relative; background: #000;
+  width: 100%; max-width: 360px; border-radius: 18px; overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,.6); margin-bottom: 14px;
+  border: 2.5px solid rgba(66,165,245,.4); position: relative; background: #000; min-height: 240px;
 }
-.psp-corner { position: absolute; width: 28px; height: 28px; border-color: #42a5f5; border-style: solid; border-width: 0; z-index: 2; pointer-events: none; }
-.psp-corner.tl { top:12px;right:12px; border-top-width:3px;border-right-width:3px; border-radius:0 4px 0 0; }
-.psp-corner.tr { top:12px;left:12px;  border-top-width:3px;border-left-width:3px;  border-radius:4px 0 0 0; }
-.psp-corner.bl { bottom:12px;right:12px; border-bottom-width:3px;border-right-width:3px; border-radius:0 0 0 4px; }
-.psp-corner.br { bottom:12px;left:12px;  border-bottom-width:3px;border-left-width:3px;  border-radius:0 0 4px 0; }
+.psp-corner { position: absolute; width: 26px; height: 26px; border-color: #42a5f5; border-style: solid; border-width: 0; z-index: 5; pointer-events: none; }
+.psp-corner.tl { top:10px;right:10px; border-top-width:3px;border-right-width:3px; border-radius:0 5px 0 0; }
+.psp-corner.tr { top:10px;left:10px;  border-top-width:3px;border-left-width:3px;  border-radius:5px 0 0 0; }
+.psp-corner.bl { bottom:10px;right:10px; border-bottom-width:3px;border-right-width:3px; border-radius:0 0 0 5px; }
+.psp-corner.br { bottom:10px;left:10px;  border-bottom-width:3px;border-left-width:3px;  border-radius:0 0 5px 0; }
 .psp-scan-line {
   position: absolute; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, transparent, #42a5f5, transparent);
-  animation: pspScanLine 2s ease-in-out infinite; z-index: 2; pointer-events: none; top: 20%;
+  background: linear-gradient(90deg, transparent 0%, #42a5f5 30%, #90caf9 50%, #42a5f5 70%, transparent 100%);
+  animation: pspScanLine 2.2s ease-in-out infinite; z-index: 4; pointer-events: none; box-shadow: 0 0 8px #42a5f5;
 }
-@keyframes pspScanLine { 0%,100%{top:15%} 50%{top:75%} }
-.psp-status { font-size:.85em; font-weight:700; color:rgba(255,255,255,.7); text-align:center; margin-bottom:12px; min-height:1.4em; }
+@keyframes pspScanLine { 0%,100%{top:10%} 50%{top:82%} }
+.psp-status { font-size:.88em; font-weight:700; color:rgba(255,255,255,.75); text-align:center; margin-bottom:10px; min-height:1.5em; line-height:1.4; white-space:pre-line; }
 .psp-result-card {
-  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
-  border-radius: 16px; padding: 18px 20px; width: 100%; max-width: 340px;
-  text-align: center; display: none; margin-bottom: 14px;
+  background: rgba(105,240,174,.12); border: 1.5px solid rgba(105,240,174,.35);
+  border-radius: 16px; padding: 16px 20px; width: 100%; max-width: 360px;
+  text-align: center; display: none; margin-bottom: 12px;
 }
 .psp-result-card.show { display: block; animation: ssoIn .3s ease; }
-.psp-result-name { font-size: 1.2em; font-weight: 900; color: #fff; margin-bottom: 6px; }
-.psp-result-bc   { font-size: .78em; color: rgba(255,255,255,.45); font-family: monospace; }
-.psp-result-ok   { font-size: 1em; color: #69f0ae; font-weight: 800; margin-top: 8px; }
-.psp-manual-wrap { width: 100%; max-width: 340px; display: flex; gap: 8px; margin-top: 10px; }
+.psp-result-name { font-size: 1.05em; font-weight: 900; color: #fff; margin-bottom: 5px; }
+.psp-result-bc   { font-size: .75em; color: rgba(255,255,255,.45); font-family: monospace; letter-spacing:.04em; }
+.psp-result-ok   { font-size: .9em; color: #69f0ae; font-weight: 800; margin-top: 8px; }
+.psp-again-btn {
+  width: 100%; max-width: 360px; padding: 14px; margin-bottom: 10px;
+  border: 1.5px solid rgba(255,255,255,.2); border-radius: 12px;
+  background: rgba(255,255,255,.08); color: #fff;
+  font-family: 'Heebo', sans-serif; font-size: 15px; font-weight: 800; cursor: pointer; transition: all .2s;
+}
+.psp-again-btn:active { background: rgba(255,255,255,.16); }
+.psp-manual-wrap { width: 100%; max-width: 360px; display: flex; gap: 8px; margin-top: 8px; }
 .psp-manual-input {
-  flex: 1; padding: 11px 14px; border: 1.5px solid rgba(255,255,255,.2);
-  border-radius: 10px; font-family: 'Heebo', sans-serif; font-size: 14px;
+  flex: 1; padding: 12px 14px; border: 1.5px solid rgba(255,255,255,.2);
+  border-radius: 10px; font-family: 'Heebo', sans-serif; font-size: 15px;
   background: rgba(255,255,255,.08); color: #fff; outline: none;
 }
 .psp-manual-input::placeholder { color: rgba(255,255,255,.35); }
-.psp-manual-input:focus { border-color: rgba(255,255,255,.45); }
+.psp-manual-input:focus { border-color: #42a5f5; background: rgba(255,255,255,.12); }
 .psp-manual-btn {
-  padding: 11px 18px; border: none; border-radius: 10px;
+  padding: 12px 20px; border: none; border-radius: 10px;
   background: #1a6eb5; color: #fff;
-  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer;
-}
-.psp-again-btn {
-  margin-top: 10px; padding: 11px 28px; border: 1.5px solid rgba(255,255,255,.2);
-  border-radius: 10px; background: transparent; color: rgba(255,255,255,.7);
-  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer;
-  width: 100%; max-width: 340px;
+  font-family: 'Heebo', sans-serif; font-size: 15px; font-weight: 900; cursor: pointer;
 }
 /* Scan button upgrade: two modes */
 .scan-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
@@ -2968,22 +2969,48 @@ tr:hover td { background: var(--bg); }
      ================================================================ -->
 <div id="phone-pair-overlay">
   <div class="pair-card">
-    <div class="pair-title">📱 חבר טלפון</div>
-    <div class="pair-sub">סרוק את קוד ה-QR עם הטלפון<br>הטלפון ישמש כמצלמת הסריקה</div>
+    <div class="pair-title">📱 חיבור טלפון כמצלמה</div>
+    <div class="pair-sub">סרוק את קוד ה-QR עם הטלפון — ואז הטלפון יסרוק ברקודים<br>
+      הפריט יוצג כאן על המחשב בזמן אמת</div>
+
     <div class="pair-steps">
-      <div class="pair-step"><b>1️⃣</b>סרוק QR עם הטלפון</div>
-      <div class="pair-step"><b>2️⃣</b>כוון למוצר</div>
-      <div class="pair-step"><b>3️⃣</b>המחשב מציג תוצאה</div>
+      <div class="pair-step"><b>1️⃣</b>סרוק QR<br>עם הטלפון</div>
+      <div class="pair-step"><b>2️⃣</b>כוון לברקוד<br>של המוצר</div>
+      <div class="pair-step"><b>3️⃣</b>המחשב מציג<br>את הפריט</div>
     </div>
+
+    <!-- QR Code -->
     <div class="pair-qr-wrap">
-      <img id="pair-qr-img" src="" width="200" height="200" alt="QR">
+      <img id="pair-qr-img" src="" width="230" height="230" alt="QR">
     </div>
-    <div class="pair-session-id" id="pair-session-label">מחבר...</div>
+
+    <!-- Session ID -->
+    <div class="pair-session-id" id="pair-session-label">מחולל...</div>
+
+    <!-- Status -->
     <div class="pair-status-row">
       <div class="pair-dot waiting" id="pair-dot"></div>
       <span id="pair-status-text">ממתין לחיבור הטלפון...</span>
     </div>
-    <button class="pair-close-btn" onclick="closePhonePairing()">✕ סגור</button>
+
+    <!-- Scan counter -->
+    <div id="pair-multi-count" style="font-size:.78em;color:rgba(255,255,255,.4);margin-bottom:14px;min-height:1.2em;"></div>
+
+    <!-- Link fallback (copy/paste if QR doesn't work) -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;">
+      <input id="pair-link-input" type="text" readonly
+        style="flex:1;padding:8px 10px;border:1px solid rgba(255,255,255,.15);border-radius:8px;
+               background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);font-size:.72em;
+               font-family:monospace;outline:none;">
+      <button onclick="copyPairLink()"
+        style="padding:8px 14px;border:1px solid rgba(255,255,255,.2);border-radius:8px;
+               background:rgba(255,255,255,.1);color:#fff;font-family:'Heebo',sans-serif;
+               font-size:.78em;font-weight:800;cursor:pointer;white-space:nowrap;">
+        📋 העתק
+      </button>
+    </div>
+
+    <button class="pair-close-btn" onclick="closePhonePairing()">✕ סגור חיבור</button>
   </div>
 </div>
 
@@ -2993,26 +3020,43 @@ tr:hover td { background: var(--bg); }
 <div id="phone-scan-page">
   <img id="psp-logo" class="psp-logo" src="" alt="לוגו">
   <div class="psp-title" id="psp-station-name">מערכת מלאי</div>
-  <div class="psp-sub">כוון את המצלמה לברקוד<br>התוצאה תועבר אוטומטית למחשב</div>
-  <div class="psp-scanner-wrap" id="psp-scanner-wrap">
+  <div class="psp-sub">כוון את המצלמה לברקוד — הפריט יופיע במחשב</div>
+
+  <!-- Scanner -->
+  <div class="psp-scanner-wrap">
     <div class="psp-corner tl"></div>
     <div class="psp-corner tr"></div>
     <div class="psp-corner bl"></div>
     <div class="psp-corner br"></div>
     <div class="psp-scan-line"></div>
-    <div id="psp-qr-reader" style="width:100%;min-height:240px;"></div>
+    <div id="psp-qr-reader" style="width:100%;min-height:260px;background:#000;"></div>
   </div>
-  <div class="psp-status" id="psp-status">🔍 מחפש ברקוד...</div>
+
+  <!-- Status -->
+  <div class="psp-status" id="psp-status">🔗 מתחבר...</div>
+
+  <!-- Result card (shown after successful scan) -->
   <div class="psp-result-card" id="psp-result-card">
+    <div style="font-size:2em;margin-bottom:6px;">✅</div>
     <div class="psp-result-name" id="psp-result-name"></div>
     <div class="psp-result-bc"   id="psp-result-bc"></div>
-    <div class="psp-result-ok">✅ נשלח למחשב בהצלחה!</div>
+    <div class="psp-result-ok">נשלח למחשב בהצלחה!</div>
   </div>
-  <button class="psp-again-btn" id="psp-again-btn" style="display:none;" onclick="pspScanAgain()">🔄 סרוק שוב</button>
+
+  <!-- Scan again button -->
+  <button class="psp-again-btn" id="psp-again-btn"
+    style="display:none;" onclick="pspScanAgain()">
+    🔄 סרוק פריט נוסף
+  </button>
+
+  <!-- Manual barcode entry -->
   <div class="psp-manual-wrap">
     <input type="text" class="psp-manual-input" id="psp-manual-input"
-      placeholder="הזן ברקוד ידנית..." inputmode="numeric">
-    <button class="psp-manual-btn" onclick="pspSubmitManual()">✓</button>
+      placeholder="הזן ברקוד ידנית..." inputmode="numeric" autocomplete="off">
+    <button class="psp-manual-btn" onclick="pspSubmitManual()">✓ שלח</button>
+  </div>
+  <div style="font-size:.72em;color:rgba(255,255,255,.25);margin-top:10px;text-align:center;">
+    מצלמה לא עובדת? הזן ברקוד ידנית
   </div>
 </div>
 
@@ -3196,6 +3240,8 @@ let _logRows = [];
    DOM READY — INIT
    ================================================================ */
 document.addEventListener('DOMContentLoaded', () => {
+  /* In phone-scan mode, skip ALL main app initialization */
+  if (_IS_PHONE_SCAN_MODE) return;
 
   // Apply site config
   document.getElementById('page-title').textContent  = CFG.title;
@@ -6682,245 +6728,347 @@ window._onScanFound = async function(code) {
 };
 
 /* ================================================================
-   V3 — PHONE-AS-CAMERA ENGINE
-   Uses Firebase Realtime DB as the relay channel:
-   /scan_sessions/{sessionId} = { status, barcode, timestamp }
-   Desktop listens → Phone writes → Desktop acts
+   V3 — PHONE-AS-CAMERA ENGINE (Fixed & Reliable)
+
+   Architecture:
+   ─────────────────────────────────────────────────────────────────
+   DESKTOP  →  creates  /scan_sessions/{id}  {status:'waiting'}
+   DESKTOP  →  shows QR code + listens to Firebase for changes
+   MOBILE   →  opens URL with ?phone_scan={id}
+   MOBILE   →  shows ONLY scanner page (hides all other app UI)
+   MOBILE   →  scans barcode → writes to Firebase {status:'done', barcode}
+   DESKTOP  →  Firebase listener fires → shows product overlay
+   MOBILE   →  can scan again: resets session to 'scanning'
+   ─────────────────────────────────────────────────────────────────
+   Supports multiple scans per session (until desktop closes overlay)
    ================================================================ */
 
-let _pairSessionId  = null;
-let _pairListener   = null;
-let _pairScanner    = null;
-let _pspSessionId   = null;
-let _pspScanner     = null;
+/* ── Detect mobile scan mode BEFORE anything else ── */
+const _IS_PHONE_SCAN_MODE = new URLSearchParams(window.location.search).has('phone_scan');
+const _PHONE_SCAN_SESSION = new URLSearchParams(window.location.search).get('phone_scan') || '';
 
-/* ── Desktop: open pairing overlay ── */
+/* If in phone-scan mode, block the main app init to avoid conflicts */
+if (_IS_PHONE_SCAN_MODE) {
+  // Prevent DOMContentLoaded from running main app
+  document.addEventListener('DOMContentLoaded', function phoneScanInit() {
+    _initMobileScanner();
+  }, { once: true });
+}
+
+/* ================================================================
+   DESKTOP SIDE
+   ================================================================ */
+
+let _pairSessionId = null;
+let _pairDbRef     = null;
+let _pairListener  = null;
+
 function openPhonePairing() {
-  // Generate unique session ID
-  _pairSessionId = 'scan_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+  /* Generate unique session ID */
+  _pairSessionId = 'ps_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 
-  // Write session to Firebase (expires in 10 min)
-  db.ref('scan_sessions/' + _pairSessionId).set({
-    status: 'waiting',
-    station: CURRENT_SITE,
+  const sessionData = {
+    status:    'waiting',
+    station:   CURRENT_SITE,
     createdAt: Date.now(),
-    expiresAt: Date.now() + 10 * 60 * 1000
-  });
+    expiresAt: Date.now() + 15 * 60 * 1000,
+    scannedBarcodes: []
+  };
 
-  // Build the mobile URL
-  const baseUrl = window.location.href.split('?')[0];
-  const mobileUrl = baseUrl + '?phone_scan=' + _pairSessionId;
+  /* Store to Firebase */
+  _pairDbRef = db.ref('scan_sessions/' + _pairSessionId);
+  _pairDbRef.set(sessionData);
 
-  // Generate QR via free API (no key needed)
-  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&bgcolor=ffffff&color=0d1b2a&margin=10&data=' + encodeURIComponent(mobileUrl);
-  document.getElementById('pair-qr-img').src = qrUrl;
-  document.getElementById('pair-session-label').textContent = 'מזהה: ' + _pairSessionId.slice(-8).toUpperCase();
+  /* Build mobile URL */
+  const mobileUrl = window.location.href.split('?')[0] + '?phone_scan=' + _pairSessionId;
+
+  /* QR code via free API */
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=230x230&bgcolor=ffffff&color=0d1b2a&margin=12&data=' + encodeURIComponent(mobileUrl);
+  const qrImg = document.getElementById('pair-qr-img');
+  if (qrImg) qrImg.src = qrUrl;
+
+  /* Session label + URL copy button */
+  const lbl = document.getElementById('pair-session-label');
+  if (lbl) lbl.textContent = 'מזהה: ' + _pairSessionId.slice(-8).toUpperCase();
+
+  /* Update link input */
+  const linkInput = document.getElementById('pair-link-input');
+  if (linkInput) { linkInput.value = mobileUrl; }
 
   _setPairStatus('waiting', 'ממתין לחיבור הטלפון...');
   document.getElementById('phone-pair-overlay').classList.add('show');
+  _pairScanCount = 0;
 
-  // Listen for result
-  _pairListener = db.ref('scan_sessions/' + _pairSessionId).on('value', snap => {
+  /* ── Firebase real-time listener ── */
+  _pairListener = _pairDbRef.on('value', snap => {
     const data = snap.val();
     if (!data) return;
+
     if (data.status === 'scanning') {
-      _setPairStatus('scanning', 'הטלפון מוכן — כוון לברקוד...');
+      _setPairStatus('scanning', '📱 טלפון מוכן — כוון לברקוד...');
+      document.getElementById('pair-multi-count').textContent = _pairScanCount > 0 ? `${_pairScanCount} פריטים נסרקו` : '';
     }
+
     if (data.status === 'done' && data.barcode) {
-      _setPairStatus('done', '✅ ברקוד נסרק!');
+      _pairScanCount++;
+      _setPairStatus('scanning', `✅ נסרק! (${_pairScanCount}) — מחכה לסריקה הבאה...`);
+      document.getElementById('pair-multi-count').textContent = `${_pairScanCount} פריטים נסרקו`;
+
+      /* Show product on desktop */
+      _handlePhoneScanResult(data.barcode);
+
+      /* Reset session for next scan (don't close overlay) */
       setTimeout(() => {
-        closePhonePairing();
-        _handlePhoneScanResult(data.barcode);
-        // Clean up session
-        db.ref('scan_sessions/' + _pairSessionId).remove();
-      }, 800);
+        _pairDbRef.update({ status: 'scanning', barcode: null, scannedAt: null })
+          .catch(() => {});
+      }, 1200);
+    }
+
+    if (data.status === 'error') {
+      _setPairStatus('waiting', '⚠️ שגיאה בטלפון — נסה שוב');
     }
   });
 
-  // Auto-expire after 10 minutes
+  /* Auto-expire */
   setTimeout(() => {
-    if (document.getElementById('phone-pair-overlay').classList.contains('show')) {
+    if (_pairSessionId && document.getElementById('phone-pair-overlay').classList.contains('show')) {
       closePhonePairing();
-      showToast('⏱️ פג תוקף החיבור — נסה שוב', 'warning');
+      showToast('⏱️ פג תוקף החיבור — לחץ שוב לחיבור חדש', 'warning');
     }
-  }, 10 * 60 * 1000);
+  }, 15 * 60 * 1000);
 }
+
+let _pairScanCount = 0;
 
 function _setPairStatus(state, text) {
   const dot  = document.getElementById('pair-dot');
   const lbl  = document.getElementById('pair-status-text');
-  if (dot) { dot.className = 'pair-dot ' + state; }
+  if (dot) dot.className = 'pair-dot ' + state;
   if (lbl) lbl.textContent = text;
 }
 
 function closePhonePairing() {
-  document.getElementById('phone-pair-overlay').classList.remove('show');
-  if (_pairListener && _pairSessionId) {
-    db.ref('scan_sessions/' + _pairSessionId).off('value', _pairListener);
+  document.getElementById('phone-pair-overlay')?.classList.remove('show');
+  if (_pairDbRef && _pairListener) {
+    _pairDbRef.off('value', _pairListener);
     _pairListener = null;
   }
+  if (_pairDbRef) {
+    _pairDbRef.remove().catch(() => {});
+    _pairDbRef = null;
+  }
   _pairSessionId = null;
+  _pairScanCount = 0;
+}
+
+function copyPairLink() {
+  const input = document.getElementById('pair-link-input');
+  if (!input) return;
+  input.select();
+  document.execCommand('copy');
+  showToast('🔗 קישור הועתק!');
 }
 
 function _handlePhoneScanResult(barcode) {
-  // Same as regular scan — show success overlay or highlight item
   const found = inv.find(i => i.barcode && String(i.barcode).trim() === String(barcode).trim());
   if (found) {
     showScanSuccess(found);
-    if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+    if (navigator.vibrate) navigator.vibrate([30, 60, 30]);
   } else {
-    showToast('⚠️ ברקוד לא נמצא במלאי: ' + barcode, 'warning');
+    showToast('⚠️ ברקוד לא נמצא: ' + barcode, 'warning');
   }
 }
 
-/* ── Mobile: detect ?phone_scan= URL param and launch mobile scanner ── */
-(function initPhoneScanPage() {
-  const params = new URLSearchParams(window.location.search);
-  const sessionId = params.get('phone_scan');
-  if (!sessionId) return;
+/* ================================================================
+   MOBILE SIDE — completely separate, no admin app running
+   ================================================================ */
 
-  _pspSessionId = sessionId;
+let _mobileScanner = null;
+let _mobileLock    = false;
+let _mobileSession = _PHONE_SCAN_SESSION;
 
-  // Show the mobile scan page immediately (before Firebase loads)
-  const page = document.getElementById('phone-scan-page');
-  if (page) page.classList.add('show');
+function _initMobileScanner() {
+  if (!_IS_PHONE_SCAN_MODE) return;
 
-  // Hide all other app UI
-  document.addEventListener('DOMContentLoaded', () => {
-    // Set station info from URL or wait for config
-    const pspLogo = document.getElementById('psp-logo');
-    const pspName = document.getElementById('psp-station-name');
-    if (pspLogo) pspLogo.src = CFG.logoUrl;
-    if (pspName) pspName.textContent = CFG.headerText;
-
-    // Update session status to 'scanning'
-    db.ref('scan_sessions/' + _pspSessionId).update({ status: 'scanning' })
-      .catch(() => {});
-
-    // Check session still valid
-    db.ref('scan_sessions/' + _pspSessionId + '/status').once('value').then(snap => {
-      if (!snap.val() || snap.val() === 'done') {
-        document.getElementById('psp-status').textContent = '⚠️ סשן פג תוקף — בקש חיבור חדש';
-        return;
-      }
-      // Start the mobile scanner
-      _startPspScanner();
-    }).catch(() => {
-      _startPspScanner(); // try anyway
-    });
-
-    // Manual input enter key
-    document.getElementById('psp-manual-input')?.addEventListener('keydown', e => {
-      if (e.key === 'Enter') pspSubmitManual();
-    });
+  /* Hide everything except the phone scan page */
+  document.querySelectorAll('body > *:not(#phone-scan-page)').forEach(el => {
+    if (el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') {
+      el.style.display = 'none';
+    }
   });
-})();
 
-function _startPspScanner() {
+  const page = document.getElementById('phone-scan-page');
+  if (page) {
+    page.style.display = 'flex';
+    page.classList.add('show');
+  }
+
+  /* Set station branding */
+  const logo = document.getElementById('psp-logo');
+  const name = document.getElementById('psp-station-name');
+  if (logo) logo.src = CFG.logoUrl;
+  if (name) name.textContent = CFG.headerText;
+
   const st = document.getElementById('psp-status');
-  if (st) st.textContent = '🔍 מפעיל מצלמה...';
+
+  if (!_mobileSession) {
+    if (st) st.textContent = '⚠️ קישור לא תקין — בקש קישור חדש';
+    return;
+  }
+
+  /* Verify session still valid */
+  if (st) st.textContent = '🔗 מתחבר ל-Firebase...';
+
+  db.ref('scan_sessions/' + _mobileSession).once('value').then(snap => {
+    const data = snap.val();
+    if (!data) {
+      if (st) st.textContent = '⚠️ הסשן פג תוקף — סרוק QR חדש';
+      return;
+    }
+    if (data.status === 'done') {
+      if (st) st.textContent = '⚠️ הסשן כבר נוצל — סרוק QR חדש';
+      return;
+    }
+
+    /* Session valid — update status and start scanner */
+    db.ref('scan_sessions/' + _mobileSession).update({ status: 'scanning' }).catch(() => {});
+    _startMobileScanner();
+
+  }).catch(err => {
+    /* Firebase error — still try to start scanner */
+    if (st) st.textContent = '⚠️ שגיאת חיבור — מנסה בכל זאת...';
+    setTimeout(_startMobileScanner, 1000);
+  });
+
+  /* Manual input */
+  const manualInput = document.getElementById('psp-manual-input');
+  if (manualInput) {
+    manualInput.addEventListener('keydown', e => { if (e.key === 'Enter') pspSubmitManual(); });
+  }
+}
+
+function _startMobileScanner() {
+  const st       = document.getElementById('psp-status');
+  const readerEl = document.getElementById('psp-qr-reader');
+  if (!readerEl) return;
+
+  if (st) st.textContent = '📷 מפעיל מצלמה...';
+
   try {
-    _pspScanner = new Html5Qrcode('psp-qr-reader', { verbose: false });
-    _pspScanner.start(
+    _mobileScanner = new Html5Qrcode('psp-qr-reader', { verbose: false });
+    _mobileScanner.start(
       { facingMode: 'environment' },
       {
-        fps: 15,
-        qrbox: (w, h) => ({ width: Math.round(w * .85), height: Math.round(h * .35) }),
-        aspectRatio: 1.4,
+        fps: 12,
+        qrbox: (w, h) => ({
+          width:  Math.min(Math.round(w * .88), 360),
+          height: Math.min(Math.round(h * .38), 160)
+        }),
+        aspectRatio: 1.5,
+        disableFlip: false,
         formatsToSupport: [
           Html5QrcodeSupportedFormats?.EAN_13,
           Html5QrcodeSupportedFormats?.EAN_8,
           Html5QrcodeSupportedFormats?.CODE_128,
           Html5QrcodeSupportedFormats?.CODE_39,
           Html5QrcodeSupportedFormats?.UPC_A,
+          Html5QrcodeSupportedFormats?.UPC_E,
           Html5QrcodeSupportedFormats?.QR_CODE,
         ].filter(Boolean)
       },
-      code => _pspOnScan(code),
+      code => _mobileOnScan(code),
       () => {}
     ).then(() => {
       if (st) st.textContent = '🔍 כוון את המצלמה לברקוד';
     }).catch(err => {
       const m = String(err);
-      if (st) st.textContent = m.includes('NotAllowed') || m.includes('Permission')
-        ? '🚫 הרשאת מצלמה נדחתה — אפשר בהגדרות'
-        : '⚠️ לא נמצאה מצלמה: ' + m.slice(0, 40);
+      if (st) st.textContent =
+        m.includes('NotAllowed') || m.includes('Permission') || m.includes('denied')
+          ? '🚫 הרשאת מצלמה נדחתה\nעבור להגדרות הדפדפן ואפשר מצלמה'
+          : m.includes('NotFound') || m.includes('no camera')
+          ? '📵 לא נמצאה מצלמה במכשיר'
+          : '⚠️ שגיאת מצלמה: ' + m.slice(0, 50);
     });
   } catch(e) {
     if (st) st.textContent = '⚠️ שגיאה: ' + e.message;
   }
 }
 
-let _pspLock = false;
-async function _pspOnScan(barcode) {
-  if (_pspLock) return;
-  _pspLock = true;
-  if (_pspScanner) { try { await _pspScanner.pause(true); } catch(e){} }
+async function _mobileOnScan(barcode) {
+  if (_mobileLock) return;
+  _mobileLock = true;
 
-  // Show result card on phone
+  /* Pause camera */
+  if (_mobileScanner) { try { await _mobileScanner.pause(true); } catch(e) {} }
+
+  const st         = document.getElementById('psp-status');
   const resultCard = document.getElementById('psp-result-card');
   const resultName = document.getElementById('psp-result-name');
   const resultBc   = document.getElementById('psp-result-bc');
-  const st         = document.getElementById('psp-status');
   const againBtn   = document.getElementById('psp-again-btn');
 
-  if (resultName) resultName.textContent = barcode;
+  if (st)         st.textContent = '📡 שולח למחשב...';
+  if (resultName) resultName.textContent = 'ברקוד: ' + barcode;
   if (resultBc)   resultBc.textContent   = '📦 ' + barcode;
-  if (st)         st.textContent         = '📡 שולח למחשב...';
   if (resultCard) resultCard.classList.add('show');
   if (againBtn)   againBtn.style.display = 'block';
 
-  // Vibrate on success
-  if (navigator.vibrate) navigator.vibrate([50, 80, 50]);
+  /* Vibrate */
+  if (navigator.vibrate) navigator.vibrate([40, 80, 40]);
 
-  // Write result to Firebase
+  /* Send to Firebase */
   try {
-    await db.ref('scan_sessions/' + _pspSessionId).update({
+    await db.ref('scan_sessions/' + _mobileSession).update({
       status:    'done',
       barcode:   barcode,
       scannedAt: Date.now()
     });
-    if (st) st.textContent = '✅ נשלח למחשב בהצלחה!';
+    if (st) st.textContent = '✅ נשלח למחשב! סרוק שוב?';
   } catch(e) {
-    if (st) st.textContent = '❌ שגיאה בשליחה: ' + e.message;
-    _pspLock = false;
+    if (st) st.textContent = '❌ שגיאה בשליחה: ' + (e.message || e);
+    _mobileLock = false;
   }
 }
 
 function pspSubmitManual() {
   const v = document.getElementById('psp-manual-input')?.value?.trim();
   if (!v) return;
-  _pspOnScan(v);
+  _mobileOnScan(v);
 }
 
 function pspScanAgain() {
-  _pspLock = false;
+  _mobileLock = false;
   document.getElementById('psp-result-card')?.classList.remove('show');
-  document.getElementById('psp-again-btn').style.display = 'none';
-  document.getElementById('psp-status').textContent = '🔍 כוון את המצלמה לברקוד';
-  document.getElementById('psp-manual-input').value = '';
-  if (_pspScanner) { try { _pspScanner.resume(); } catch(e){} }
-  // Refresh session
-  db.ref('scan_sessions/' + _pspSessionId).update({ status: 'scanning' }).catch(() => {});
+  const againBtn = document.getElementById('psp-again-btn');
+  if (againBtn) againBtn.style.display = 'none';
+  const st = document.getElementById('psp-status');
+  if (st) st.textContent = '🔍 כוון את המצלמה לברקוד';
+  const manualInput = document.getElementById('psp-manual-input');
+  if (manualInput) manualInput.value = '';
+
+  /* Resume camera */
+  if (_mobileScanner) { try { _mobileScanner.resume(); } catch(e) {} }
+
+  /* Tell desktop we're ready for next scan */
+  db.ref('scan_sessions/' + _mobileSession)
+    .update({ status: 'scanning' })
+    .catch(() => {});
 }
 
-/* Clean up old scan sessions (older than 15 min) */
-(function cleanScanSessions() {
-  try {
-    const cutoff = Date.now() - 15 * 60 * 1000;
-    db.ref('scan_sessions').orderByChild('createdAt').endAt(cutoff).once('value').then(snap => {
-      if (!snap.val()) return;
-      const updates = {};
-      snap.forEach(c => { updates[c.key] = null; });
-      db.ref('scan_sessions').update(updates).catch(() => {});
-    }).catch(() => {});
-  } catch(e) {}
-  setTimeout(cleanScanSessions, 5 * 60 * 1000); // re-run every 5 min
-})();
-
-
-
-
+/* ── Auto-cleanup old sessions (desktop only) ── */
+if (!_IS_PHONE_SCAN_MODE) {
+  setTimeout(() => {
+    try {
+      const cutoff = Date.now() - 20 * 60 * 1000;
+      db.ref('scan_sessions').orderByChild('createdAt').endAt(cutoff).once('value').then(snap => {
+        if (!snap.val()) return;
+        const upd = {};
+        snap.forEach(c => { upd[c.key] = null; });
+        db.ref('scan_sessions').update(upd).catch(() => {});
+      }).catch(() => {});
+    } catch(e) {}
+  }, 5000);
+}
 
 </script>
 </body>
