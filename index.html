@@ -144,28 +144,166 @@ body {
 .top-item-count { font-size:.82em;font-weight:900;color:var(--c-blue);white-space:nowrap;min-width:36px;text-align:left; }
 
 /* ================================================================
-   V3 — ORDERS TAB (הזמנות)
+   V3 — ORDERS TAB (Complete)
    ================================================================ */
-.order-item-card { background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh-xs);transition:var(--tr); }
-.order-item-card:hover { border-color:var(--border-dark);box-shadow:var(--sh-sm); }
-.order-item-card.in-cart { border-color:var(--c-green);background:var(--c-green-pale); }
-.order-qty-info { flex:1;min-width:0; }
-.order-item-name { font-weight:800;font-size:.95em;color:var(--text);margin-bottom:3px; }
-.order-item-meta { font-size:.78em;color:var(--text-muted); }
-.order-cart-badge { background:var(--c-green);color:#fff;padding:3px 10px;border-radius:var(--r-full);font-size:.7em;font-weight:800; }
-#order-cart-panel {
-  position:fixed;bottom:0;left:0;right:0;z-index:400;
-  background:var(--c-navy);color:#fff;padding:12px 16px 20px;
-  transform:translateY(100%);transition:transform .3s var(--ease);
-  border-radius:var(--r-lg) var(--r-lg) 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.3);max-height:55vh;overflow-y:auto;
+/* item cards */
+.ord-item-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 13px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--sh-xs);
+  transition: var(--tr);
+  position: relative;
 }
-#order-cart-panel.open { transform:translateY(0); }
-.cart-panel-title { font-weight:900;font-size:1em;margin-bottom:10px;display:flex;align-items:center;gap:8px; }
-.cart-item-row { display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:.85em;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08); }
-.cart-item-row .ci-name { flex:1;font-weight:600; }
-.cart-item-row .ci-qty { color:rgba(255,255,255,.6);font-size:.8em; }
-.cart-item-row .ci-remove { cursor:pointer;opacity:.6; }
-.cart-item-row .ci-remove:hover { opacity:1; }
+.ord-item-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 4px;
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  background: var(--c-gold);
+}
+.ord-item-card.in-cart  { border-color: var(--c-green-light); background: #f0fdf4; }
+.ord-item-card.in-cart::before { background: var(--c-green-light); }
+.ord-item-card.is-out::before  { background: var(--c-red); }
+.ord-item-card:hover { box-shadow: var(--sh-sm); }
+
+.ord-item-img  { width:46px;height:46px;border-radius:var(--r-sm);object-fit:cover;flex-shrink:0;cursor:pointer; }
+.ord-item-emoji{ font-size:1.8em;flex-shrink:0; }
+.ord-item-info { flex:1;min-width:0; }
+.ord-item-name { font-weight:800;font-size:.94em;color:var(--text);margin-bottom:4px; }
+.ord-item-meta {
+  display:flex;flex-wrap:wrap;gap:6px;
+  font-size:.76em;color:var(--text-muted);margin-bottom:5px;
+}
+.ord-item-meta span { background:var(--bg);border-radius:var(--r-xs);padding:2px 6px; }
+.ord-val-out { color:var(--c-red)!important;font-weight:800; }
+.ord-val-low { color:var(--c-orange)!important;font-weight:800; }
+.ord-bar-wrap { height:4px;background:var(--border);border-radius:2px;overflow:hidden; }
+.ord-bar-fill { height:100%;border-radius:2px;transition:width .6s var(--ease); }
+
+/* right controls */
+.ord-item-right { display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0; }
+.ord-add-btn {
+  background: linear-gradient(135deg, var(--c-green) 0%, #2e7d32 100%);
+  color: #fff; border: none; border-radius: var(--r-sm);
+  padding: 9px 16px; font-family: 'Heebo', sans-serif;
+  font-size: 13px; font-weight: 800; cursor: pointer;
+  transition: var(--tr); white-space: nowrap;
+}
+.ord-add-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.ord-qty-ctrl {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--c-green-pale); border-radius: var(--r-sm);
+  padding: 4px 6px;
+}
+.ord-qty-btn {
+  width: 28px; height: 28px; border: none; border-radius: 6px;
+  background: var(--c-green); color: #fff;
+  font-size: 1.1em; font-weight: 900; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--tr);
+}
+.ord-qty-btn:hover { filter: brightness(1.1); }
+.ord-qty-input {
+  width: 46px; height: 28px; border: 1.5px solid var(--c-green-light);
+  border-radius: 6px; text-align: center;
+  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 900;
+  color: var(--c-green); background: #fff; outline: none;
+}
+.ord-remove-btn {
+  font-size: .75em; color: var(--c-red); font-weight: 700;
+  border: none; background: none; cursor: pointer; padding: 2px 4px;
+}
+
+/* sent orders */
+.sent-order-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r-md); padding: 14px 16px;
+  margin-bottom: 10px; box-shadow: var(--sh-xs);
+  position: relative; overflow: hidden;
+}
+.sent-order-card::before {
+  content: ''; position: absolute;
+  top: 0; right: 0; bottom: 0; width: 4px;
+}
+.sent-order-card.status-sent::before           { background: var(--c-gold); }
+.sent-order-card.status-confirmed::before      { background: var(--c-blue); }
+.sent-order-card.status-fully_confirmed::before{ background: var(--c-green-light); }
+.so-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px; }
+.so-id     { font-size:.75em;font-weight:700;color:var(--text-muted);margin-bottom:2px; }
+.so-date   { font-weight:800;font-size:.85em;color:var(--text);margin-bottom:2px; }
+.so-status-pill { padding:4px 12px;border-radius:var(--r-full);font-size:.72em;font-weight:800;white-space:nowrap;flex-shrink:0; }
+.so-progress  { margin-bottom:10px; }
+.so-prog-bar  { height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px; }
+.so-prog-fill { height:100%;background:var(--c-green-light);border-radius:3px;transition:width .6s var(--ease); }
+.so-prog-lbl  { font-size:.75em;color:var(--text-muted);font-weight:600; }
+.so-items-preview { display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px; }
+.so-item-chip {
+  font-size:.73em;padding:3px 9px;border-radius:var(--r-full);
+  background:var(--bg);border:1px solid var(--border);font-weight:600;color:var(--text-soft);
+}
+.so-item-chip.chip-done    { background:#e8f5e9;border-color:#a5d6a7;color:#1b5e20; }
+.so-item-chip.chip-partial { background:#fff8e1;border-color:#ffe082;color:#e65100; }
+.so-actions { display:flex;gap:8px;flex-wrap:wrap; }
+
+/* receipt confirm modal */
+#order-receipt-modal {
+  position: fixed; inset: 0; z-index: 9700;
+  background: rgba(13,27,42,.8); backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: none; align-items: center; justify-content: center; padding: 16px;
+}
+#order-receipt-modal.show { display: flex; animation: fadeIn .2s ease; }
+.rcm-box {
+  background: var(--surface); border-radius: var(--r-lg);
+  padding: 0; width: 100%; max-width: 520px;
+  box-shadow: var(--sh-xl); max-height: 90vh;
+  display: flex; flex-direction: column;
+  overflow: hidden; animation: slideUp .25s cubic-bezier(.34,1.56,.64,1);
+}
+.rcm-header {
+  background: linear-gradient(135deg, #0d1b2a 0%, #1a3a5f 100%);
+  padding: 20px 22px 16px;
+  flex-shrink: 0;
+}
+.rcm-header h3 { color: #fff; font-size: 1.05em; font-weight: 900; margin-bottom: 4px; }
+.rcm-header p  { color: rgba(255,255,255,.5); font-size: .8em; }
+.rcm-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.rcm-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
+
+.rcm-item-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.rcm-item-row:last-child { border-bottom: none; }
+.rcm-item-info { flex: 1; min-width: 0; }
+.rcm-item-name { font-weight: 800; font-size: .9em; color: var(--text); margin-bottom: 3px; }
+.rcm-item-sub  { font-size: .75em; color: var(--text-muted); display: flex; gap: 8px; }
+.rcm-recv-wrap { flex-shrink: 0; text-align: center; }
+.rcm-recv-label{ font-size: .68em; color: var(--text-muted); font-weight: 700; margin-bottom: 5px; letter-spacing: .04em; }
+.rcm-recv-btns { display: flex; align-items: center; gap: 4px; }
+.rcm-btn {
+  padding: 6px 11px; border: 1.5px solid var(--border);
+  border-radius: var(--r-sm); font-family: 'Heebo', sans-serif;
+  font-size: 12px; font-weight: 800; cursor: pointer;
+  background: var(--surface); color: var(--text-soft);
+  transition: var(--tr); white-space: nowrap;
+}
+.rcm-btn-none.active { background: #ffebee; border-color: var(--c-red); color: var(--c-red); }
+.rcm-btn-all.active  { background: var(--c-green-pale); border-color: var(--c-green-light); color: var(--c-green); }
+.rcm-qty-input {
+  width: 54px; height: 32px; border: 1.5px solid var(--border);
+  border-radius: var(--r-sm); text-align: center;
+  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 900;
+  color: var(--c-navy); outline: none; transition: var(--tr);
+}
+.rcm-qty-input:focus { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(26,110,181,.1); }
 
 /* ================================================================
    V3 — PHONE-AS-CAMERA (Mobile Remote Scanner)
@@ -2217,8 +2355,6 @@ tr:hover td { background: var(--bg); }
       <button id="tab-logs-btn" class="tab-btn" onclick="showTab('tab-logs',this)">📜 לוגים</button>
       <button id="tab-alerts-btn" class="tab-btn" onclick="showTab('tab-alerts',this)">🚨 התראות</button>
       <button class="tab-btn" onclick="showTab('tab-orders',this)" id="tab-orders-btn">🛒 הזמנות</button>
-      <button class="tab-btn" onclick="showTab('tab-deliveries',this)" id="tab-deliveries-btn">🚚 משלוחים</button>
-      <button class="tab-btn" onclick="showTab('tab-transfer',this)">🔄 העברות</button>
       <button class="tab-btn" onclick="showTab('tab-compare',this)">📈 השוואה</button>
       <button class="tab-btn" onclick="showTab('tab-settings',this)">⚙️ הגדרות</button>
       <button class="tab-btn tab-logout" onclick="logout()">↩ יציאה</button>
@@ -2228,7 +2364,10 @@ tr:hover td { background: var(--bg); }
 
       <!-- DASHBOARD -->
       <div id="tab-dash" class="tab-pane">
-
+        <div id="admin-alert-banner" class="alert-banner critical">
+          <h4>🚨 פריטים חסרים / מלאי נמוך</h4>
+          <div id="admin-alert-list" class="ab-list"></div>
+        </div>
         <div class="stats-grid">
           <div class="stat-card"><span id="st-total" class="stat-num">0</span><div class="stat-label">פריטים</div></div>
           <div class="stat-card"><span id="st-cats" class="stat-num">0</span><div class="stat-label">קטגוריות</div></div>
@@ -2239,6 +2378,19 @@ tr:hover td { background: var(--bg); }
         </div>
         <!-- Biometric management banner (admin) -->
         <div id="bio-setup-banner-admin" class="bio-banner hidden"></div>
+
+        <!-- Phone-as-camera quick action -->
+        <div class="card" style="background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5f 100%);border-color:rgba(255,255,255,.1);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:.95em;font-weight:900;color:#fff;margin-bottom:4px;">📱 סריקה עם טלפון</div>
+              <div style="font-size:.78em;color:rgba(255,255,255,.5);">חבר טלפון למחשב לסריקה מרחוק</div>
+            </div>
+            <button onclick="openPhonePairing()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px 20px;font-family:'Heebo',sans-serif;font-size:14px;font-weight:800;color:#fff;cursor:pointer;white-space:nowrap;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.22)'" onmouseout="this.style.background='rgba(255,255,255,.12)'">
+              📷 פתח מצלמת טלפון
+            </button>
+          </div>
+        </div>
 
         <div class="card">
           <div class="card-title">📊 פיזור לפי קטגוריה</div>
@@ -2457,107 +2609,54 @@ tr:hover td { background: var(--bg); }
       </div><!-- /tab-alerts -->
 
       <!-- ════════════ ORDERS TAB — הזמנות ════════════ -->
+      <!-- ════════════ ORDERS TAB — הזמנות ════════════ -->
       <div id="tab-orders" class="tab-pane hidden">
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-            <div class="card-title" style="margin-bottom:0;">🛒 רשימת הזמנות נדרשות</div>
+
+        <!-- Summary stats -->
+        <div class="stats-grid" style="margin-bottom:12px;">
+          <div class="stat-card danger"><span id="ord-out-num" class="stat-num">0</span><div class="stat-label">🚨 אזל</div></div>
+          <div class="stat-card warning"><span id="ord-low-num" class="stat-num">0</span><div class="stat-label">⚠️ נמוך</div></div>
+          <div class="stat-card"><span id="ord-cart-num" class="stat-num">0</span><div class="stat-label">🛒 בהזמנה</div></div>
+          <div class="stat-card success"><span id="ord-sent-num" class="stat-num">0</span><div class="stat-label">✅ נשלחו</div></div>
+        </div>
+
+        <!-- Controls -->
+        <div class="card" style="margin-bottom:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+            <div class="card-title" style="margin-bottom:0;">🛒 פריטים לצורך הזמנה</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button class="btn w-auto sm btn-gold" onclick="toggleOrderCart()">🛒 הזמנה (<span id="cart-count">0</span>)</button>
+              <button class="btn w-auto sm btn-blue" onclick="ordSelectAll()">✓ בחר הכל</button>
+              <button class="btn w-auto sm btn-gold" onclick="openOrderCart()">🛒 הזמנה <span id="cart-count" style="background:#fff;color:#e65100;border-radius:999px;padding:1px 7px;font-size:.85em;font-weight:900;">0</span></button>
               <button class="btn w-auto sm btn-green" onclick="sendOrderByEmail()">📧 שלח הזמנה</button>
-              <button class="btn w-auto sm btn-gray"  onclick="exportOrderCsv()">📥 CSV</button>
+              <button class="btn w-auto sm btn-gray" onclick="exportOrderCsv()">📥 CSV</button>
             </div>
           </div>
-          <p style="font-size:.8em;color:var(--text-muted);margin-bottom:14px;">פריטים שאזלו / מתחת לסף ← לחץ <b>הוסף להזמנה</b> על כל פריט שרוצים להזמין</p>
-          <div class="search-wrap" style="margin-bottom:12px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <span class="chip active-chip" data-of="all"  onclick="setOrdFilter('all',this)">הכל</span>
+            <span class="chip chip-red"   data-of="out"   onclick="setOrdFilter('out',this)">🚨 אזל</span>
+            <span class="chip chip-red"   data-of="low"   onclick="setOrdFilter('low',this)">⚠️ נמוך</span>
+            <span class="chip chip-blue"  data-of="cart"  onclick="setOrdFilter('cart',this)">🛒 בהזמנה</span>
+          </div>
+          <div class="search-wrap" style="margin-bottom:0;">
             <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="order-search" placeholder="חפש מוצר..." oninput="renderOrdersTab()">
+            <input type="text" class="search-input" id="order-search"
+              placeholder="חפש לפי שם / קטגוריה / ברקוד..."
+              oninput="renderOrdersTab()">
             <button class="search-clear" onclick="document.getElementById('order-search').value='';renderOrdersTab()">✕</button>
           </div>
-          <div id="orders-list"></div>
-        </div>
-      </div>
-
-      <!-- ════════════ DELIVERIES TAB — משלוחים ════════════ -->
-      <div id="tab-deliveries" class="tab-pane hidden">
-        <!-- Create new delivery -->
-        <div class="card">
-          <div class="card-title">📦 יצירת משלוח חדש</div>
-          <div class="input-row">
-            <input type="text"  id="del-title"     class="app-input" placeholder="כותרת המשלוח (חובה)" style="flex:1;margin-bottom:0;">
-            <input type="text"  id="del-recipient" class="app-input" placeholder="שם מקבל" style="width:145px;margin-bottom:0;">
-          </div>
-          <input type="email" id="del-email" class="app-input" placeholder="📧 אימייל מקבל (לשליחה אוטומטית)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 8px;">
-            <span style="font-size:.85em;font-weight:800;color:var(--text-soft);">
-              פריטי המשלוח <span id="del-items-count-lbl" style="color:var(--text-muted);font-weight:600;"></span>
-            </span>
-            <div style="display:flex;gap:6px;">
-              <button class="btn w-auto sm btn-blue" onclick="addDeliveryItemRow()">➕ הוסף שורה</button>
-              <button class="btn w-auto sm btn-gray" onclick="addDeliveryItemFromScan()">📷 סרוק ברקוד</button>
-            </div>
-          </div>
-          <div id="delivery-item-rows" style="margin-bottom:10px;"></div>
-          <textarea id="del-notes" class="app-input" placeholder="הערות נוספות (אופציונלי)" rows="2" style="resize:vertical;margin-bottom:8px;"></textarea>
-          <button class="btn btn-blue" onclick="createDelivery()">🚚 צור ובצע משלוח</button>
         </div>
 
-        <!-- Deliveries list -->
-        <div class="card">
+        <div id="orders-list"></div>
+
+        <!-- Sent orders history -->
+        <div class="card" style="margin-top:4px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-            <div class="card-title" style="margin-bottom:0;">📋 היסטוריית משלוחים</div>
-            <select class="app-select" id="del-filter" style="width:auto;margin-bottom:0;" onchange="renderDeliveries()">
-              <option value="all">הכל</option>
-              <option value="sent">נשלח</option>
-              <option value="pending">ממתין</option>
-              <option value="confirmed">אושר</option>
-            </select>
+            <div class="card-title" style="margin-bottom:0;">📋 הזמנות שנשלחו</div>
+            <button class="btn w-auto sm btn-gray" onclick="loadSentOrders()">🔄 רענן</button>
           </div>
-          <div class="search-wrap" style="margin-bottom:12px;">
-            <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="del-search"
-              placeholder="חפש לפי כותרת / שם מוצר / ברקוד / מקבל..."
-              oninput="renderDeliveries()">
-            <button class="search-clear" onclick="document.getElementById('del-search').value='';renderDeliveries()">✕</button>
+          <div id="sent-orders-list">
+            <div class="empty-state"><div class="es-icon">📋</div><p>אין הזמנות עדיין</p></div>
           </div>
-          <div id="deliveries-list">
-            <div class="empty-state"><div class="es-icon">🚚</div><p>אין משלוחים עדיין</p></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════════════ TRANSFER TAB — העברות ════════════ -->
-      <div id="tab-transfer" class="tab-pane hidden">
-        <div class="card">
-          <div class="card-title">🔄 העברת ציוד בין תחנות</div>
-          <div class="transfer-station-row">
-            <select class="app-select" id="trans-from" style="margin-bottom:0;" onchange="loadTransferItems()">
-              <option value="">מקור...</option>
-              <option value="hodhasharon">הוד השרון</option>
-              <option value="nave">נווה ימין</option>
-              <option value="karnei">קרני שומרון</option>
-              <option value="tnkids">ט.נ. ילדים</option>
-            </select>
-            <div class="transfer-arrow">➜</div>
-            <select class="app-select" id="trans-to" style="margin-bottom:0;">
-              <option value="">יעד...</option>
-              <option value="hodhasharon">הוד השרון</option>
-              <option value="nave">נווה ימין</option>
-              <option value="karnei">קרני שומרון</option>
-              <option value="tnkids">ט.נ. ילדים</option>
-            </select>
-          </div>
-          <div class="search-wrap" style="margin-bottom:10px;">
-            <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="trans-search" placeholder="חפש פריט..." oninput="renderTransferItems()">
-            <button class="search-clear" onclick="document.getElementById('trans-search').value='';renderTransferItems()">✕</button>
-          </div>
-          <div id="transfer-items-list"><div class="empty-state"><div class="es-icon">🔄</div><p>בחר תחנת מקור</p></div></div>
-          <div id="transfer-selected-count" style="font-size:.82em;color:var(--text-muted);font-weight:600;margin:8px 0 10px;"></div>
-          <button class="btn btn-blue" onclick="executeTransfer()">🔄 בצע העברה</button>
-        </div>
-        <div class="card">
-          <div class="card-title">📋 היסטוריית העברות</div>
-          <div id="transfer-log-list"><div class="empty-state"><div class="es-icon">📋</div><p>אין העברות עדיין</p></div></div>
         </div>
       </div>
 
@@ -2731,19 +2830,10 @@ tr:hover td { background: var(--bg); }
 
     <div class="card">
       <input type="text" id="u-reason" class="app-input" placeholder="✍️ סיבת הוצאה (נסיעה 54, מילוי אמבולנס...)">
-      <!-- Scan mode: device camera OR phone-as-camera -->
-      <div class="scan-btn-group">
-        <button class="scan-btn-option scan-btn-cam" onclick="openScanner('find')">
-          <span class="sbo-icon">📷</span>
-          <span class="sbo-title">סרוק ברקוד</span>
-          <span class="sbo-sub">מצלמת המכשיר</span>
-        </button>
-        <button class="scan-btn-option scan-btn-phone" onclick="openPhonePairing()">
-          <span class="sbo-icon">📱</span>
-          <span class="sbo-title">סרוק עם טלפון</span>
-          <span class="sbo-sub">חבר טלפון למחשב</span>
-        </button>
-      </div>
+      <button class="scan-btn" onclick="openScanner('find')">
+        <span class="scan-icon">📷</span>
+        סרוק ברקוד מוצר
+      </button>
       <div class="search-wrap" style="margin-bottom:0;">
         <span class="search-icon">🔍</span>
         <input type="text" id="u-search" class="search-input" placeholder="חפש ציוד..." oninput="handleUserSearch(this)">
@@ -2976,11 +3066,36 @@ tr:hover td { background: var(--bg); }
      V3 — ORDER CART PANEL (slide-up from bottom)
      ================================================================ -->
 <div id="order-cart-panel">
-  <div class="cart-panel-title">🛒 הזמנה שלי <span id="cart-badge" style="background:var(--c-gold);color:#000;padding:2px 8px;border-radius:999px;font-size:.75em;margin-right:4px;">0</span></div>
+  <div class="cart-panel-title">
+    🛒 הזמנה שלי
+    <span id="cart-badge" style="background:var(--c-gold);color:#000;border-radius:999px;padding:2px 9px;font-size:.75em;font-weight:900;">0</span>
+  </div>
   <div id="cart-items-list"></div>
-  <div style="display:flex;gap:8px;margin-top:10px;">
-    <button class="btn btn-green" onclick="sendOrderByEmail()">📧 שלח הזמנה</button>
+  <div style="display:flex;gap:8px;margin-top:12px;">
+    <button class="btn btn-green" onclick="sendOrderByEmail()">📧 שלח הזמנה עכשיו</button>
     <button class="btn btn-ghost w-auto" onclick="closeOrderCart()">סגור</button>
+  </div>
+</div>
+
+<!-- ================================================================
+     V3 — ORDER RECEIPT CONFIRM MODAL
+     ================================================================ -->
+<div id="order-receipt-modal">
+  <div class="rcm-box">
+    <div class="rcm-header">
+      <h3>✅ אישור קבלת הזמנה</h3>
+      <p id="rcm-order-id"></p>
+      <p style="margin-top:4px;">עדכן כמה יחידות התקבלו בפועל מכל פריט</p>
+    </div>
+    <div class="rcm-body">
+      <div id="rcm-items-list"></div>
+      <textarea id="rcm-notes" class="app-input" placeholder="הערות (אופציונלי — חסרים, נזק, תאריך תפוגה...)"
+        rows="2" style="resize:vertical;margin-top:14px;"></textarea>
+    </div>
+    <div class="rcm-footer">
+      <button class="btn btn-green" onclick="submitReceiptConfirm()">✅ אשר קבלה ועדכן מלאי</button>
+      <button class="btn btn-ghost w-auto" onclick="closeReceiptConfirm()">ביטול</button>
+    </div>
   </div>
 </div>
 
@@ -3627,6 +3742,7 @@ function checkLowStock() {
     return `${q===0?'🚨':'⚠️'} <b>${esc(i.name)}</b> — נותרו <b style="color:var(--c-red)">${q}</b>`;
   }).join('<br>');
   const ab = document.getElementById('admin-alert-banner');
+  const al = document.getElementById('admin-alert-list');
   if (ab && al) {
     if (low.length) { ab.classList.add('show'); al.innerHTML = makeList(low); }
     else ab.classList.remove('show');
@@ -5439,465 +5555,534 @@ window._onScanFindV3 = function(barcode) {
 };
 
 /* ================================================================
-   V3 — ORDERS TAB
+   V3 — ORDERS ENGINE (Complete Rewrite)
+   Flow:
+     1. Admin sees all low/out items → checks boxes → adds to cart
+     2. Cart panel shows summary with qty-to-order per item
+     3. "Send Order" → EmailJS email + saved to Firebase /orders
+     4. History shows all sent orders with "Confirm Receipt" button
+     5. Confirm Receipt modal → per item: received? how many?
+     6. Confirms → updates inventory + sends confirmation email
    ================================================================ */
-let orderCart = {}; // { itemId: { item, qty } }
+
+let _orderCart    = {};   // { itemId: { item, qtyToOrder } }
+let _ordFilter    = 'all';
+let _sentOrders   = [];
+let _receiptOrderId = null;
+
+/* ── Filter chips ── */
+function setOrdFilter(f, el) {
+  _ordFilter = f;
+  document.querySelectorAll('[data-of]').forEach(c => c.classList.toggle('active-chip', c.dataset.of === f));
+  renderOrdersTab();
+}
+
+/* ── Select all visible items ── */
+function ordSelectAll() {
+  const visible = _getFilteredOrderItems();
+  const allIn   = visible.every(i => _orderCart[i.id]);
+  visible.forEach(i => {
+    if (allIn) delete _orderCart[i.id];
+    else if (!_orderCart[i.id]) _orderCart[i.id] = { item: i, qtyToOrder: Math.max(1, getThreshold(i) - (Number.isFinite(i.qty)?i.qty:0)) };
+  });
+  _updateOrdStats();
+  renderOrdersTab();
+}
+
+/* ── Main render ── */
+function _getFilteredOrderItems() {
+  const q   = (document.getElementById('order-search')?.value||'').trim().toLowerCase();
+  const all = inv.filter(i => {
+    const qty = Number.isFinite(i.qty) ? i.qty : 0;
+    const thr = getThreshold(i);
+    if (_ordFilter === 'out')  return qty === 0;
+    if (_ordFilter === 'low')  return qty > 0 && qty <= thr;
+    if (_ordFilter === 'cart') return !!_orderCart[i.id];
+    return qty <= thr; // 'all' = out + low
+  });
+  if (!q) return all;
+  return all.filter(i =>
+    i.name.toLowerCase().includes(q) ||
+    (i.category||'').toLowerCase().includes(q) ||
+    (i.barcode||'').includes(q)
+  );
+}
 
 function renderOrdersTab() {
-  const q = (document.getElementById('order-search')?.value || '').trim().toLowerCase();
-  const needOrder = inv.filter(i => {
-    const qty = Number.isFinite(i.qty) ? i.qty : 0;
-    const thr = getThreshold(i);
-    return qty <= thr;
-  }).filter(i => !q || i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q));
   const el = document.getElementById('orders-list');
   if (!el) return;
-  if (!needOrder.length) { el.innerHTML = '<div class="empty-state"><div class="es-icon">✅</div><p>כל הפריטים במלאי תקין!</p></div>'; return; }
-  el.innerHTML = needOrder.map(i => {
-    const qty = Number.isFinite(i.qty) ? i.qty : 0;
-    const thr = getThreshold(i);
-    const inCart = !!orderCart[i.id];
-    return `<div class="order-item-card ${inCart ? 'in-cart' : ''}">
-      ${i.image ? `<img src="${esc(i.image)}" style="width:44px;height:44px;border-radius:var(--r-sm);object-fit:cover;flex-shrink:0;">` : `<div style="font-size:1.8em;flex-shrink:0;">${qty===0?'🚨':'⚠️'}</div>`}
-      <div class="order-qty-info">
-        <div class="order-item-name">${esc(i.name)}</div>
-        <div class="order-item-meta">קטגוריה: ${esc(i.category||'—')} · במלאי: <b>${qty}</b> · סף: <b>${thr}</b>${i.barcode ? ' · 📦 '+esc(i.barcode):''}</div>
+  const items = _getFilteredOrderItems();
+  _updateOrdStats();
+
+  if (!items.length) {
+    el.innerHTML = `<div class="empty-state"><div class="es-icon">${_ordFilter==='cart'?'🛒':'✅'}</div><p>${_ordFilter==='cart'?'ההזמנה ריקה — הוסף פריטים':'כל הפריטים במלאי תקין!'}</p></div>`;
+    return;
+  }
+
+  el.innerHTML = items.map(i => {
+    const qty    = Number.isFinite(i.qty) ? i.qty : 0;
+    const thr    = getThreshold(i);
+    const isOut  = qty === 0;
+    const inCart = !!_orderCart[i.id];
+    const suggested = Math.max(1, thr - qty + Math.ceil(thr * 0.5)); // suggest 150% of threshold
+    const cartQty = _orderCart[i.id]?.qtyToOrder || suggested;
+    const pct  = thr > 0 ? Math.min(100, Math.round(qty / thr * 100)) : (qty > 0 ? 100 : 0);
+    const barColor = isOut ? '#d32f2f' : pct < 40 ? '#e65100' : '#f9a825';
+
+    return `<div class="ord-item-card ${inCart?'in-cart':''}${isOut?' is-out':''}">
+      <div class="ord-item-left">
+        ${i.image
+          ? `<img src="${esc(i.image)}" class="ord-item-img" onclick="viewImage('${esc(i.image)}')">`
+          : `<div class="ord-item-emoji">${isOut?'🚨':'⚠️'}</div>`}
       </div>
-      ${inCart ? `<span class="order-cart-badge">✓ בהזמנה</span>` : ''}
-      <button class="btn sm w-auto ${inCart?'btn-red':'btn-green'}" onclick="toggleCartItem('${esc(i.id)}')">${inCart ? '✕ הסר' : '➕ הוסף'}</button>
+      <div class="ord-item-info">
+        <div class="ord-item-name">${esc(i.name)}</div>
+        <div class="ord-item-meta">
+          <span>${esc(i.category||'—')}</span>
+          <span class="${isOut?'ord-val-out':'ord-val-low'}">במלאי: <b>${qty}</b></span>
+          <span>סף: <b>${thr}</b></span>
+          ${i.barcode ? `<span style="font-family:monospace;">📦 ${esc(i.barcode)}</span>` : ''}
+        </div>
+        <div class="ord-bar-wrap">
+          <div class="ord-bar-fill" style="width:${pct}%;background:${barColor};"></div>
+        </div>
+      </div>
+      <div class="ord-item-right">
+        ${inCart ? `
+          <div class="ord-qty-ctrl">
+            <button class="ord-qty-btn" onclick="ordChangeQty('${esc(i.id)}',-1)">−</button>
+            <input type="number" class="ord-qty-input" value="${cartQty}" min="1"
+              onchange="ordSetQty('${esc(i.id)}',+this.value)"
+              onclick="this.select()">
+            <button class="ord-qty-btn" onclick="ordChangeQty('${esc(i.id)}',+1)">+</button>
+          </div>
+          <button class="ord-remove-btn" onclick="toggleOrdItem('${esc(i.id)}')">✕ הסר</button>
+        ` : `
+          <button class="ord-add-btn" onclick="toggleOrdItem('${esc(i.id)}')">
+            + הוסף
+          </button>
+        `}
+      </div>
     </div>`;
   }).join('');
-  updateCartCount();
 }
 
-function toggleCartItem(itemId) {
+function toggleOrdItem(itemId) {
   const item = inv.find(i => i.id === itemId);
   if (!item) return;
-  if (orderCart[itemId]) { delete orderCart[itemId]; showToast('הוסר מהרשימה'); }
-  else { orderCart[itemId] = { item, qty: 1 }; showToast('✅ נוסף להזמנה'); }
+  if (_orderCart[itemId]) {
+    delete _orderCart[itemId];
+  } else {
+    const qty = Number.isFinite(item.qty) ? item.qty : 0;
+    const thr = getThreshold(item);
+    _orderCart[itemId] = { item, qtyToOrder: Math.max(1, thr - qty + Math.ceil(thr * 0.5)) };
+  }
+  _updateOrdStats();
   renderOrdersTab();
-  renderCartPanel();
 }
 
-function updateCartCount() {
-  const n = Object.keys(orderCart).length;
-  ['cart-count','cart-badge'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = n; });
+function ordChangeQty(itemId, delta) {
+  if (!_orderCart[itemId]) return;
+  const newQty = (_orderCart[itemId].qtyToOrder || 1) + delta;
+  if (newQty < 1) return;
+  _orderCart[itemId].qtyToOrder = newQty;
+  renderOrdersTab();
 }
 
-function renderCartPanel() {
+function ordSetQty(itemId, val) {
+  if (!_orderCart[itemId]) return;
+  const v = parseInt(val, 10);
+  if (!v || v < 1) return;
+  _orderCart[itemId].qtyToOrder = v;
+}
+
+function _updateOrdStats() {
+  const outItems = inv.filter(i => (Number.isFinite(i.qty)?i.qty:0) === 0);
+  const lowItems = inv.filter(i => { const q=Number.isFinite(i.qty)?i.qty:0; return q>0&&q<=getThreshold(i); });
+  const cartN = Object.keys(_orderCart).length;
+  _setEl('ord-out-num',  outItems.length);
+  _setEl('ord-low-num',  lowItems.length);
+  _setEl('ord-cart-num', cartN);
+  ['cart-count','cart-badge'].forEach(id => _setEl(id, cartN));
+}
+function _setEl(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+
+/* ── Cart panel ── */
+function openOrderCart() {
+  _renderCartPanel();
+  document.getElementById('order-cart-panel')?.classList.add('open');
+}
+function closeOrderCart() {
+  document.getElementById('order-cart-panel')?.classList.remove('open');
+}
+
+function _renderCartPanel() {
   const el = document.getElementById('cart-items-list');
   if (!el) return;
-  const items = Object.values(orderCart);
-  if (!items.length) { el.innerHTML = '<p style="color:rgba(255,255,255,.5);font-size:.85em;">הסל ריק</p>'; }
-  else {
-    el.innerHTML = items.map(({item}) => `
-      <div class="cart-item-row">
-        <span class="ci-name">${esc(item.name)}</span>
-        <span class="ci-qty">${Number.isFinite(item.qty)?item.qty:0} במלאי</span>
-        <span class="ci-remove" onclick="toggleCartItem('${esc(item.id)}')">✕</span>
-      </div>`).join('');
+  const items = Object.values(_orderCart);
+  if (!items.length) {
+    el.innerHTML = '<p style="color:rgba(255,255,255,.5);font-size:.85em;text-align:center;padding:12px 0;">הסל ריק</p>';
+    return;
   }
-  updateCartCount();
+  el.innerHTML = items.map(({item, qtyToOrder}) => `
+    <div class="cart-item-row">
+      <span class="ci-name">${esc(item.name)}</span>
+      <span class="ci-qty" style="background:rgba(255,255,255,.12);border-radius:999px;padding:2px 8px;font-size:.8em;">
+        × ${qtyToOrder}
+      </span>
+      <span class="ci-remove" onclick="toggleOrdItem('${esc(item.id)}');_renderCartPanel()">✕</span>
+    </div>`).join('');
 }
 
-function toggleOrderCart() {
-  const p = document.getElementById('order-cart-panel');
-  if (p.classList.contains('open')) closeOrderCart();
-  else { renderCartPanel(); p.classList.add('open'); }
-}
-function closeOrderCart() { document.getElementById('order-cart-panel')?.classList.remove('open'); }
-
-// sendOrderByEmail, createDelivery, resendDeliveryEmail → defined later (EmailJS versions)
-
+/* ── Export CSV ── */
 function exportOrderCsv() {
-  const items = Object.values(orderCart);
+  const items = Object.values(_orderCart);
   if (!items.length) return showToast('ההזמנה ריקה', 'warning');
-  let csv = '\uFEFFשם,קטגוריה,במלאי,סף,ברקוד\n';
-  items.forEach(({item}) => {
-    csv += [csvSafe(item.name),csvSafe(item.category||''),Number.isFinite(item.qty)?item.qty:0,getThreshold(item),csvSafe(item.barcode||'')].join(',') + '\n';
+  let csv = '\uFEFFשם,קטגוריה,כמות להזמנה,במלאי,סף,ברקוד\n';
+  items.forEach(({item, qtyToOrder}) => {
+    const qty = Number.isFinite(item.qty) ? item.qty : 0;
+    csv += [csvSafe(item.name), csvSafe(item.category||''), qtyToOrder, qty, getThreshold(item), csvSafe(item.barcode||'')].join(',') + '\n';
   });
   dlFile(csv, `order_${dateStamp()}.csv`, 'text/csv');
 }
 
-/* ================================================================
-   V3 — DELIVERIES
-   ================================================================ */
-let _deliveries = [];
-let _deliveryConfirmId = null;
+/* ── Send Order Email (EmailJS) ── */
+async function sendOrderByEmail() {
+  const items = Object.values(_orderCart);
+  if (!items.length) return showToast('⚠️ ההזמנה ריקה — הוסף פריטים', 'warning');
+  if (!_ejsReady) return showToast('⚠️ EmailJS לא מוגדר — עבור להגדרות', 'warning');
 
-function listenDeliveries() {
-  db.ref('deliveries').on('value', snap => {
-    _deliveries = [];
-    if (snap.val()) { snap.forEach(c => { _deliveries.push({ id: c.key, ...c.val() }); }); }
-    _deliveries.sort((a,b) => b.createdAt - a.createdAt);
-    renderDeliveries();
+  const ordersEmail = await db.ref('settings/ordersEmail').once('value').then(s => s.val() || '');
+  const toEmail = ordersEmail || await asyncPrompt('שלח הזמנה', 'אימייל יעד להזמנה:', '');
+  if (!toEmail) return;
+
+  const orderId = 'ORD-' + Date.now().toString(36).toUpperCase().slice(-8);
+  const orderData = {
+    orderId,
+    items: items.map(({item, qtyToOrder}) => ({
+      id:         item.id,
+      name:       item.name,
+      category:   item.category || '',
+      qtyToOrder,
+      qtyInStock: Number.isFinite(item.qty) ? item.qty : 0,
+      threshold:  getThreshold(item),
+      barcode:    item.barcode || ''
+    })),
+    sentAt:  Date.now(),
+    sentBy:  window.curU || '',
+    toEmail,
+    status:  'sent',
+    station: CURRENT_SITE
+  };
+
+  // Save to Firebase FIRST
+  const dbRef = db.ref('orders').push();
+  await dbRef.set(orderData);
+  const savedId = dbRef.key;
+
+  // Build confirmation URL
+  const confirmUrl = window.location.href.split('?')[0] + '?confirm_order=' + orderId;
+
+  // Build email HTML
+  const html = buildEmailHtml({
+    type:       'order',
+    heroIcon:   '🛒',
+    title:      `הזמנת ציוד — ${orderId}`,
+    subtitle:   `${items.length} פריטים · ${new Date().toLocaleDateString('he-IL')}`,
+    badgeText:  '🛒 דרוש מילוי מלאי',
+    badgeColor: '#e65100',
+    stats: [
+      { value: items.length, label: 'פריטים', color: '#e65100' },
+      { value: items.reduce((s, {qtyToOrder}) => s + qtyToOrder, 0), label: 'יחידות', color: '#1a6eb5' },
+      { value: items.filter(({item}) => (Number.isFinite(item.qty)?item.qty:0) === 0).length, label: 'אזל לגמרי', color: '#d32f2f' }
+    ],
+    body: `<p>שלום,</p>
+           <p>להלן פירוט הציוד הדרוש לרכישה עבור <strong>${esc(CFG.headerText)}</strong>.</p>
+           <p>לאחר קבלת ההזמנה, לחץ על הכפתור למטה לאישור הקבלה.</p>`,
+    tableHeaders: ['שם מוצר', 'קטגוריה', 'כמות להזמנה', 'במלאי', 'ברקוד'],
+    tableRows: items.map(({item, qtyToOrder}) => [
+      item.name,
+      item.category || '—',
+      String(qtyToOrder),
+      String(Number.isFinite(item.qty) ? item.qty : 0),
+      item.barcode || '—'
+    ]),
+    cta: { text: '✅ אשר קבלת ההזמנה', url: confirmUrl }
   });
+
+  const sent = await ejsSend({
+    toEmail,
+    toName: 'ספק / מחסן',
+    subject: `🛒 הזמנת ציוד ${orderId} — ${CFG.headerText} — ${new Date().toLocaleDateString('he-IL')}`,
+    htmlContent: html,
+    type: 'order'
+  });
+
+  if (sent) {
+    _orderCart = {};
+    _updateOrdStats();
+    renderOrdersTab();
+    loadSentOrders();
+    closeOrderCart();
+  }
 }
 
-function addDeliveryItemRow(barcode, name) {
-  const container = document.getElementById('delivery-item-rows');
-  if (!container) return;
-  const rowId = 'drow_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
-  const row = document.createElement('div');
-  row.id = rowId;
-  row.className = 'del-item-builder-row';
-  // Autocomplete options from current inventory
-  const opts = inv.map(i => `<option value="${esc(i.name)}">`).join('');
-  row.innerHTML = `
-    <span style="font-size:1.1em;flex-shrink:0;">📦</span>
-    <input type="text"   class="app-input del-item-name" placeholder="שם מוצר..."
-      value="${esc(name||'')}" style="flex:1;margin-bottom:0;min-width:0;"
-      list="dlist_${rowId}" oninput="onDelItemInput(this,'${rowId}')">
-    <datalist id="dlist_${rowId}">${opts}</datalist>
-    <input type="number" class="app-input del-item-qty"  placeholder="כמות"
-      value="1" min="1" style="width:62px;margin-bottom:0;text-align:center;">
-    <input type="text"   class="app-input del-item-bc"   placeholder="ברקוד"
-      value="${esc(barcode||'')}" style="width:96px;margin-bottom:0;font-family:monospace;font-size:12px;">
-    <button class="btn btn-red sm w-auto" title="הסר שורה"
-      onclick="this.closest('.del-item-builder-row').remove();_updateDelRowCount()">✕</button>`;
-  container.appendChild(row);
-  _updateDelRowCount();
-  // Focus name field
-  setTimeout(() => row.querySelector('.del-item-name')?.focus(), 80);
+/* ── Sent orders history ── */
+async function loadSentOrders() {
+  const snap = await db.ref('orders').orderByChild('sentAt').limitToLast(30).once('value');
+  _sentOrders = [];
+  if (snap.val()) {
+    snap.forEach(c => _sentOrders.push({ _key: c.key, ...c.val() }));
+    _sentOrders.sort((a, b) => b.sentAt - a.sentAt);
+  }
+  _setEl('ord-sent-num', _sentOrders.length);
+  _renderSentOrders();
 }
 
-function _updateDelRowCount() {
-  const n = document.querySelectorAll('#delivery-item-rows .del-item-builder-row').length;
-  const lbl = document.querySelector('#del-items-count-lbl');
-  if (lbl) lbl.textContent = n ? `(${n} פריטים)` : '';
-}
-
-function onDelItemInput(input, rowId) {
-  const name  = input.value.trim();
-  if (!name) return;
-  const found = inv.find(i => i.name === name);
-  if (!found) return;
-  const row = rowId ? document.getElementById(rowId) : input.closest('.del-item-builder-row');
-  if (!row) return;
-  const bcIn = row.querySelector('.del-item-bc');
-  if (bcIn && found.barcode && !bcIn.value) bcIn.value = found.barcode;
-}
-function addDeliveryItemFromScan() { openScanner('delivery-item'); }
-
-// createDelivery → EmailJS version defined below
-
-function renderDeliveries() {
-  const el = document.getElementById('deliveries-list');
+function _renderSentOrders() {
+  const el = document.getElementById('sent-orders-list');
   if (!el) return;
-  const f = document.getElementById('del-filter')?.value || 'all';
-  const q = (document.getElementById('del-search')?.value || '').trim().toLowerCase();
-  let list = _deliveries;
-  if (f !== 'all') list = list.filter(d => d.status === f);
-  if (q) list = list.filter(d =>
-    d.title?.toLowerCase().includes(q) ||
-    d.recipient?.toLowerCase().includes(q) ||
-    (d.items||[]).some(it => it.name?.toLowerCase().includes(q) || it.barcode?.includes(q))
-  );
-  if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="es-icon">🚚</div><p>אין משלוחים</p></div>'; return; }
-  el.innerHTML = list.map(d => {
-    const statusMap = { pending:'ממתין', sent:'נשלח', confirmed:'אושר' };
-    const pillMap   = { pending:'pill-pending', sent:'pill-sent', confirmed:'pill-confirmed' };
-    const itemLines = (d.items||[]).map(it => `${it.name} × ${it.qty}${it.barcode?' ('+it.barcode+')':''}`).join(' · ');
-    return `<div class="delivery-card status-${d.status||'pending'}">
-      <div class="delivery-header">
+  if (!_sentOrders.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">📋</div><p>אין הזמנות עדיין</p></div>';
+    return;
+  }
+  el.innerHTML = _sentOrders.map(o => {
+    const statusMap   = { sent: 'נשלח', confirmed: 'אושר חלקית', fully_confirmed: 'אושר הכל' };
+    const statusColor = { sent: '#e65100', confirmed: '#1a6eb5', fully_confirmed: '#1b5e20' };
+    const st   = o.status || 'sent';
+    const date = new Date(o.sentAt).toLocaleDateString('he-IL');
+    const total= (o.items||[]).reduce((s, it) => s + (it.qtyToOrder||0), 0);
+    const rcvd = (o.items||[]).reduce((s, it) => s + (it.qtyReceived||0), 0);
+
+    return `<div class="sent-order-card status-${st}">
+      <div class="so-header">
         <div>
-          <div class="delivery-id">#${esc(d.delId||d.id)}</div>
-          <div class="delivery-title">${esc(d.title||'ללא כותרת')}</div>
-          <div class="delivery-meta">${d.recipient?'מקבל: '+esc(d.recipient)+' · ':''} ${d.email?esc(d.email)+' · ':''} ${new Date(d.createdAt).toLocaleDateString('he-IL')}</div>
+          <div class="so-id">#${esc(o.orderId||o._key?.slice(-8).toUpperCase()||'—')}</div>
+          <div class="so-date">${date} · ${esc(o.sentBy||'')} · ${(o.items||[]).length} פריטים</div>
+          <div class="so-email" style="font-size:.75em;color:var(--text-muted);">📧 ${esc(o.toEmail||'—')}</div>
         </div>
-        <span class="delivery-status-pill ${pillMap[d.status]||'pill-pending'}">${statusMap[d.status]||'ממתין'}</span>
+        <span class="so-status-pill" style="background:${statusColor[st]}18;color:${statusColor[st]};border:1px solid ${statusColor[st]}35;">
+          ${statusMap[st]||'נשלח'}
+        </span>
       </div>
-      <div class="delivery-items-list">${esc(itemLines)}</div>
-      ${d.notes ? `<div style="font-size:.79em;color:var(--text-muted);margin-bottom:10px;">הערות: ${esc(d.notes)}</div>` : ''}
-      <div class="delivery-actions">
-        ${d.status !== 'confirmed'
-          ? `<button class="btn sm w-auto btn-green" onclick="openDeliveryConfirm('${d.id}')">✅ אשר משלוח</button>`
-          : `<span style="font-size:.78em;color:var(--c-green);font-weight:800;">✅ אושר${d.confirmedAt?' ב-'+new Date(d.confirmedAt).toLocaleDateString('he-IL'):''}</span>`}
-        ${d.email && d.status !== 'confirmed' ? `<button class="btn sm w-auto btn-blue" onclick="resendDeliveryEmail('${d.id}')">📧 שלח שוב</button>` : ''}
-        <button class="btn sm w-auto btn-gray" onclick="exportDeliveryCsv('${d.id}')">📥 CSV</button>
+      ${st !== 'sent' ? `<div class="so-progress">
+        <div class="so-prog-bar">
+          <div class="so-prog-fill" style="width:${total?Math.round(rcvd/total*100):0}%"></div>
+        </div>
+        <span class="so-prog-lbl">${rcvd} / ${total} יחידות התקבלו</span>
+      </div>` : ''}
+      <div class="so-items-preview">${(o.items||[]).slice(0,4).map(it =>
+        `<span class="so-item-chip ${it.qtyReceived!=null?(it.qtyReceived>=it.qtyToOrder?'chip-done':'chip-partial'):''}">
+          ${esc(it.name)} × ${it.qtyToOrder}${it.qtyReceived!=null?' (קיבלנו '+it.qtyReceived+')':''}
+        </span>`).join('')}${(o.items||[]).length > 4 ? `<span class="so-item-chip">+${(o.items||[]).length-4} עוד</span>` : ''}</div>
+      <div class="so-actions">
+        ${st === 'sent'
+          ? `<button class="btn sm w-auto btn-green" onclick="openReceiptConfirm('${o._key}')">✅ אשר קבלה</button>`
+          : `<button class="btn sm w-auto btn-blue"  onclick="openReceiptConfirm('${o._key}')">✏️ עדכן קבלה</button>`}
+        <button class="btn sm w-auto btn-gray" onclick="exportSentOrderCsv('${o._key}')">📥 CSV</button>
+        ${_ejsReady && o.toEmail ? `<button class="btn sm w-auto" style="background:#1a6eb5;color:#fff;" onclick="resendOrder('${o._key}')">📧 שלח שוב</button>` : ''}
       </div>
     </div>`;
   }).join('');
 }
 
-function openDeliveryConfirm(deliveryId) {
-  const d = _deliveries.find(x => x.id === deliveryId);
-  if (!d) return showToast('משלוח לא נמצא', 'error');
-  _deliveryConfirmId = deliveryId;
+/* ── Receipt Confirmation Modal ── */
+function openReceiptConfirm(orderKey) {
+  const o = _sentOrders.find(x => x._key === orderKey);
+  if (!o) return showToast('הזמנה לא נמצאה', 'error');
+  _receiptOrderId = orderKey;
 
-  const idEl = document.getElementById('dcm-delivery-id');
-  if (idEl) idEl.textContent = '#' + (d.delId || deliveryId.slice(-8).toUpperCase()) + ' — ' + (d.title || '');
+  document.getElementById('rcm-order-id').textContent = '#' + (o.orderId || orderKey.slice(-8).toUpperCase()) + ' — ' + new Date(o.sentAt).toLocaleDateString('he-IL');
 
-  const el = document.getElementById('dcm-items-list');
-  if (!el) return;
-
-  if (!(d.items||[]).length) {
-    el.innerHTML = '<div style="padding:12px;color:var(--text-muted);font-size:.85em;">אין פריטים במשלוח זה</div>';
-  } else {
-    el.innerHTML = (d.items||[]).map((it, idx) => `
-      <div class="dcm-item-row">
-        <div style="flex:1;min-width:0;">
-          <div class="dcm-item-name">${esc(it.name)}</div>
-          ${it.barcode ? `<div class="dcm-item-bc">📦 ${esc(it.barcode)}</div>` : ''}
+  const el = document.getElementById('rcm-items-list');
+  el.innerHTML = (o.items||[]).map((it, idx) => {
+    const prev = it.qtyReceived ?? '';
+    const isFullyReceived = it.qtyReceived != null && it.qtyReceived >= it.qtyToOrder;
+    return `<div class="rcm-item-row" id="rcm-row-${idx}">
+      <div class="rcm-item-info">
+        <div class="rcm-item-name">${esc(it.name)}</div>
+        <div class="rcm-item-sub">
+          ${it.barcode ? `<span style="font-family:monospace;font-size:.78em;">📦 ${esc(it.barcode)}</span>` : ''}
+          <span>הוזמן: <b>${it.qtyToOrder}</b></span>
         </div>
-        <div class="dcm-sent-lbl">נשלח:&nbsp;<b>${it.qty}</b></div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
-          <div style="font-size:.68em;color:var(--text-muted);font-weight:700;">התקבל</div>
-          <input type="number" class="dcm-recv-input dcm-recv-qty" data-idx="${idx}"
-            value="${it.qty}" min="0" max="${(it.qty||1)*3}"
-            oninput="this.style.borderColor=+this.value===+${it.qty}?'var(--border)':+this.value<+${it.qty}?'var(--c-orange)':'var(--c-green)'">
+      </div>
+      <div class="rcm-recv-wrap">
+        <div class="rcm-recv-label">התקבל</div>
+        <div class="rcm-recv-btns">
+          <button class="rcm-btn rcm-btn-none ${prev===0?'active':''}"
+            onclick="rcmSetReceived(${idx}, 0, this)">✕ לא</button>
+          <input type="number" class="rcm-qty-input" id="rcm-qty-${idx}"
+            value="${prev !== '' ? prev : it.qtyToOrder}" min="0" max="${it.qtyToOrder * 3}"
+            oninput="rcmInputChanged(${idx})">
+          <button class="rcm-btn rcm-btn-all ${isFullyReceived?'active':''}"
+            onclick="rcmSetReceived(${idx}, ${it.qtyToOrder}, this)">✓ הכל</button>
         </div>
-      </div>`).join('');
-  }
+      </div>
+    </div>`;
+  }).join('');
 
-  const notesEl = document.getElementById('dcm-notes');
-  if (notesEl) notesEl.value = '';
-
-  const modal = document.getElementById('delivery-confirm-modal');
-  if (modal) modal.classList.add('show');
+  document.getElementById('rcm-notes').value = o.confirmNotes || '';
+  document.getElementById('order-receipt-modal').classList.add('show');
 }
 
-function closeDeliveryConfirm() {
-  document.getElementById('delivery-confirm-modal').classList.remove('show');
-  _deliveryConfirmId = null;
+function closeReceiptConfirm() {
+  document.getElementById('order-receipt-modal').classList.remove('show');
+  _receiptOrderId = null;
 }
 
-async function confirmDeliverySubmit() {
-  if (!_deliveryConfirmId) return showToast('⚠️ אין משלוח פעיל', 'warning');
-  const d = _deliveries.find(x => x.id === _deliveryConfirmId);
-  if (!d) return showToast('⚠️ משלוח לא נמצא', 'error');
+function rcmSetReceived(idx, val, btn) {
+  const input = document.getElementById(`rcm-qty-${idx}`);
+  if (input) input.value = val;
+  // Style active button
+  const row = document.getElementById(`rcm-row-${idx}`);
+  row?.querySelectorAll('.rcm-btn').forEach(b => b.classList.remove('active'));
+  btn?.classList.add('active');
+}
 
-  const btn = document.querySelector('#delivery-confirm-modal .btn-green');
+function rcmInputChanged(idx) {
+  const input = document.getElementById(`rcm-qty-${idx}`);
+  if (!input) return;
+  const row = document.getElementById(`rcm-row-${idx}`);
+  row?.querySelectorAll('.rcm-btn').forEach(b => b.classList.remove('active'));
+}
+
+async function submitReceiptConfirm() {
+  if (!_receiptOrderId) return;
+  const o = _sentOrders.find(x => x._key === _receiptOrderId);
+  if (!o) return;
+
+  const btn = document.querySelector('#order-receipt-modal .btn-green');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ שומר...'; }
 
-  const qtyInputs = [...document.querySelectorAll('.dcm-recv-qty')];
-  const receivedItems = (d.items||[]).map((it, idx) => ({
-    ...it,
-    qtyReceived: Math.max(0, parseInt(qtyInputs[idx]?.value ?? it.qty, 10) || 0)
-  }));
-  const notes = document.getElementById('dcm-notes')?.value?.trim() || '';
-
   try {
-    // 1. Update delivery status in Firebase
-    await db.ref('deliveries/' + _deliveryConfirmId).update({
-      status: 'confirmed',
-      confirmedAt: Date.now(),
-      confirmedBy: window.curU || 'לא ידוע',
-      receivedItems,
-      confirmNotes: notes
+    const notes = document.getElementById('rcm-notes').value.trim();
+    const updatedItems = (o.items||[]).map((it, idx) => {
+      const input = document.getElementById(`rcm-qty-${idx}`);
+      const qtyReceived = input ? Math.max(0, parseInt(input.value, 10) || 0) : (it.qtyReceived ?? 0);
+      return { ...it, qtyReceived };
     });
 
-    // 2. Update inventory for each received item
-    for (const it of receivedItems) {
-      if (it.itemId && it.qtyReceived > 0) {
-        try {
-          await changeQuantity({
-            itemId: it.itemId,
-            delta: it.qtyReceived,
-            user: window.curU,
-            reason: `אישור משלוח ${d.delId || _deliveryConfirmId}`,
-            action: 'add'
-          });
-        } catch(e) { console.warn('qty update failed for', it.name, e); }
+    const allFull = updatedItems.every(it => it.qtyReceived >= it.qtyToOrder);
+    const anyRcvd = updatedItems.some(it => it.qtyReceived > 0);
+    const newStatus = allFull ? 'fully_confirmed' : anyRcvd ? 'confirmed' : 'sent';
+
+    // Update Firebase
+    await db.ref('orders/' + _receiptOrderId).update({
+      items:          updatedItems,
+      status:         newStatus,
+      confirmedAt:    Date.now(),
+      confirmedBy:    window.curU || '',
+      confirmNotes:   notes
+    });
+
+    // Update inventory for received items
+    for (const it of updatedItems) {
+      if (it.id && it.qtyReceived > 0) {
+        const prev = o.items.find(x => x.id === it.id)?.qtyReceived || 0;
+        const delta = it.qtyReceived - prev;
+        if (delta > 0) {
+          try {
+            await changeQuantity({
+              itemId: it.id,
+              delta,
+              user:   window.curU,
+              reason: `קבלת הזמנה ${o.orderId || _receiptOrderId}`,
+              action: 'add'
+            });
+          } catch(e) { console.warn('qty update failed:', it.name, e); }
+        }
       }
     }
 
-    // 3. Send confirmation email (EmailJS)
+    // Send confirmation email
     if (_ejsReady) {
-      _sendDeliveryConfirmNotice(d, receivedItems, notes).catch(() => {});
+      const reportEmail = await db.ref('settings/reportEmail').once('value').then(s => s.val() || '');
+      if (reportEmail) {
+        const html = buildEmailHtml({
+          type:       'confirm',
+          heroIcon:   '✅',
+          title:      `אישור קבלה — ${o.orderId}`,
+          subtitle:   `${new Date().toLocaleDateString('he-IL')}`,
+          badgeText:  allFull ? '✅ התקבל הכל' : '⚠️ התקבל חלקית',
+          badgeColor: allFull ? '#1b5e20' : '#e65100',
+          stats: [
+            { value: updatedItems.filter(it => it.qtyReceived >= it.qtyToOrder).length, label: 'הושלמו', color: '#1b5e20' },
+            { value: updatedItems.filter(it => it.qtyReceived > 0 && it.qtyReceived < it.qtyToOrder).length, label: 'חלקי', color: '#e65100' },
+            { value: updatedItems.filter(it => !it.qtyReceived).length, label: 'לא התקבל', color: '#d32f2f' }
+          ],
+          body: `<p>אישור קבלה ע"י <strong>${esc(window.curU)}</strong>.</p>${notes ? `<p><strong>הערות:</strong> ${esc(notes)}</p>` : ''}`,
+          tableHeaders: ['פריט', 'הוזמן', 'התקבל', 'סטטוס'],
+          tableRows: updatedItems.map(it => [
+            it.name,
+            String(it.qtyToOrder),
+            String(it.qtyReceived),
+            it.qtyReceived >= it.qtyToOrder ? '✅' : it.qtyReceived > 0 ? '⚠️ חלקי' : '❌'
+          ]),
+          cta: null
+        });
+        ejsSend({
+          toEmail:     reportEmail,
+          toName:      'מנהל',
+          subject:     `✅ אישור קבלה ${o.orderId} — ${CFG.headerText}`,
+          htmlContent: html,
+          type:        'confirm'
+        }).catch(() => {});
+      }
     }
 
-    closeDeliveryConfirm();
-    showToast('✅ משלוח אושר והמלאי עודכן!');
+    closeReceiptConfirm();
+    showToast(allFull ? '✅ אושר הכל! המלאי עודכן.' : '✅ קבלה חלקית נשמרה.');
+    loadSentOrders();
 
   } catch(e) {
-    console.error('confirmDeliverySubmit error:', e);
-    showToast('❌ שגיאה באישור המשלוח: ' + (e.message || e), 'error');
-    if (btn) { btn.disabled = false; btn.textContent = '✅ אשר משלוח'; }
+    console.error('submitReceiptConfirm:', e);
+    showToast('❌ שגיאה: ' + (e.message || e), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '✅ אשר קבלה'; }
   }
 }
 
-// resendDeliveryEmail → EmailJS version defined below
-
-function exportDeliveryCsv(deliveryId) {
-  const d = _deliveries.find(x => x.id === deliveryId);
-  if (!d) return;
-  let csv = '\uFEFFפריט,כמות נשלחה,כמות התקבלה,ברקוד\n';
-  (d.items||[]).forEach(it => {
-    const recv = (d.receivedItems||[]).find(r=>r.name===it.name)?.qtyReceived || '';
-    csv += [csvSafe(it.name), it.qty, recv, csvSafe(it.barcode||'')].join(',') + '\n';
+/* ── Resend order email ── */
+async function resendOrder(orderKey) {
+  const o = _sentOrders.find(x => x._key === orderKey);
+  if (!o || !o.toEmail) return showToast('אין אימייל', 'warning');
+  const confirmUrl = window.location.href.split('?')[0] + '?confirm_order=' + (o.orderId || orderKey);
+  const html = buildEmailHtml({
+    type: 'order', heroIcon: '🛒',
+    title: `תזכורת: הזמנה ${o.orderId}`,
+    subtitle: `${new Date(o.sentAt).toLocaleDateString('he-IL')}`,
+    badgeText: '⏳ ממתין לאישורך', badgeColor: '#e65100',
+    body: '<p>תזכורת — הזמנה ממתינה לאישור קבלתך.</p>',
+    tableHeaders: ['פריט', 'כמות'],
+    tableRows: (o.items||[]).map(it => [it.name, String(it.qtyToOrder)]),
+    cta: { text: '✅ אשר קבלת ההזמנה', url: confirmUrl }
   });
-  dlFile(csv, `delivery_${d.delId||deliveryId}_${dateStamp()}.csv`, 'text/csv');
+  await ejsSend({ toEmail: o.toEmail, toName: 'ספק', subject: `🛒 תזכורת הזמנה ${o.orderId}`, htmlContent: html, type: 'order' });
 }
 
-/* ================================================================
-   V3 — TRANSFER BETWEEN STATIONS
-   ================================================================ */
-let _transferInv = [];
-let _transferSelected = {}; // { itemId: qty }
-
-async function loadTransferItems() {
-  const fromSite = document.getElementById('trans-from')?.value;
-  if (!fromSite) return;
-  const config = SITE_CONFIG[fromSite];
-  if (!config) return showToast('תחנה לא נמצאה', 'error');
-  showToast('⏳ טוען נתוני תחנה...');
-  // Connect to remote Firebase and read inventory
-  try {
-    const snap = await firebase.database().app.options.databaseURL !== config.firebase.databaseURL
-      ? await (async () => {
-          // Use fetch for cross-DB (via REST)
-          const url = config.firebase.databaseURL + '/inventory.json?auth=' + config.firebase.apiKey;
-          const res = await fetch(url);
-          return res.json();
-        })()
-      : await db.ref('inventory').once('value').then(s => s.val());
-    _transferInv = snap ? Object.entries(snap).map(([k,v])=>({id:k,...v})) : [];
-    renderTransferItems();
-    showToast(`✅ נטענו ${_transferInv.length} פריטים`);
-  } catch(e) {
-    // Fallback: use current station inventory
-    _transferInv = [...inv];
-    renderTransferItems();
-    showToast('⚠️ משתמש במלאי תחנה נוכחית', 'warning');
-  }
-}
-
-function renderTransferItems() {
-  const el = document.getElementById('transfer-items-list');
-  if (!el) return;
-  const q = (document.getElementById('trans-search')?.value||'').trim().toLowerCase();
-  let list = _transferInv;
-  if (q) list = list.filter(i => i.name?.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q) || (i.barcode||'').includes(q));
-  if (!list.length) { el.innerHTML = '<div class="empty-state"><div class="es-icon">📦</div><p>אין פריטים להצגה</p></div>'; return; }
-  const selectedCount = Object.keys(_transferSelected).length;
-  document.getElementById('transfer-selected-count').textContent = selectedCount ? `✓ נבחרו ${selectedCount} פריטים` : '';
-  el.innerHTML = list.map(i => {
-    const sel = !!_transferSelected[i.id];
-    const qty = Number.isFinite(i.qty)?i.qty:0;
-    return `<div class="transfer-item-row ${sel?'selected':''}" onclick="toggleTransferItem('${esc(i.id)}')">
-      <div class="transfer-item-check">${sel ? '✅' : '⬜'}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:800;font-size:.9em;">${esc(i.name)}</div>
-        <div style="font-size:.77em;color:var(--text-muted);">${esc(i.category||'—')} · במלאי: ${qty}${i.barcode?' · 📦 '+esc(i.barcode):''}</div>
-      </div>
-      ${sel ? `<input class="transfer-qty-input" type="number" value="${_transferSelected[i.id]||1}" min="1" max="${qty}" onclick="event.stopPropagation()" onchange="setTransferQty('${esc(i.id)}',this.value)">` : `<span style="font-size:.82em;color:var(--text-muted);">${qty} יח׳</span>`}
-    </div>`;
-  }).join('');
-}
-
-function toggleTransferItem(itemId) {
-  if (_transferSelected[itemId]) delete _transferSelected[itemId];
-  else {
-    const item = _transferInv.find(i => i.id === itemId);
-    _transferSelected[itemId] = item ? Math.min(1, Number.isFinite(item.qty)?item.qty:0) : 1;
-  }
-  renderTransferItems();
-}
-
-function setTransferQty(itemId, val) {
-  _transferSelected[itemId] = Math.max(1, parseInt(val,10)||1);
-}
-
-async function executeTransfer() {
-  const fromSite = document.getElementById('trans-from')?.value;
-  const toSite   = document.getElementById('trans-to')?.value;
-  if (!fromSite || !toSite) return showToast('⚠️ בחר תחנת מקור ויעד', 'warning');
-  if (fromSite === toSite) return showToast('⚠️ מקור ויעד זהים', 'warning');
-  const selIds = Object.keys(_transferSelected);
-  if (!selIds.length) return showToast('⚠️ לא נבחרו פריטים', 'warning');
-  const ok = await asyncConfirm('אישור העברה', `להעביר ${selIds.length} פריטים מ${SITE_CONFIG[fromSite]?.headerText||fromSite} ל${SITE_CONFIG[toSite]?.headerText||toSite}?`);
-  if (!ok) return;
-  const transferItems = selIds.map(id => {
-    const item = _transferInv.find(i => i.id === id);
-    return { id, name: item?.name||id, qty: _transferSelected[id], barcode: item?.barcode||'' };
+/* ── Export single sent order ── */
+function exportSentOrderCsv(orderKey) {
+  const o = _sentOrders.find(x => x._key === orderKey);
+  if (!o) return;
+  let csv = '\uFEFFפריט,קטגוריה,הוזמן,התקבל,ברקוד\n';
+  (o.items||[]).forEach(it => {
+    csv += [csvSafe(it.name), csvSafe(it.category||''), it.qtyToOrder||0, it.qtyReceived??'', csvSafe(it.barcode||'')].join(',') + '\n';
   });
-  await db.ref('transfers').push({ from: fromSite, to: toSite, items: transferItems, transferredAt: Date.now(), transferredBy: window.curU });
-  // Subtract from current station if same
-  if (fromSite === CURRENT_SITE) {
-    for (const it of transferItems) {
-      try { await changeQuantity({ itemId: it.id, delta: -it.qty, user: window.curU, reason: `העברה ל${SITE_CONFIG[toSite]?.headerText||toSite}`, action: 'transfer' }); } catch(e) {}
-    }
-  }
-  _transferSelected = {};
-  renderTransferItems();
-  loadTransferLogs();
-  showToast(`✅ העברה בוצעה! ${selIds.length} פריטים`);
+  dlFile(csv, `order_${o.orderId||orderKey}_${dateStamp()}.csv`, 'text/csv');
 }
 
-async function loadTransferLogs() {
-  const snap = await db.ref('transfers').orderByChild('transferredAt').limitToLast(20).once('value');
-  const el = document.getElementById('transfer-log-list');
-  if (!el) return;
-  const logs2 = [];
-  if (snap.val()) snap.forEach(c => logs2.push({ id: c.key, ...c.val() }));
-  logs2.sort((a,b) => b.transferredAt - a.transferredAt);
-  if (!logs2.length) { el.innerHTML = '<div class="empty-state"><div class="es-icon">📋</div><p>אין העברות</p></div>'; return; }
-  el.innerHTML = logs2.map(t => {
-    const fromN = SITE_CONFIG[t.from]?.headerText || t.from;
-    const toN   = SITE_CONFIG[t.to]?.headerText   || t.to;
-    const items = (t.items||[]).map(it => `${it.name} × ${it.qty}`).join(', ');
-    return `<div style="padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;font-size:.84em;">
-      <div style="font-weight:800;color:var(--text);margin-bottom:3px;">${fromN} ➜ ${toN}</div>
-      <div style="color:var(--text-soft);">${esc(items)}</div>
-      <div style="color:var(--text-muted);font-size:.8em;margin-top:3px;">${new Date(t.transferredAt).toLocaleString('he-IL')} · ${esc(t.transferredBy||'')}</div>
-    </div>`;
-  }).join('');
-}
+/* ── Handle ?confirm_order= URL param (for supplier link) ── */
+(function checkOrderConfirmParam() {
+  const orderId = new URLSearchParams(window.location.search).get('confirm_order');
+  if (!orderId) return;
+  // After data loads, find and open confirm
+  const check = setInterval(async () => {
+    if (!_sentOrders.length) return;
+    const o = _sentOrders.find(x => x.orderId === orderId || x._key === orderId);
+    if (o) { clearInterval(check); openReceiptConfirm(o._key); }
+  }, 800);
+  setTimeout(() => clearInterval(check), 20000);
+})();
 
-/* ================================================================
-   V3 — STATION COMPARISON
-   ================================================================ */
-async function runComparison() {
-  const s1 = document.getElementById('cmp-s1')?.value;
-  const s2 = document.getElementById('cmp-s2')?.value;
-  if (!s1 || !s2 || s1 === s2) return showToast('⚠️ בחר שתי תחנות שונות', 'warning');
-  document.getElementById('compare-summary').textContent = '⏳ טוען נתונים...';
-  document.getElementById('compare-results').innerHTML = '';
-  try {
-    const cfg1 = SITE_CONFIG[s1], cfg2 = SITE_CONFIG[s2];
-    const [snap1, snap2] = await Promise.all([
-      fetch(cfg1.firebase.databaseURL + '/inventory.json').then(r=>r.json()),
-      fetch(cfg2.firebase.databaseURL + '/inventory.json').then(r=>r.json())
-    ]);
-    const inv1 = snap1 ? Object.entries(snap1).map(([k,v])=>({id:k,...v})) : [];
-    const inv2 = snap2 ? Object.entries(snap2).map(([k,v])=>({id:k,...v})) : [];
-    // Match by name
-    const names = [...new Set([...inv1.map(i=>i.name), ...inv2.map(i=>i.name)])].sort((a,b)=>a.localeCompare(b,'he'));
-    document.getElementById('compare-summary').textContent = `השוואה בין ${cfg1.headerText} ל${cfg2.headerText} · ${names.length} פריטים סה"כ`;
-    const el = document.getElementById('compare-results');
-    el.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;margin-bottom:10px;font-weight:900;font-size:.88em;padding:0 6px;">
-        <span style="color:var(--c-blue);">${esc(cfg1.headerText)}</span>
-        <span style="color:var(--text-muted);text-align:center;">פריט</span>
-        <span style="color:var(--c-teal);text-align:left;">${esc(cfg2.headerText)}</span>
-      </div>` +
-      names.map(name => {
-        const i1 = inv1.find(x => x.name === name);
-        const i2 = inv2.find(x => x.name === name);
-        const q1 = i1 ? (Number.isFinite(i1.qty)?i1.qty:0) : '—';
-        const q2 = i2 ? (Number.isFinite(i2.qty)?i2.qty:0) : '—';
-        const diff = (typeof q1==='number' && typeof q2==='number') ? q1-q2 : null;
-        const diffStr = diff !== null ? `${diff>0?'+':''}${diff}` : '';
-        const diffCls = diff === null ? '' : diff > 0 ? 'pos' : diff < 0 ? 'neg' : '';
-        const rowBg = !i1 ? 'background:#fff3e0' : !i2 ? 'background:#e8f5e9' : '';
-        return `<div style="display:grid;grid-template-columns:50px 1fr 50px;gap:8px;padding:7px 6px;border-bottom:1px solid var(--border);align-items:center;font-size:.84em;${rowBg}">
-          <span style="color:var(--c-blue);font-weight:900;text-align:center;">${q1}</span>
-          <span style="font-weight:700;text-align:center;">${esc(name)}</span>
-          <span style="color:var(--c-teal);font-weight:900;text-align:center;">${q2}</span>
-        </div>`;
-      }).join('');
-  } catch(e) {
-    document.getElementById('compare-summary').textContent = '⚠️ שגיאה בטעינת נתונים';
-    showToast('שגיאה: ' + e.message, 'error');
-  }
-}
-
-function exportComparisonCsv() {
-  const el = document.getElementById('compare-results');
-  if (!el || !el.children.length) return showToast('אין נתונים לייצוא', 'warning');
-  showToast('⚠️ בצע השוואה תחילה', 'warning');
-}
 
 
 /* ================================================================
@@ -6332,181 +6517,6 @@ function buildEmailHtml({ type='general', title, subtitle='', heroIcon='📧',
 }
 
 /* ================================================================
-   V3 — ORDER EMAIL
-   ================================================================ */
-async function sendOrderByEmail() {
-  const items = Object.values(orderCart);
-  if (!items.length) return showToast('⚠️ ההזמנה ריקה — הוסף פריטים','warning');
-  const ordersEmail = await db.ref('settings/ordersEmail').once('value').then(s=>s.val()||'');
-  const toEmail = ordersEmail || await asyncPrompt('שלח הזמנה','אימייל יעד:','');
-  if (!toEmail) return;
-
-  const tableHeaders = ['שם מוצר','קטגוריה','במלאי','סף מינ׳','ברקוד'];
-  const tableRows    = items.map(({item})=>[
-    item.name, item.category||'—',
-    String(Number.isFinite(item.qty)?item.qty:0),
-    String(getThreshold(item)),
-    item.barcode||'—'
-  ]);
-
-  const html = buildEmailHtml({
-    type:'order', heroIcon:'🛒',
-    title:`הזמנת ציוד — ${CFG.headerText}`,
-    subtitle:`${items.length} פריטים · ${new Date().toLocaleDateString('he-IL')}`,
-    badgeText:'🛒 דרוש מילוי מלאי', badgeColor:'#e65100',
-    stats:[
-      { value:items.length, label:'פריטים', color:'#e65100' },
-      { value:items.filter(({item})=>(Number.isFinite(item.qty)?item.qty:0)===0).length, label:'אזל לחלוטין', color:'#d32f2f' },
-    ],
-    body:`<p>שלום,</p><p>להלן רשימת הפריטים שיש לרכוש עבור <strong>${esc(CFG.headerText)}</strong>. אנא הכן ושלח את הציוד בהקדם האפשרי.</p>`,
-    tableHeaders, tableRows, cta:null
-  });
-
-  const sent = await ejsSend({ toEmail, toName:'ספק', subject:`🛒 הזמנת ציוד — ${CFG.headerText} — ${new Date().toLocaleDateString('he-IL')}`, htmlContent:html, type:'order' });
-  if (sent) {
-    await db.ref('orders').push({ items:items.map(({item})=>({id:item.id,name:item.name,qty:Number.isFinite(item.qty)?item.qty:0,thr:getThreshold(item)})), sentAt:Date.now(), sentBy:window.curU, station:CURRENT_SITE, toEmail });
-    orderCart = {};
-    renderOrdersTab(); renderCartPanel();
-  }
-}
-
-/* ================================================================
-   V3 — DELIVERY EMAIL
-   ================================================================ */
-async function createDelivery() {
-  const title     = document.getElementById('del-title')?.value?.trim();
-  const recipient = document.getElementById('del-recipient')?.value?.trim();
-  const email     = document.getElementById('del-email')?.value?.trim();
-  const notes     = document.getElementById('del-notes')?.value?.trim();
-
-  if (!title) return showToast('⚠️ חובה למלא כותרת למשלוח', 'warning');
-
-  const rows = document.querySelectorAll('#delivery-item-rows .del-item-builder-row');
-  if (!rows.length) return showToast('⚠️ הוסף לפחות פריט אחד', 'warning');
-
-  const items = [];
-  let hasEmpty = false;
-  rows.forEach(row => {
-    const name = row.querySelector('.del-item-name')?.value?.trim();
-    const qty  = parseInt(row.querySelector('.del-item-qty')?.value || '1', 10);
-    const bc   = row.querySelector('.del-item-bc')?.value?.trim();
-    if (!name) { hasEmpty = true; return; }
-    const found = inv.find(i => i.name === name);
-    items.push({
-      name,
-      qty:    isNaN(qty) || qty < 1 ? 1 : qty,
-      barcode: bc || found?.barcode || '',
-      itemId:  found?.id || ''
-    });
-  });
-
-  if (hasEmpty)    return showToast('⚠️ יש שורות ריקות — מלא שם מוצר או הסר', 'warning');
-  if (!items.length) return showToast('⚠️ אין פריטים תקינים', 'warning');
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-    return showToast('⚠️ כתובת אימייל לא תקינה', 'warning');
-
-  const btn = document.querySelector('#tab-deliveries .btn-blue');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ שומר...'; }
-
-  try {
-    const delId = 'DEL-' + Date.now().toString(36).toUpperCase().slice(-8);
-    const delivery = {
-      delId, title,
-      recipient: recipient || '',
-      email:     email || '',
-      notes:     notes || '',
-      items,
-      status:    'sent',
-      createdAt: Date.now(),
-      createdBy: window.curU || '',
-      station:   CURRENT_SITE
-    };
-    await db.ref('deliveries').push(delivery);
-
-    // Send email to recipient if provided
-    if (email && _ejsReady) {
-      const confirmUrl = window.location.href.split('?')[0] + '?confirm_delivery=' + delId;
-      const html = buildEmailHtml({
-        type: 'delivery', heroIcon: '📦',
-        title: `משלוח ${delId}`,
-        subtitle: title,
-        badgeText: `📦 משלוח מ${esc(CFG.headerText)}`, badgeColor: '#1a6eb5',
-        stats: [{ value: items.length, label: 'פריטים', color: '#1a6eb5' },
-                { value: items.reduce((s,it)=>s+it.qty,0), label: 'יחידות', color: '#0288d1' }],
-        body: `<p>שלום ${esc(recipient) || ''},</p>
-               <p>נשלח עבורך משלוח ציוד מ<strong>${esc(CFG.headerText)}</strong>.</p>
-               ${notes ? `<p><strong>הערות:</strong> ${esc(notes)}</p>` : ''}
-               <p>לחץ על הכפתור למטה לאישור הקבלה ועדכון הכמויות שהתקבלו.</p>`,
-        tableHeaders: ['פריט', 'כמות', 'ברקוד'],
-        tableRows: items.map(it => [it.name, String(it.qty), it.barcode || '—']),
-        cta: { text: '✅ אשר קבלת משלוח', url: confirmUrl }
-      });
-      await ejsSend({
-        toEmail: email, toName: recipient || '',
-        subject: `📦 משלוח ${delId} — ${title}`,
-        htmlContent: html, type: 'delivery'
-      });
-    } else if (email && !_ejsReady) {
-      showToast('⚠️ EmailJS לא מוגדר — משלוח נשמר ללא שליחת אימייל', 'warning');
-    }
-
-    // Reset form
-    document.getElementById('del-title').value     = '';
-    document.getElementById('del-recipient').value = '';
-    document.getElementById('del-email').value     = '';
-    document.getElementById('del-notes').value     = '';
-    document.getElementById('delivery-item-rows').innerHTML = '';
-    addDeliveryItemRow(); // add fresh empty row
-
-    if (!email || !_ejsReady) showToast(`✅ משלוח ${delId} נוצר!`);
-
-  } catch(e) {
-    console.error('createDelivery error:', e);
-    showToast('❌ שגיאה: ' + (e.message || e), 'error');
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🚚 צור ובצע משלוח'; }
-  }
-}
-
-async function resendDeliveryEmail(deliveryId) {
-  const d = _deliveries.find(x => x.id===deliveryId);
-  if (!d||!d.email) return showToast('אין אימייל למשלוח זה','warning');
-  const confirmUrl = window.location.href.split('?')[0] + '?confirm_delivery=' + (d.delId||deliveryId);
-  const html = buildEmailHtml({
-    type:'delivery', heroIcon:'📦',
-    title:`תזכורת: משלוח ${d.delId||deliveryId}`,
-    subtitle:d.title||'',
-    badgeText:'⏳ ממתין לאישורך', badgeColor:'#e65100',
-    body:`<p>שלום ${esc(d.recipient)||''},</p><p>תזכורת — משלוח ממתין לאישורך.</p>`,
-    tableHeaders:['פריט','כמות'],
-    tableRows:(d.items||[]).map(it=>[it.name, String(it.qty)]),
-    cta:{ text:'✅ אשר קבלת משלוח', url:confirmUrl }
-  });
-  await ejsSend({ toEmail:d.email, toName:d.recipient||'', subject:`📦 תזכורת: משלוח ${d.delId||deliveryId}`, htmlContent:html, type:'delivery' });
-}
-
-/* ── Delivery confirmed → notify sender ── */
-async function _sendDeliveryConfirmNotice(d, receivedItems, notes) {
-  const reportEmail = await db.ref('settings/reportEmail').once('value').then(s=>s.val()||'');
-  if (!reportEmail || !_ejsReady) return;
-  const html = buildEmailHtml({
-    type:'confirm', heroIcon:'✅',
-    title:`משלוח ${d.delId||d.id} אושר`,
-    subtitle:d.title||'',
-    badgeText:'✅ התקבל ואושר', badgeColor:'#1b5e20',
-    body:`<p>המשלוח אושר ע"י <strong>${esc(window.curU)}</strong>.</p>${notes?`<p><strong>הערות:</strong> ${esc(notes)}</p>`:''}`,
-    tableHeaders:['פריט','נשלח','התקבל'],
-    tableRows:receivedItems.map(it=>[it.name, String(it.qty), String(it.qtyReceived||it.qty)]),
-    stats:[
-      { value:receivedItems.length, label:'פריטים', color:'#1b5e20' },
-      { value:receivedItems.reduce((s,it)=>s+(it.qtyReceived||it.qty),0), label:'סה"כ יחידות', color:'#1a6eb5' },
-    ],
-    cta:null
-  });
-  ejsSend({ toEmail:reportEmail, toName:'מנהל', subject:`✅ משלוח ${d.delId||d.id} אושר — ${d.title}`, htmlContent:html, type:'confirm' }).catch(()=>{});
-}
-
-/* ================================================================
    V3 — WEEKLY / DAILY REPORT EMAIL
    ================================================================ */
 async function sendWeeklyReportNow() {
@@ -6632,13 +6642,13 @@ window.showApp = function(screenId, ...rest) {
   _origShowApp_v3.call(this, screenId, ...rest);
   if (screenId === 'scr-admin' && !_v3AdminInited) {
     _v3AdminInited = true;
-    listenDeliveries();
-    loadTransferLogs();
     loadEjsSettings();
     initReportScheduler();
+    loadSentOrders();
     setTimeout(() => {
-      if (!document.getElementById('delivery-item-rows')?.children.length) addDeliveryItemRow();
-    }, 600);
+      renderOrdersTab();
+      _updateOrdStats();
+    }, 400);
   }
 };
 
@@ -6646,10 +6656,12 @@ window.showApp = function(screenId, ...rest) {
 const _origShowTab_v3 = window.showTab;
 window.showTab = function(id, btn, ...rest) {
   _origShowTab_v3.call(this, id, btn, ...rest);
-  if (id === 'tab-orders')    renderOrdersTab();
-  if (id === 'tab-deliveries'){ renderDeliveries(); if (!document.getElementById('delivery-item-rows')?.children.length) addDeliveryItemRow(); }
-  if (id === 'tab-transfer')  loadTransferLogs();
-  if (id === 'tab-dash')      { setTimeout(renderTopItems, 100); }
+  if (id === 'tab-orders') {
+    renderOrdersTab();
+    loadSentOrders();
+  }
+  if (id === 'tab-dash') { setTimeout(renderTopItems, 100); }
+  if (id === 'tab-compare') { /* comparison is triggered manually */ }
 };
 
 /* 3. Patch updateStats — show top items on dashboard */
@@ -6659,56 +6671,15 @@ window.updateStats = function(...rest) {
   renderTopItems();
 };
 
-/* 4. Patch _onScanFound — intercept scan for V3 overlay / delivery mode
-   Note: _onScanFound is a top-level function → its global binding IS window._onScanFound
-   We replace it so the scanner's arrow closure picks up the new version on next call */
-const _origOnScanFound_v3 = _onScanFound; // capture original
+/* 4. Patch _onScanFound — intercept for V3 scan success overlay */
+const _origOnScanFound_v3 = _onScanFound;
 window._onScanFound = async function(code) {
-  /* Delivery item mode — user scanned while adding items to a delivery */
-  if (window._scannerDeliveryMode) {
-    window._scannerDeliveryMode = false;
-    closeScanner();
-    const found = inv.find(i => (i.barcode||'').trim() === String(code).trim());
-    addDeliveryItemRow(found?.barcode || code, found?.name || '');
-    if (found) showToast(`✅ נוסף: ${found.name}`);
-    else showToast(`⚠️ ברקוד לא מוכר — נוסף ידנית`, 'warning');
-    return;
-  }
-  /* Find mode → V3 scan success overlay */
   if (_scanMode === 'find') {
     const found = inv.find(i => i.barcode && String(i.barcode).trim() === String(code).trim());
-    if (found) {
-      closeScanner();
-      showScanSuccess(found);
-      return;
-    }
-    /* Not found — fall through to original (shows error in scanner UI) */
+    if (found) { closeScanner(); showScanSuccess(found); return; }
   }
   return _origOnScanFound_v3.call(this, code);
 };
-
-/* 5. Patch openScanner — support delivery-item mode */
-const _origOpenScanner_v3 = window.openScanner;
-window.openScanner = function(mode, ...rest) {
-  if (mode === 'delivery-item') {
-    window._scannerDeliveryMode = true;
-    _origOpenScanner_v3.call(this, 'find', ...rest);
-    return;
-  }
-  window._scannerDeliveryMode = false;
-  _origOpenScanner_v3.call(this, mode, ...rest);
-};
-
-/* 6. Handle ?confirm_delivery= URL param */
-(function checkDeliveryParam() {
-  const delId = new URLSearchParams(window.location.search).get('confirm_delivery');
-  if (!delId) return;
-  const check = setInterval(() => {
-    const d = _deliveries.find(x => x.delId===delId || x.id===delId);
-    if (d) { clearInterval(check); openDeliveryConfirm(d.id); }
-  }, 800);
-  setTimeout(() => clearInterval(check), 20000);
-})();
 
 /* ================================================================
    V3 — PHONE-AS-CAMERA ENGINE
