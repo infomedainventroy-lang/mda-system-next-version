@@ -168,8 +168,124 @@ body {
 .cart-item-row .ci-remove:hover { opacity:1; }
 
 /* ================================================================
-   V3 — DELIVERIES TAB (משלוחים)
+   V3 — PHONE-AS-CAMERA (Mobile Remote Scanner)
    ================================================================ */
+#phone-pair-overlay {
+  position: fixed; inset: 0; z-index: 19500;
+  background: linear-gradient(135deg, #0a1628 0%, #0d2246 50%, #1a3a6b 100%);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px;
+}
+#phone-pair-overlay.show { display: flex; animation: ssoIn .3s ease both; }
+.pair-card {
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
+  border-radius: 24px; padding: 32px 28px;
+  max-width: 380px; width: 100%; text-align: center; position: relative;
+}
+.pair-title { font-size: 1.35em; font-weight: 900; color: #fff; margin-bottom: 6px; }
+.pair-sub   { font-size: .82em; color: rgba(255,255,255,.5); margin-bottom: 24px; line-height: 1.5; }
+.pair-qr-wrap {
+  background: #fff; border-radius: 18px; padding: 14px;
+  display: inline-block; margin-bottom: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.4);
+}
+.pair-qr-wrap img { display: block; border-radius: 8px; }
+.pair-session-id { font-family: monospace; font-size: .78em; color: rgba(255,255,255,.35); letter-spacing: .08em; margin-bottom: 18px; }
+.pair-status-row {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-bottom: 20px; padding: 10px 18px;
+  background: rgba(255,255,255,.07); border-radius: 999px;
+  font-size: .85em; font-weight: 700; color: rgba(255,255,255,.7);
+}
+.pair-dot { width: 10px; height: 10px; border-radius: 50%; background: #90a4ae; flex-shrink: 0; }
+.pair-dot.waiting  { background: #f9a825; animation: ejsPulse 1.4s infinite; }
+.pair-dot.scanning { background: #42a5f5; animation: ejsPulse .8s infinite; }
+.pair-dot.done     { background: #69f0ae; }
+.pair-steps { display: flex; gap: 10px; margin-bottom: 22px; }
+.pair-step {
+  flex: 1; background: rgba(255,255,255,.05);
+  border-radius: 12px; padding: 10px 8px;
+  font-size: .74em; color: rgba(255,255,255,.55); line-height: 1.4;
+}
+.pair-step b { display: block; font-size: 1.3em; margin-bottom: 4px; color: rgba(255,255,255,.8); }
+.pair-close-btn {
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18);
+  border-radius: 12px; padding: 12px 28px;
+  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 800;
+  color: rgba(255,255,255,.8); cursor: pointer; transition: var(--tr); width: 100%;
+}
+.pair-close-btn:hover { background: rgba(255,255,255,.18); }
+/* Mobile scanner landing */
+#phone-scan-page {
+  position: fixed; inset: 0; z-index: 99000;
+  background: linear-gradient(160deg, #0a1628 0%, #0d2246 100%);
+  display: none; flex-direction: column; align-items: center;
+  justify-content: flex-start; padding: 32px 20px 20px;
+  direction: rtl; overflow-y: auto;
+}
+#phone-scan-page.show { display: flex; }
+.psp-logo  { width: 64px; height: 64px; border-radius: 14px; margin-bottom: 14px; border: 2px solid rgba(255,255,255,.2); }
+.psp-title { font-size: 1.4em; font-weight: 900; color: #fff; margin-bottom: 6px; text-align: center; }
+.psp-sub   { font-size: .82em; color: rgba(255,255,255,.5); margin-bottom: 24px; text-align: center; line-height: 1.6; }
+.psp-scanner-wrap {
+  width: 100%; max-width: 340px; border-radius: 20px; overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,.5); margin-bottom: 16px;
+  border: 2px solid rgba(255,255,255,.15); position: relative; background: #000;
+}
+.psp-corner { position: absolute; width: 28px; height: 28px; border-color: #42a5f5; border-style: solid; border-width: 0; z-index: 2; pointer-events: none; }
+.psp-corner.tl { top:12px;right:12px; border-top-width:3px;border-right-width:3px; border-radius:0 4px 0 0; }
+.psp-corner.tr { top:12px;left:12px;  border-top-width:3px;border-left-width:3px;  border-radius:4px 0 0 0; }
+.psp-corner.bl { bottom:12px;right:12px; border-bottom-width:3px;border-right-width:3px; border-radius:0 0 0 4px; }
+.psp-corner.br { bottom:12px;left:12px;  border-bottom-width:3px;border-left-width:3px;  border-radius:0 0 4px 0; }
+.psp-scan-line {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, #42a5f5, transparent);
+  animation: pspScanLine 2s ease-in-out infinite; z-index: 2; pointer-events: none; top: 20%;
+}
+@keyframes pspScanLine { 0%,100%{top:15%} 50%{top:75%} }
+.psp-status { font-size:.85em; font-weight:700; color:rgba(255,255,255,.7); text-align:center; margin-bottom:12px; min-height:1.4em; }
+.psp-result-card {
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 16px; padding: 18px 20px; width: 100%; max-width: 340px;
+  text-align: center; display: none; margin-bottom: 14px;
+}
+.psp-result-card.show { display: block; animation: ssoIn .3s ease; }
+.psp-result-name { font-size: 1.2em; font-weight: 900; color: #fff; margin-bottom: 6px; }
+.psp-result-bc   { font-size: .78em; color: rgba(255,255,255,.45); font-family: monospace; }
+.psp-result-ok   { font-size: 1em; color: #69f0ae; font-weight: 800; margin-top: 8px; }
+.psp-manual-wrap { width: 100%; max-width: 340px; display: flex; gap: 8px; margin-top: 10px; }
+.psp-manual-input {
+  flex: 1; padding: 11px 14px; border: 1.5px solid rgba(255,255,255,.2);
+  border-radius: 10px; font-family: 'Heebo', sans-serif; font-size: 14px;
+  background: rgba(255,255,255,.08); color: #fff; outline: none;
+}
+.psp-manual-input::placeholder { color: rgba(255,255,255,.35); }
+.psp-manual-input:focus { border-color: rgba(255,255,255,.45); }
+.psp-manual-btn {
+  padding: 11px 18px; border: none; border-radius: 10px;
+  background: #1a6eb5; color: #fff;
+  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer;
+}
+.psp-again-btn {
+  margin-top: 10px; padding: 11px 28px; border: 1.5px solid rgba(255,255,255,.2);
+  border-radius: 10px; background: transparent; color: rgba(255,255,255,.7);
+  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer;
+  width: 100%; max-width: 340px;
+}
+/* Scan button upgrade: two modes */
+.scan-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.scan-btn-option {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 5px; padding: 16px 12px; border: none; border-radius: var(--r-md);
+  font-family: 'Heebo', sans-serif; cursor: pointer; transition: var(--tr); font-weight: 800;
+}
+.scan-btn-option:hover { transform: translateY(-2px); box-shadow: var(--sh-md); }
+.scan-btn-option .sbo-icon  { font-size: 1.8em; }
+.scan-btn-option .sbo-title { font-size: .88em; }
+.scan-btn-option .sbo-sub   { font-size: .71em; opacity: .7; font-weight: 600; }
+.scan-btn-cam   { background: linear-gradient(135deg, var(--c-navy) 0%, #1a3a6b 100%); color: #fff; }
+.scan-btn-phone { background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); color: #fff; }
+
 /* ================================================================
    V3 — DELIVERIES TAB (משלוחים)
    ================================================================ */
@@ -2618,10 +2734,19 @@ tr:hover td { background: var(--bg); }
 
     <div class="card">
       <input type="text" id="u-reason" class="app-input" placeholder="✍️ סיבת הוצאה (נסיעה 54, מילוי אמבולנס...)">
-      <button class="scan-btn" onclick="openScanner('find')">
-        <span class="scan-icon">📷</span>
-        סרוק ברקוד מוצר
-      </button>
+      <!-- Scan mode: device camera OR phone-as-camera -->
+      <div class="scan-btn-group">
+        <button class="scan-btn-option scan-btn-cam" onclick="openScanner('find')">
+          <span class="sbo-icon">📷</span>
+          <span class="sbo-title">סרוק ברקוד</span>
+          <span class="sbo-sub">מצלמת המכשיר</span>
+        </button>
+        <button class="scan-btn-option scan-btn-phone" onclick="openPhonePairing()">
+          <span class="sbo-icon">📱</span>
+          <span class="sbo-title">סרוק עם טלפון</span>
+          <span class="sbo-sub">חבר טלפון למחשב</span>
+        </button>
+      </div>
       <div class="search-wrap" style="margin-bottom:0;">
         <span class="search-icon">🔍</span>
         <input type="text" id="u-search" class="search-input" placeholder="חפש ציוד..." oninput="handleUserSearch(this)">
@@ -2750,6 +2875,59 @@ tr:hover td { background: var(--bg); }
 
 <!-- Toast -->
 <div id="toast"></div>
+
+<!-- ================================================================
+     V3 — PHONE-AS-CAMERA: Desktop pairing overlay
+     ================================================================ -->
+<div id="phone-pair-overlay">
+  <div class="pair-card">
+    <div class="pair-title">📱 חבר טלפון</div>
+    <div class="pair-sub">סרוק את קוד ה-QR עם הטלפון<br>הטלפון ישמש כמצלמת הסריקה</div>
+    <div class="pair-steps">
+      <div class="pair-step"><b>1️⃣</b>סרוק QR עם הטלפון</div>
+      <div class="pair-step"><b>2️⃣</b>כוון למוצר</div>
+      <div class="pair-step"><b>3️⃣</b>המחשב מציג תוצאה</div>
+    </div>
+    <div class="pair-qr-wrap">
+      <img id="pair-qr-img" src="" width="200" height="200" alt="QR">
+    </div>
+    <div class="pair-session-id" id="pair-session-label">מחבר...</div>
+    <div class="pair-status-row">
+      <div class="pair-dot waiting" id="pair-dot"></div>
+      <span id="pair-status-text">ממתין לחיבור הטלפון...</span>
+    </div>
+    <button class="pair-close-btn" onclick="closePhonePairing()">✕ סגור</button>
+  </div>
+</div>
+
+<!-- ================================================================
+     V3 — PHONE-AS-CAMERA: Mobile scanner landing page
+     ================================================================ -->
+<div id="phone-scan-page">
+  <img id="psp-logo" class="psp-logo" src="" alt="לוגו">
+  <div class="psp-title" id="psp-station-name">מערכת מלאי</div>
+  <div class="psp-sub">כוון את המצלמה לברקוד<br>התוצאה תועבר אוטומטית למחשב</div>
+  <div class="psp-scanner-wrap" id="psp-scanner-wrap">
+    <div class="psp-corner tl"></div>
+    <div class="psp-corner tr"></div>
+    <div class="psp-corner bl"></div>
+    <div class="psp-corner br"></div>
+    <div class="psp-scan-line"></div>
+    <div id="psp-qr-reader" style="width:100%;min-height:240px;"></div>
+  </div>
+  <div class="psp-status" id="psp-status">🔍 מחפש ברקוד...</div>
+  <div class="psp-result-card" id="psp-result-card">
+    <div class="psp-result-name" id="psp-result-name"></div>
+    <div class="psp-result-bc"   id="psp-result-bc"></div>
+    <div class="psp-result-ok">✅ נשלח למחשב בהצלחה!</div>
+  </div>
+  <button class="psp-again-btn" id="psp-again-btn" style="display:none;" onclick="pspScanAgain()">🔄 סרוק שוב</button>
+  <div class="psp-manual-wrap">
+    <input type="text" class="psp-manual-input" id="psp-manual-input"
+      placeholder="הזן ברקוד ידנית..." inputmode="numeric">
+    <button class="psp-manual-btn" onclick="pspSubmitManual()">✓</button>
+  </div>
+</div>
 
 <!-- ================================================================
      V3 — SCAN SUCCESS OVERLAY (Camera Mode)
@@ -6536,7 +6714,244 @@ window.openScanner = function(mode, ...rest) {
   setTimeout(() => clearInterval(check), 20000);
 })();
 
-/* 7. (removed — confirmDeliverySubmit now directly calls _sendDeliveryConfirmNotice) */
+/* ================================================================
+   V3 — PHONE-AS-CAMERA ENGINE
+   Uses Firebase Realtime DB as the relay channel:
+   /scan_sessions/{sessionId} = { status, barcode, timestamp }
+   Desktop listens → Phone writes → Desktop acts
+   ================================================================ */
+
+let _pairSessionId  = null;
+let _pairListener   = null;
+let _pairScanner    = null;
+let _pspSessionId   = null;
+let _pspScanner     = null;
+
+/* ── Desktop: open pairing overlay ── */
+function openPhonePairing() {
+  // Generate unique session ID
+  _pairSessionId = 'scan_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+
+  // Write session to Firebase (expires in 10 min)
+  db.ref('scan_sessions/' + _pairSessionId).set({
+    status: 'waiting',
+    station: CURRENT_SITE,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 10 * 60 * 1000
+  });
+
+  // Build the mobile URL
+  const baseUrl = window.location.href.split('?')[0];
+  const mobileUrl = baseUrl + '?phone_scan=' + _pairSessionId;
+
+  // Generate QR via free API (no key needed)
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&bgcolor=ffffff&color=0d1b2a&margin=10&data=' + encodeURIComponent(mobileUrl);
+  document.getElementById('pair-qr-img').src = qrUrl;
+  document.getElementById('pair-session-label').textContent = 'מזהה: ' + _pairSessionId.slice(-8).toUpperCase();
+
+  _setPairStatus('waiting', 'ממתין לחיבור הטלפון...');
+  document.getElementById('phone-pair-overlay').classList.add('show');
+
+  // Listen for result
+  _pairListener = db.ref('scan_sessions/' + _pairSessionId).on('value', snap => {
+    const data = snap.val();
+    if (!data) return;
+    if (data.status === 'scanning') {
+      _setPairStatus('scanning', 'הטלפון מוכן — כוון לברקוד...');
+    }
+    if (data.status === 'done' && data.barcode) {
+      _setPairStatus('done', '✅ ברקוד נסרק!');
+      setTimeout(() => {
+        closePhonePairing();
+        _handlePhoneScanResult(data.barcode);
+        // Clean up session
+        db.ref('scan_sessions/' + _pairSessionId).remove();
+      }, 800);
+    }
+  });
+
+  // Auto-expire after 10 minutes
+  setTimeout(() => {
+    if (document.getElementById('phone-pair-overlay').classList.contains('show')) {
+      closePhonePairing();
+      showToast('⏱️ פג תוקף החיבור — נסה שוב', 'warning');
+    }
+  }, 10 * 60 * 1000);
+}
+
+function _setPairStatus(state, text) {
+  const dot  = document.getElementById('pair-dot');
+  const lbl  = document.getElementById('pair-status-text');
+  if (dot) { dot.className = 'pair-dot ' + state; }
+  if (lbl) lbl.textContent = text;
+}
+
+function closePhonePairing() {
+  document.getElementById('phone-pair-overlay').classList.remove('show');
+  if (_pairListener && _pairSessionId) {
+    db.ref('scan_sessions/' + _pairSessionId).off('value', _pairListener);
+    _pairListener = null;
+  }
+  _pairSessionId = null;
+}
+
+function _handlePhoneScanResult(barcode) {
+  // Same as regular scan — show success overlay or highlight item
+  const found = inv.find(i => i.barcode && String(i.barcode).trim() === String(barcode).trim());
+  if (found) {
+    showScanSuccess(found);
+    if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+  } else {
+    showToast('⚠️ ברקוד לא נמצא במלאי: ' + barcode, 'warning');
+  }
+}
+
+/* ── Mobile: detect ?phone_scan= URL param and launch mobile scanner ── */
+(function initPhoneScanPage() {
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('phone_scan');
+  if (!sessionId) return;
+
+  _pspSessionId = sessionId;
+
+  // Show the mobile scan page immediately (before Firebase loads)
+  const page = document.getElementById('phone-scan-page');
+  if (page) page.classList.add('show');
+
+  // Hide all other app UI
+  document.addEventListener('DOMContentLoaded', () => {
+    // Set station info from URL or wait for config
+    const pspLogo = document.getElementById('psp-logo');
+    const pspName = document.getElementById('psp-station-name');
+    if (pspLogo) pspLogo.src = CFG.logoUrl;
+    if (pspName) pspName.textContent = CFG.headerText;
+
+    // Update session status to 'scanning'
+    db.ref('scan_sessions/' + _pspSessionId).update({ status: 'scanning' })
+      .catch(() => {});
+
+    // Check session still valid
+    db.ref('scan_sessions/' + _pspSessionId + '/status').once('value').then(snap => {
+      if (!snap.val() || snap.val() === 'done') {
+        document.getElementById('psp-status').textContent = '⚠️ סשן פג תוקף — בקש חיבור חדש';
+        return;
+      }
+      // Start the mobile scanner
+      _startPspScanner();
+    }).catch(() => {
+      _startPspScanner(); // try anyway
+    });
+
+    // Manual input enter key
+    document.getElementById('psp-manual-input')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') pspSubmitManual();
+    });
+  });
+})();
+
+function _startPspScanner() {
+  const st = document.getElementById('psp-status');
+  if (st) st.textContent = '🔍 מפעיל מצלמה...';
+  try {
+    _pspScanner = new Html5Qrcode('psp-qr-reader', { verbose: false });
+    _pspScanner.start(
+      { facingMode: 'environment' },
+      {
+        fps: 15,
+        qrbox: (w, h) => ({ width: Math.round(w * .85), height: Math.round(h * .35) }),
+        aspectRatio: 1.4,
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats?.EAN_13,
+          Html5QrcodeSupportedFormats?.EAN_8,
+          Html5QrcodeSupportedFormats?.CODE_128,
+          Html5QrcodeSupportedFormats?.CODE_39,
+          Html5QrcodeSupportedFormats?.UPC_A,
+          Html5QrcodeSupportedFormats?.QR_CODE,
+        ].filter(Boolean)
+      },
+      code => _pspOnScan(code),
+      () => {}
+    ).then(() => {
+      if (st) st.textContent = '🔍 כוון את המצלמה לברקוד';
+    }).catch(err => {
+      const m = String(err);
+      if (st) st.textContent = m.includes('NotAllowed') || m.includes('Permission')
+        ? '🚫 הרשאת מצלמה נדחתה — אפשר בהגדרות'
+        : '⚠️ לא נמצאה מצלמה: ' + m.slice(0, 40);
+    });
+  } catch(e) {
+    if (st) st.textContent = '⚠️ שגיאה: ' + e.message;
+  }
+}
+
+let _pspLock = false;
+async function _pspOnScan(barcode) {
+  if (_pspLock) return;
+  _pspLock = true;
+  if (_pspScanner) { try { await _pspScanner.pause(true); } catch(e){} }
+
+  // Show result card on phone
+  const resultCard = document.getElementById('psp-result-card');
+  const resultName = document.getElementById('psp-result-name');
+  const resultBc   = document.getElementById('psp-result-bc');
+  const st         = document.getElementById('psp-status');
+  const againBtn   = document.getElementById('psp-again-btn');
+
+  if (resultName) resultName.textContent = barcode;
+  if (resultBc)   resultBc.textContent   = '📦 ' + barcode;
+  if (st)         st.textContent         = '📡 שולח למחשב...';
+  if (resultCard) resultCard.classList.add('show');
+  if (againBtn)   againBtn.style.display = 'block';
+
+  // Vibrate on success
+  if (navigator.vibrate) navigator.vibrate([50, 80, 50]);
+
+  // Write result to Firebase
+  try {
+    await db.ref('scan_sessions/' + _pspSessionId).update({
+      status:    'done',
+      barcode:   barcode,
+      scannedAt: Date.now()
+    });
+    if (st) st.textContent = '✅ נשלח למחשב בהצלחה!';
+  } catch(e) {
+    if (st) st.textContent = '❌ שגיאה בשליחה: ' + e.message;
+    _pspLock = false;
+  }
+}
+
+function pspSubmitManual() {
+  const v = document.getElementById('psp-manual-input')?.value?.trim();
+  if (!v) return;
+  _pspOnScan(v);
+}
+
+function pspScanAgain() {
+  _pspLock = false;
+  document.getElementById('psp-result-card')?.classList.remove('show');
+  document.getElementById('psp-again-btn').style.display = 'none';
+  document.getElementById('psp-status').textContent = '🔍 כוון את המצלמה לברקוד';
+  document.getElementById('psp-manual-input').value = '';
+  if (_pspScanner) { try { _pspScanner.resume(); } catch(e){} }
+  // Refresh session
+  db.ref('scan_sessions/' + _pspSessionId).update({ status: 'scanning' }).catch(() => {});
+}
+
+/* Clean up old scan sessions (older than 15 min) */
+(function cleanScanSessions() {
+  try {
+    const cutoff = Date.now() - 15 * 60 * 1000;
+    db.ref('scan_sessions').orderByChild('createdAt').endAt(cutoff).once('value').then(snap => {
+      if (!snap.val()) return;
+      const updates = {};
+      snap.forEach(c => { updates[c.key] = null; });
+      db.ref('scan_sessions').update(updates).catch(() => {});
+    }).catch(() => {});
+  } catch(e) {}
+  setTimeout(cleanScanSessions, 5 * 60 * 1000); // re-run every 5 min
+})();
+
+
 
 
 
