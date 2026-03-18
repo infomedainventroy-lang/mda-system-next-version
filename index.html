@@ -7,8 +7,29 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" id="pwa-manifest">
+<meta name="theme-color" id="pwa-theme-color" content="#0d1b2a">
 <script>
-  const APP_VERSION = "1.16";
+// Inline PWA manifest
+const _pwaManifest = {
+  name: 'מערכת מלאי מד"א',
+  short_name: 'מלאי מד"א',
+  description: 'מערכת ניהול מלאי מגן דוד אדום',
+  start_url: './',
+  display: 'standalone',
+  background_color: '#0d1b2a',
+  theme_color: '#0d1b2a',
+  orientation: 'portrait-primary',
+  icons: [
+    { src: 'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system@main/Hod_Hasharon_photo.png', sizes: '192x192', type: 'image/png' },
+    { src: 'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system@main/Hod_Hasharon_photo.png', sizes: '512x512', type: 'image/png' }
+  ]
+};
+const _blob = new Blob([JSON.stringify(_pwaManifest)], {type:'application/json'});
+document.getElementById('pwa-manifest').href = URL.createObjectURL(_blob);
+</script>
+<script>
+  const APP_VERSION = "1.17";
   const APP_BUILD_TS = 1773773371653;
 </script>
 <title id="page-title">מערכת מלאי מד"א</title>
@@ -69,6 +90,86 @@
   --tr: all .2s var(--ease);
   --tr-slow: all .35s var(--ease);
 }
+
+/* ================================================================
+   DARK MODE
+   ================================================================ */
+[data-theme="dark"] {
+  --bg:           #0d1117;
+  --surface:      #161b22;
+  --border:       #30363d;
+  --border-dark:  #484f58;
+  --text:         #e6edf3;
+  --text-soft:    #8b949e;
+  --text-muted:   #6e7681;
+  --sh-xs: 0 1px 3px rgba(0,0,0,.4);
+  --sh-sm: 0 2px 8px rgba(0,0,0,.45);
+  --sh-md: 0 4px 16px rgba(0,0,0,.55);
+  --sh-lg: 0 8px 32px rgba(0,0,0,.6);
+  --sh-xl: 0 16px 48px rgba(0,0,0,.65);
+  --c-navy:        #1a1f29;
+  --c-navy-mid:    #1e2736;
+  --c-navy-light:  #2a3a52;
+  --c-red-pale:    #2d1515;
+  --c-orange-pale: #2d1e0d;
+  --c-green-pale:  #0d2018;
+}
+[data-theme="dark"] body { background: var(--bg); }
+[data-theme="dark"] .app-header { background: linear-gradient(135deg,#0d1117 0%,#161b22 100%); border-bottom:1px solid var(--border); }
+[data-theme="dark"] .nav-tabs { background: var(--surface); border-bottom-color: var(--border); }
+[data-theme="dark"] .tab-btn:hover:not(.active) { background: var(--bg); }
+[data-theme="dark"] .card { background: var(--surface); border-color: var(--border); }
+[data-theme="dark"] .item-card { background: var(--surface); border-color: var(--border); }
+[data-theme="dark"] .item-card.is-low { background: linear-gradient(135deg,#1e1200 0%,var(--surface) 100%); }
+[data-theme="dark"] .item-card.is-out { background: linear-gradient(135deg,#1e0a0a 0%,var(--surface) 100%); }
+[data-theme="dark"] .admin-item { background: var(--surface); border-color: var(--border); }
+[data-theme="dark"] .admin-item.ai-out { background: #1e0a0a; }
+[data-theme="dark"] .section-header { background: linear-gradient(135deg,#161b22 0%,#1e2736 100%); }
+[data-theme="dark"] .stat-card { background: var(--surface); border-color: var(--border); }
+[data-theme="dark"] .chip { background: var(--surface); border-color: var(--border); color: var(--text-soft); }
+[data-theme="dark"] .chip.active-chip { background: var(--c-navy-light); }
+[data-theme="dark"] .search-input, [data-theme="dark"] .app-input, [data-theme="dark"] .app-select { background: var(--surface); border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .quick-input { background: var(--surface) !important; color: var(--text) !important; border-color: var(--border) !important; }
+[data-theme="dark"] .quick-input.changed { background: #2d0a0a !important; }
+[data-theme="dark"] .modal-box, [data-theme="dark"] .confirm-box { background: var(--surface); color: var(--text); }
+[data-theme="dark"] .modal-input { background: var(--bg); border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .alert-item-card { background: var(--surface); border-color: var(--border); }
+[data-theme="dark"] .alert-item-card.is-out { background: linear-gradient(135deg,#1e0a0a 0%,var(--surface) 100%); }
+[data-theme="dark"] .alert-item-card.is-low { background: linear-gradient(135deg,#1e1200 0%,var(--surface) 100%); }
+[data-theme="dark"] .alert-sort-btn { background: var(--surface); border-color: var(--border); color: var(--text-soft); }
+[data-theme="dark"] .google-badge { background: #1a2744; color: #90b4f5; }
+[data-theme="dark"] #floating-save { box-shadow: 0 8px 32px rgba(0,255,100,.2); }
+[data-theme="dark"] .rpt-select, [data-theme="dark"] .rpt-date-input { background: var(--surface); border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .dc-card { background: linear-gradient(145deg,#07050f 0%,#0d0b25 50%,#06071a 100%); }
+[data-theme="dark"] .bio-picker-box { background: var(--surface); }
+[data-theme="dark"] .bio-account-btn { background: var(--surface); border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .bio-account-btn:hover { background: #1a2744; }
+
+[data-theme="dark"] .bio-cancel-btn { color: var(--text-muted); }
+[data-theme="dark"] .bio-cancel-btn:hover { background: var(--bg); }
+[data-theme="dark"] #scan-modal { background: #0d1117 !important; }
+[data-theme="dark"] #scan-manual-input { background: #161b22 !important; border-color: var(--border) !important; color: var(--text) !important; }
+[data-theme="dark"] .login-page { background: radial-gradient(ellipse at 15% 90%, rgba(211,47,47,.12) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(26,110,181,.15) 0%, transparent 55%), linear-gradient(160deg, #050a12 0%, #061422 60%, #040d1a 100%) !important; }
+[data-theme="dark"] .rpt-summary-bar { background: linear-gradient(135deg,#0d1117 0%,#161b22 100%); border:1px solid var(--border); }
+
+/* Dark mode toggle button */
+#dark-toggle {
+  position: fixed;
+  bottom: 80px;
+  left: 16px;
+  z-index: 700;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.25em;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--sh-md);
+  transition: var(--tr);
+}
+#dark-toggle:hover { transform: scale(1.1); box-shadow: var(--sh-lg); }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -2410,23 +2511,35 @@ tr:hover td { background: var(--bg); }
               📅 דוחות אוטומטיים
             </div>
             <div class="dc-checks" style="flex-direction:column;gap:10px;">
-              <label class="dc-check" style="width:100%;justify-content:space-between;">
+              <label class="dc-check" style="width:100%;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                 <div style="display:flex;align-items:center;gap:8px;">
                   <input type="checkbox" id="dc-sched-daily"> 🌙 דוח יומי
                 </div>
-                <span style="font-size:.75em;color:rgba(255,255,255,.4);">כל יום ב-20:00</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="font-size:.72em;color:rgba(255,255,255,.4);">בשעה:</span>
+                  <input type="time" id="dc-sched-daily-time" value="20:00"
+                    style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:3px 7px;color:white;font-family:'Heebo',sans-serif;font-size:.78em;outline:none;width:80px;">
+                </div>
               </label>
-              <label class="dc-check" style="width:100%;justify-content:space-between;">
+              <label class="dc-check" style="width:100%;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                 <div style="display:flex;align-items:center;gap:8px;">
                   <input type="checkbox" id="dc-sched-weekly"> 📊 דוח שבועי
                 </div>
-                <span style="font-size:.75em;color:rgba(255,255,255,.4);">כל שבת בצהריים</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="font-size:.72em;color:rgba(255,255,255,.4);">שבת בשעה:</span>
+                  <input type="time" id="dc-sched-weekly-time" value="12:00"
+                    style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:3px 7px;color:white;font-family:'Heebo',sans-serif;font-size:.78em;outline:none;width:80px;">
+                </div>
               </label>
-              <label class="dc-check" style="width:100%;justify-content:space-between;">
+              <label class="dc-check" style="width:100%;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                 <div style="display:flex;align-items:center;gap:8px;">
                   <input type="checkbox" id="dc-sched-monthly"> 📆 דוח חודשי
                 </div>
-                <span style="font-size:.75em;color:rgba(255,255,255,.4);">בסוף כל חודש</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="font-size:.72em;color:rgba(255,255,255,.4);">סוף חודש, שעה:</span>
+                  <input type="time" id="dc-sched-monthly-time" value="21:00"
+                    style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:3px 7px;color:white;font-family:'Heebo',sans-serif;font-size:.78em;outline:none;width:80px;">
+                </div>
               </label>
             </div>
             <div id="dc-sched-status" style="display:none;margin-top:8px;font-size:.7em;color:rgba(255,255,255,.3);padding:8px 12px;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid rgba(255,255,255,.06);">
@@ -2682,6 +2795,9 @@ let _logRows = [];
    DOM READY — INIT
    ================================================================ */
 document.addEventListener('DOMContentLoaded', () => {
+
+  // Apply theme (dark/light)
+  _initTheme();
 
   // Apply site config
   document.getElementById('page-title').textContent  = CFG.title;
@@ -3088,6 +3204,71 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ================================================================
+   DARK MODE
+   ================================================================ */
+function toggleDarkMode() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('mda_theme', newTheme);
+  document.getElementById('dark-toggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+  // Update Chart.js colors if charts exist
+  _updateChartsTheme();
+}
+
+function _initTheme() {
+  const saved = localStorage.getItem('mda_theme') ||
+    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', saved);
+  const btn = document.getElementById('dark-toggle');
+  if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+}
+
+function _updateChartsTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const gridColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
+  const textColor = isDark ? '#8b949e' : '#4a5568';
+  [chartPie, chartBar, _chartReport].forEach(function(ch) {
+    if (!ch) return;
+    try {
+      if (ch.options.plugins?.legend?.labels) ch.options.plugins.legend.labels.color = textColor;
+      if (ch.options.scales?.y) { ch.options.scales.y.ticks.color = textColor; ch.options.scales.y.grid.color = gridColor; }
+      if (ch.options.scales?.x) { ch.options.scales.x.ticks.color = textColor; ch.options.scales.x.grid.color = gridColor; }
+      ch.update('none');
+    } catch(e) {}
+  });
+}
+
+/* ================================================================
+   PWA
+   ================================================================ */
+let _pwaDeferred = null;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _pwaDeferred = e;
+  const banner = document.getElementById('pwa-banner');
+  if (banner && !localStorage.getItem('pwa_dismissed')) {
+    banner.style.display = 'flex';
+  }
+});
+
+function pwaInstall() {
+  if (!_pwaDeferred) return;
+  _pwaDeferred.prompt();
+  _pwaDeferred.userChoice.then(function(result) {
+    if (result.outcome === 'accepted') showToast('✅ האפליקציה הותקנה בהצלחה!', 'success');
+    _pwaDeferred = null;
+    document.getElementById('pwa-banner').style.display = 'none';
+  });
+}
+
+function pwaDismiss() {
+  document.getElementById('pwa-banner').style.display = 'none';
+  localStorage.setItem('pwa_dismissed', '1');
+}
+
+/* ================================================================
    GLOBAL SETTINGS
    ================================================================ */
 function applyGlobalSettings(s) {
@@ -3369,6 +3550,11 @@ function _buildDashTopItems(todayLogs, todayStart) {
 }
 
 function buildCharts(cats) {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const gridColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
+  const textColor = isDark ? '#8b949e' : '#4a5568';
+  const borderCol = isDark ? '#161b22' : '#fff';
+
   const ctxPie = document.getElementById('chartPie')?.getContext('2d');
   if (ctxPie) {
     if (chartPie) chartPie.destroy();
@@ -3376,9 +3562,9 @@ function buildCharts(cats) {
       type: 'doughnut',
       data: {
         labels: Object.keys(cats),
-        datasets: [{ data: Object.values(cats), backgroundColor: ['#0d1b2a','#d32f2f','#f9a825','#1b5e20','#0288d1','#6a1b9a','#e64a19','#00695c','#37474f','#558b2f'], borderWidth: 2, borderColor: '#fff' }]
+        datasets: [{ data: Object.values(cats), backgroundColor: ['#0d1b2a','#d32f2f','#f9a825','#1b5e20','#0288d1','#6a1b9a','#e64a19','#00695c','#37474f','#558b2f'], borderWidth: 2, borderColor: borderCol }]
       },
-      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Heebo',size:11}, padding:14 } } } }
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color: textColor, font:{family:'Heebo',size:11}, padding:14 } } } }
     });
   }
   const ctxBar = document.getElementById('chartBar')?.getContext('2d');
@@ -3395,7 +3581,7 @@ function buildCharts(cats) {
     chartBar = new Chart(ctxBar, {
       type: 'bar',
       data: { labels, datasets: [{ label:'יחידות שיצאו', data, backgroundColor:'rgba(211,47,47,.7)', borderColor:'rgba(211,47,47,1)', borderWidth:1, borderRadius:4 }] },
-      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{beginAtZero:true} } }
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{beginAtZero:true, ticks:{color:textColor}, grid:{color:gridColor}}, x:{ticks:{color:textColor}, grid:{color:gridColor}} } }
     });
   }
 }
@@ -5455,6 +5641,9 @@ let _dc = {
   schedDaily:    false,
   schedWeekly:   false,
   schedMonthly:  false,
+  schedDailyTime:   '20:00',
+  schedWeeklyTime:  '12:00',
+  schedMonthlyTime: '21:00',
 };
 const _dcThrottle  = {};   // itemId_type → timestamp
 let   _prevQtyMap  = null; // snapshot for diff detection
@@ -5481,6 +5670,9 @@ async function loadDiscordSettings() {
       schedDaily:    !!cfg.schedDaily,
       schedWeekly:   !!cfg.schedWeekly,
       schedMonthly:  !!cfg.schedMonthly,
+      schedDailyTime:   cfg.schedDailyTime   || '20:00',
+      schedWeeklyTime:  cfg.schedWeeklyTime  || '12:00',
+      schedMonthlyTime: cfg.schedMonthlyTime || '21:00',
     };
     _dcApplyToUI();
     _dcUpdateStatusUI();
@@ -5505,6 +5697,9 @@ function _dcApplyToUI() {
   setChk('dc-sched-daily',    _dc.schedDaily);
   setChk('dc-sched-weekly',   _dc.schedWeekly);
   setChk('dc-sched-monthly',  _dc.schedMonthly);
+  setVal('dc-sched-daily-time',   _dc.schedDailyTime   || '20:00');
+  setVal('dc-sched-weekly-time',  _dc.schedWeeklyTime  || '12:00');
+  setVal('dc-sched-monthly-time', _dc.schedMonthlyTime || '21:00');
 }
 
 /* ── Update status dot & text ── */
@@ -5543,6 +5738,9 @@ async function saveDcSettings() {
     schedDaily:    getChk('dc-sched-daily'),
     schedWeekly:   getChk('dc-sched-weekly'),
     schedMonthly:  getChk('dc-sched-monthly'),
+    schedDailyTime:   (document.getElementById('dc-sched-daily-time')?.value   || '20:00'),
+    schedWeeklyTime:  (document.getElementById('dc-sched-weekly-time')?.value  || '12:00'),
+    schedMonthlyTime: (document.getElementById('dc-sched-monthly-time')?.value || '21:00'),
   };
 
   try {
@@ -5706,7 +5904,12 @@ async function _dcFlushBatch() {
         const list = extra.items.slice(0, 20).map(function(i) { return '• **' + (i.name || '?') + '** × ' + (i.qty || 1); }).join('\n');
         embed.fields.push({ name: '📋 פריטים (' + extra.items.length + ')', value: list + (extra.items.length > 20 ? '\n*...ועוד ' + (extra.items.length - 20) + '*' : ''), inline: false });
       }
-      if (item && item.image && item.image.startsWith('http')) embed.thumbnail = { url: item.image };
+      // 📸 Product image as thumbnail
+      if (item && item.image && item.image.startsWith('http')) {
+        embed.thumbnail = { url: item.image };
+      } else if (CFG && CFG.logoUrl) {
+        embed.thumbnail = { url: CFG.logoUrl };
+      }
       if (type === 'out' && _dc.mentionRole) content = '<@&' + _dc.mentionRole + '> ⚠️ דרוש מילוי!';
       embeds.push(embed);
 
@@ -5791,8 +5994,9 @@ function _dcStartScheduler() {
 
     const todayStr = yr + '-' + (mo+1) + '-' + date;
 
-    // Daily — every day at 20:00
-    if (_dc.schedDaily && h === 20 && m === 0) {
+    // Daily — configurable time (default 20:00)
+    const [dailyH, dailyM] = (_dc.schedDailyTime || '20:00').split(':').map(Number);
+    if (_dc.schedDaily && h === dailyH && m === dailyM) {
       const k = 'daily_' + todayStr;
       if (!_schedSentKeys[k]) {
         _schedSentKeys[k] = true;
@@ -5800,8 +6004,9 @@ function _dcStartScheduler() {
       }
     }
 
-    // Weekly — every Saturday (day=6) at 12:00
-    if (_dc.schedWeekly && day === 6 && h === 12 && m === 0) {
+    // Weekly — every Saturday (day=6) at configurable time (default 12:00)
+    const [weeklyH, weeklyM] = (_dc.schedWeeklyTime || '12:00').split(':').map(Number);
+    if (_dc.schedWeekly && day === 6 && h === weeklyH && m === weeklyM) {
       const k = 'weekly_' + todayStr;
       if (!_schedSentKeys[k]) {
         _schedSentKeys[k] = true;
@@ -5809,8 +6014,9 @@ function _dcStartScheduler() {
       }
     }
 
-    // Monthly — last day of month at 21:00
-    if (_dc.schedMonthly && isLastDayOfMonth && h === 21 && m === 0) {
+    // Monthly — last day of month at configurable time (default 21:00)
+    const [monthlyH, monthlyM] = (_dc.schedMonthlyTime || '21:00').split(':').map(Number);
+    if (_dc.schedMonthly && isLastDayOfMonth && h === monthlyH && m === monthlyM) {
       const k = 'monthly_' + todayStr;
       if (!_schedSentKeys[k]) {
         _schedSentKeys[k] = true;
@@ -5836,26 +6042,29 @@ function _dcStartScheduler() {
 function _nextTimeLabel(type) {
   const now = new Date();
   if (type === 'daily') {
+    const [tH, tM] = (_dc.schedDailyTime || '20:00').split(':').map(Number);
     const next = new Date(now);
-    next.setHours(20, 0, 0, 0);
+    next.setHours(tH, tM, 0, 0);
     if (next <= now) next.setDate(next.getDate() + 1);
-    return next.toLocaleDateString('he-IL', { weekday:'short', day:'numeric', month:'short' }) + ' 20:00';
+    return next.toLocaleDateString('he-IL', { weekday:'short', day:'numeric', month:'short' }) + ' ' + (_dc.schedDailyTime || '20:00');
   }
   if (type === 'weekly') {
+    const [tH, tM] = (_dc.schedWeeklyTime || '12:00').split(':').map(Number);
     const next = new Date(now);
     const daysUntilSat = (6 - next.getDay() + 7) % 7 || 7;
     next.setDate(next.getDate() + daysUntilSat);
-    next.setHours(12, 0, 0, 0);
+    next.setHours(tH, tM, 0, 0);
     if (next <= now) next.setDate(next.getDate() + 7);
-    return next.toLocaleDateString('he-IL', { weekday:'short', day:'numeric', month:'short' }) + ' 12:00';
+    return next.toLocaleDateString('he-IL', { weekday:'short', day:'numeric', month:'short' }) + ' ' + (_dc.schedWeeklyTime || '12:00');
   }
   if (type === 'monthly') {
+    const [tH, tM] = (_dc.schedMonthlyTime || '21:00').split(':').map(Number);
     const yr = now.getFullYear(), mo = now.getMonth();
     const lastDay = new Date(yr, mo + 1, 0);
-    lastDay.setHours(21, 0, 0, 0);
+    lastDay.setHours(tH, tM, 0, 0);
     const next = lastDay <= now ? new Date(yr, mo + 2, 0) : lastDay;
-    next.setHours(21, 0, 0, 0);
-    return next.toLocaleDateString('he-IL', { day:'numeric', month:'short', year:'numeric' }) + ' 21:00';
+    next.setHours(tH, tM, 0, 0);
+    return next.toLocaleDateString('he-IL', { day:'numeric', month:'short', year:'numeric' }) + ' ' + (_dc.schedMonthlyTime || '21:00');
   }
   return '—';
 }
@@ -6021,8 +6230,25 @@ async function initDiscordSystem() {
   console.log('[Discord] ✅ מערכת Discord אותחלה v5.0');
 }
 
-console.log('[Discord] מודול Discord v5.0 נטען ✅');
+console.log('[Discord] מודול Discord v5.1 נטען ✅');
 
 </script>
+<!-- Dark Mode Toggle -->
+<button id="dark-toggle" onclick="toggleDarkMode()" title="מצב לילה">🌙</button>
+
+<!-- PWA Install Banner -->
+<div id="pwa-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:800;
+  background:linear-gradient(135deg,var(--c-navy) 0%,#1a3a5c 100%);
+  color:white;padding:14px 18px;box-shadow:0 -4px 20px rgba(0,0,0,.3);
+  display:none;align-items:center;gap:12px;">
+  <span style="font-size:1.6em;">📱</span>
+  <div style="flex:1;">
+    <div style="font-weight:800;font-size:.9em;">התקן כאפליקציה</div>
+    <div style="font-size:.75em;opacity:.6;">גישה מהירה ישירות מהמסך הראשי</div>
+  </div>
+  <button onclick="pwaDismiss()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:white;padding:6px 12px;border-radius:20px;font-family:'Heebo',sans-serif;font-size:.8em;font-weight:700;cursor:pointer;margin-left:6px;">אחר כך</button>
+  <button onclick="pwaInstall()" style="background:var(--c-blue);border:none;color:white;padding:8px 16px;border-radius:20px;font-family:'Heebo',sans-serif;font-size:.85em;font-weight:800;cursor:pointer;">התקן</button>
+</div>
+
 </body>
 </html>
