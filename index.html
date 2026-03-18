@@ -5939,11 +5939,22 @@ async function _dcFlushBatch() {
       if (content) { body.content = content; content = undefined; }
       if (CFG && CFG.logoUrl) body.avatar_url = CFG.logoUrl;
 
-      const res = await fetch(_dc.webhookUrl, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(body),
-      });
+      // חפש את האזור הזה בקוד (בערך שורה 3080):
+const res = await fetch(_dc.webhookUrl, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    // השורה החדשה שמוסיפה את התיוג:
+    content: `<@&1483893017529024662>`, 
+    embeds: [ {
+      title: '🚨 התראת מלאי מאוחדת',
+      description: bodyStr,
+      color: 15746887, // Red
+      timestamp: new Date().toISOString(),
+      footer: { text: 'מערכת מלאי מד"א • v' + APP_VERSION }
+    } ]
+  })
+});
       const ok = res.ok || res.status === 204;
       if (ok) {
         _dcSentTotal++;
@@ -6160,11 +6171,22 @@ async function sendScheduledReport(period) {
   try {
     const body = { embeds: [embed], username: siteTitle + ' · דוחות אוטומטיים' };
     if (CFG && CFG.logoUrl) body.avatar_url = CFG.logoUrl;
-    const res = await fetch(_dc.webhookUrl, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(body),
-    });
+    // חפש את האזור הזה בקוד (בערך שורה 3080):
+const res = await fetch(_dc.webhookUrl, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    // השורה החדשה שמוסיפה את התיוג:
+    content: `<@&1483893017529024662>`, 
+    embeds: [ {
+      title: '🚨 התראת מלאי מאוחדת',
+      description: bodyStr,
+      color: 15746887, // Red
+      timestamp: new Date().toISOString(),
+      footer: { text: 'מערכת מלאי מד"א • v' + APP_VERSION }
+    } ]
+  })
+});
     if (res.ok || res.status === 204) {
       console.log('[Discord] ✅ ' + period + ' report sent');
       if (period === 'manual') showToast('📊 דוח נשלח ל-Discord!', 'success', 3000);
