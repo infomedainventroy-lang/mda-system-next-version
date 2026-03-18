@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0d1b2a">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>
-  const APP_VERSION = "3.1";
-  const APP_BUILD_TS = Date.now();
+  const APP_VERSION = "1.14";
+  const APP_BUILD_TS = 1773773371653;
 </script>
 <title id="page-title">מערכת מלאי מד"א</title>
 
@@ -24,8 +25,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- Barcode Scanner -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<!-- EmailJS -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
 <style>
 /* ================================================================
@@ -87,609 +86,7 @@ body {
 .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
 
 /* ================================================================
-   V3 — CAMERA SCAN SUCCESS OVERLAY
-   ================================================================ */
-#scan-success-overlay {
-  position:fixed;inset:0;z-index:19000;
-  background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5f 100%);
-  display:none;flex-direction:column;align-items:center;justify-content:center;
-  padding:24px;
-}
-#scan-success-overlay.show { display:flex;animation:ssoIn .3s cubic-bezier(.34,1.56,.64,1) both; }
-@keyframes ssoIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
-.sso-badge { font-size:4em;margin-bottom:8px;animation:sosBadge .4s cubic-bezier(.34,1.56,.64,1) .1s both; }
-@keyframes sosBadge{from{transform:scale(0) rotate(-20deg)}to{transform:scale(1) rotate(0)}}
-.sso-img {
-  width:130px;height:130px;border-radius:20px;object-fit:cover;
-  border:3px solid rgba(255,255,255,.25);margin-bottom:16px;
-  box-shadow:0 8px 32px rgba(0,0,0,.5);
-  animation:sosBadge .4s cubic-bezier(.34,1.56,.64,1) .15s both;
-}
-.sso-name { font-size:1.65em;font-weight:900;color:#fff;text-align:center;margin-bottom:6px;animation:fadeUp .3s ease .2s both; }
-.sso-cat  { font-size:.82em;color:rgba(255,255,255,.55);font-weight:600;margin-bottom:14px;letter-spacing:.04em;animation:fadeUp .3s ease .25s both; }
-.sso-qty-wrap {
-  display:flex;align-items:center;justify-content:center;gap:20px;
-  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
-  border-radius:20px;padding:18px 32px;margin-bottom:20px;animation:fadeUp .3s ease .3s both;
-}
-.sso-qty-num   { font-size:3.2em;font-weight:900;color:#fff;line-height:1; }
-.sso-qty-label { font-size:.78em;color:rgba(255,255,255,.5);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:4px; }
-.sso-status-pill { padding:6px 18px;border-radius:999px;font-size:.83em;font-weight:800;letter-spacing:.04em;margin-bottom:20px;animation:fadeUp .3s ease .32s both; }
-.sso-status-ok  { background:#1b5e20;color:#a5d6a7; }
-.sso-status-low { background:#e65100;color:#ffe0b2; }
-.sso-status-out { background:#b71c1c;color:#ffcdd2; }
-.sso-actions { display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;animation:fadeUp .3s ease .35s both; }
-.sso-btn { padding:14px;border:none;border-radius:12px;font-family:'Heebo',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:8px; }
-.sso-btn-take   { background:var(--c-red);color:#fff; }
-.sso-btn-add    { background:var(--c-green);color:#fff; }
-.sso-btn-close  { background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2); }
-.sso-barcode-tag { font-size:.72em;color:rgba(255,255,255,.3);font-family:monospace;margin-top:8px;letter-spacing:.08em;animation:fadeUp .3s ease .4s both; }
-.sso-pulse-ring { position:absolute;width:200px;height:200px;border-radius:50%;border:2px solid rgba(255,255,255,.1);animation:ringPulse 2s ease infinite;pointer-events:none; }
-@keyframes ringPulse{0%{transform:scale(0.8);opacity:0.5}50%{transform:scale(1.3);opacity:0}100%{transform:scale(0.8);opacity:0}}
-
-/* ================================================================
-   V3 — TOP ITEMS WIDGET
-   ================================================================ */
-.top-items-list { display:flex;flex-direction:column;gap:8px; }
-.top-item-row { display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:var(--r-sm);border:1px solid var(--border);transition:var(--tr); }
-.top-item-row:hover { border-color:var(--border-dark);box-shadow:var(--sh-xs); }
-.top-item-rank { font-size:1.2em;font-weight:900;color:var(--text-muted);min-width:26px;text-align:center; }
-.top-item-rank.gold   { color:var(--c-gold); }
-.top-item-rank.silver { color:#90a4ae; }
-.top-item-rank.bronze { color:#a1665e; }
-.top-item-bar-wrap { flex:1;min-width:0; }
-.top-item-name { font-size:.88em;font-weight:800;color:var(--text);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-.top-item-bar-bg { height:5px;background:var(--border);border-radius:3px;overflow:hidden; }
-.top-item-bar-fill { height:100%;border-radius:3px;background:var(--c-blue);transition:width .8s var(--ease); }
-.top-item-count { font-size:.82em;font-weight:900;color:var(--c-blue);white-space:nowrap;min-width:36px;text-align:left; }
-
-/* ================================================================
-   V3 — ORDERS TAB (Complete)
-   ================================================================ */
-/* item cards */
-.ord-item-card {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-md);
-  padding: 13px 14px;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: var(--sh-xs);
-  transition: var(--tr);
-  position: relative;
-}
-.ord-item-card::before {
-  content: '';
-  position: absolute;
-  top: 0; right: 0; bottom: 0;
-  width: 4px;
-  border-radius: 0 var(--r-md) var(--r-md) 0;
-  background: var(--c-gold);
-}
-.ord-item-card.in-cart  { border-color: var(--c-green-light); background: #f0fdf4; }
-.ord-item-card.in-cart::before { background: var(--c-green-light); }
-.ord-item-card.is-out::before  { background: var(--c-red); }
-.ord-item-card:hover { box-shadow: var(--sh-sm); }
-
-.ord-item-img  { width:46px;height:46px;border-radius:var(--r-sm);object-fit:cover;flex-shrink:0;cursor:pointer; }
-.ord-item-emoji{ font-size:1.8em;flex-shrink:0; }
-.ord-item-info { flex:1;min-width:0; }
-.ord-item-name { font-weight:800;font-size:.94em;color:var(--text);margin-bottom:4px; }
-.ord-item-meta {
-  display:flex;flex-wrap:wrap;gap:6px;
-  font-size:.76em;color:var(--text-muted);margin-bottom:5px;
-}
-.ord-item-meta span { background:var(--bg);border-radius:var(--r-xs);padding:2px 6px; }
-.ord-val-out { color:var(--c-red)!important;font-weight:800; }
-.ord-val-low { color:var(--c-orange)!important;font-weight:800; }
-.ord-bar-wrap { height:4px;background:var(--border);border-radius:2px;overflow:hidden; }
-.ord-bar-fill { height:100%;border-radius:2px;transition:width .6s var(--ease); }
-
-/* right controls */
-.ord-item-right { display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0; }
-.ord-add-btn {
-  background: linear-gradient(135deg, var(--c-green) 0%, #2e7d32 100%);
-  color: #fff; border: none; border-radius: var(--r-sm);
-  padding: 9px 16px; font-family: 'Heebo', sans-serif;
-  font-size: 13px; font-weight: 800; cursor: pointer;
-  transition: var(--tr); white-space: nowrap;
-}
-.ord-add-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-.ord-qty-ctrl {
-  display: flex; align-items: center; gap: 4px;
-  background: var(--c-green-pale); border-radius: var(--r-sm);
-  padding: 4px 6px;
-}
-.ord-qty-btn {
-  width: 28px; height: 28px; border: none; border-radius: 6px;
-  background: var(--c-green); color: #fff;
-  font-size: 1.1em; font-weight: 900; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: var(--tr);
-}
-.ord-qty-btn:hover { filter: brightness(1.1); }
-.ord-qty-input {
-  width: 46px; height: 28px; border: 1.5px solid var(--c-green-light);
-  border-radius: 6px; text-align: center;
-  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 900;
-  color: var(--c-green); background: #fff; outline: none;
-}
-.ord-remove-btn {
-  font-size: .75em; color: var(--c-red); font-weight: 700;
-  border: none; background: none; cursor: pointer; padding: 2px 4px;
-}
-
-/* sent orders */
-.sent-order-card {
-  background: var(--surface); border: 1.5px solid var(--border);
-  border-radius: var(--r-md); padding: 14px 16px;
-  margin-bottom: 10px; box-shadow: var(--sh-xs);
-  position: relative; overflow: hidden;
-}
-.sent-order-card::before {
-  content: ''; position: absolute;
-  top: 0; right: 0; bottom: 0; width: 4px;
-}
-.sent-order-card.status-sent::before           { background: var(--c-gold); }
-.sent-order-card.status-confirmed::before      { background: var(--c-blue); }
-.sent-order-card.status-fully_confirmed::before{ background: var(--c-green-light); }
-.so-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px; }
-.so-id     { font-size:.75em;font-weight:700;color:var(--text-muted);margin-bottom:2px; }
-.so-date   { font-weight:800;font-size:.85em;color:var(--text);margin-bottom:2px; }
-.so-status-pill { padding:4px 12px;border-radius:var(--r-full);font-size:.72em;font-weight:800;white-space:nowrap;flex-shrink:0; }
-.so-progress  { margin-bottom:10px; }
-.so-prog-bar  { height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px; }
-.so-prog-fill { height:100%;background:var(--c-green-light);border-radius:3px;transition:width .6s var(--ease); }
-.so-prog-lbl  { font-size:.75em;color:var(--text-muted);font-weight:600; }
-.so-items-preview { display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px; }
-.so-item-chip {
-  font-size:.73em;padding:3px 9px;border-radius:var(--r-full);
-  background:var(--bg);border:1px solid var(--border);font-weight:600;color:var(--text-soft);
-}
-.so-item-chip.chip-done    { background:#e8f5e9;border-color:#a5d6a7;color:#1b5e20; }
-.so-item-chip.chip-partial { background:#fff8e1;border-color:#ffe082;color:#e65100; }
-.so-actions { display:flex;gap:8px;flex-wrap:wrap; }
-
-/* receipt confirm modal */
-#order-receipt-modal {
-  position: fixed; inset: 0; z-index: 9700;
-  background: rgba(13,27,42,.8); backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: none; align-items: center; justify-content: center; padding: 16px;
-}
-#order-receipt-modal.show { display: flex; animation: fadeIn .2s ease; }
-.rcm-box {
-  background: var(--surface); border-radius: var(--r-lg);
-  padding: 0; width: 100%; max-width: 520px;
-  box-shadow: var(--sh-xl); max-height: 90vh;
-  display: flex; flex-direction: column;
-  overflow: hidden; animation: slideUp .25s cubic-bezier(.34,1.56,.64,1);
-}
-.rcm-header {
-  background: linear-gradient(135deg, #0d1b2a 0%, #1a3a5f 100%);
-  padding: 20px 22px 16px;
-  flex-shrink: 0;
-}
-.rcm-header h3 { color: #fff; font-size: 1.05em; font-weight: 900; margin-bottom: 4px; }
-.rcm-header p  { color: rgba(255,255,255,.5); font-size: .8em; }
-.rcm-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
-.rcm-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
-
-.rcm-item-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 0; border-bottom: 1px solid var(--border);
-}
-.rcm-item-row:last-child { border-bottom: none; }
-.rcm-item-info { flex: 1; min-width: 0; }
-.rcm-item-name { font-weight: 800; font-size: .9em; color: var(--text); margin-bottom: 3px; }
-.rcm-item-sub  { font-size: .75em; color: var(--text-muted); display: flex; gap: 8px; }
-.rcm-recv-wrap { flex-shrink: 0; text-align: center; }
-.rcm-recv-label{ font-size: .68em; color: var(--text-muted); font-weight: 700; margin-bottom: 5px; letter-spacing: .04em; }
-.rcm-recv-btns { display: flex; align-items: center; gap: 4px; }
-.rcm-btn {
-  padding: 6px 11px; border: 1.5px solid var(--border);
-  border-radius: var(--r-sm); font-family: 'Heebo', sans-serif;
-  font-size: 12px; font-weight: 800; cursor: pointer;
-  background: var(--surface); color: var(--text-soft);
-  transition: var(--tr); white-space: nowrap;
-}
-.rcm-btn-none.active { background: #ffebee; border-color: var(--c-red); color: var(--c-red); }
-.rcm-btn-all.active  { background: var(--c-green-pale); border-color: var(--c-green-light); color: var(--c-green); }
-.rcm-qty-input {
-  width: 54px; height: 32px; border: 1.5px solid var(--border);
-  border-radius: var(--r-sm); text-align: center;
-  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 900;
-  color: var(--c-navy); outline: none; transition: var(--tr);
-}
-.rcm-qty-input:focus { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(26,110,181,.1); }
-
-/* ================================================================
-   V3 — PHONE-AS-CAMERA (Mobile Remote Scanner)
-   ================================================================ */
-#phone-pair-overlay {
-  position: fixed; inset: 0; z-index: 19500;
-  background: linear-gradient(135deg, #0a1628 0%, #0d2246 50%, #1a3a6b 100%);
-  display: none; flex-direction: column; align-items: center; justify-content: center;
-  padding: 24px;
-}
-#phone-pair-overlay.show { display: flex; animation: ssoIn .3s ease both; }
-.pair-card {
-  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
-  border-radius: 24px; padding: 32px 28px;
-  max-width: 380px; width: 100%; text-align: center; position: relative;
-}
-.pair-title { font-size: 1.35em; font-weight: 900; color: #fff; margin-bottom: 6px; }
-.pair-sub   { font-size: .82em; color: rgba(255,255,255,.5); margin-bottom: 24px; line-height: 1.5; }
-.pair-qr-wrap {
-  background: #fff; border-radius: 18px; padding: 14px;
-  display: inline-block; margin-bottom: 20px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.4);
-}
-.pair-qr-wrap img { display: block; border-radius: 8px; }
-.pair-session-id { font-family: monospace; font-size: .78em; color: rgba(255,255,255,.35); letter-spacing: .08em; margin-bottom: 18px; }
-.pair-status-row {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  margin-bottom: 20px; padding: 10px 18px;
-  background: rgba(255,255,255,.07); border-radius: 999px;
-  font-size: .85em; font-weight: 700; color: rgba(255,255,255,.7);
-}
-.pair-dot { width: 10px; height: 10px; border-radius: 50%; background: #90a4ae; flex-shrink: 0; }
-.pair-dot.waiting  { background: #f9a825; animation: ejsPulse 1.4s infinite; }
-.pair-dot.scanning { background: #42a5f5; animation: ejsPulse .8s infinite; }
-.pair-dot.done     { background: #69f0ae; }
-.pair-steps { display: flex; gap: 10px; margin-bottom: 22px; }
-.pair-step {
-  flex: 1; background: rgba(255,255,255,.05);
-  border-radius: 12px; padding: 10px 8px;
-  font-size: .74em; color: rgba(255,255,255,.55); line-height: 1.4;
-}
-.pair-step b { display: block; font-size: 1.3em; margin-bottom: 4px; color: rgba(255,255,255,.8); }
-.pair-close-btn {
-  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18);
-  border-radius: 12px; padding: 12px 28px;
-  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 800;
-  color: rgba(255,255,255,.8); cursor: pointer; transition: var(--tr); width: 100%;
-}
-.pair-close-btn:hover { background: rgba(255,255,255,.18); }
-/* Mobile scanner landing */
-#phone-scan-page {
-  position: fixed; inset: 0; z-index: 99000;
-  background: linear-gradient(160deg, #0a1628 0%, #0d2246 100%);
-  display: none; flex-direction: column; align-items: center;
-  justify-content: flex-start; padding: 28px 20px 24px;
-  direction: rtl; overflow-y: auto; -webkit-overflow-scrolling: touch;
-}
-#phone-scan-page.show { display: flex; }
-.psp-logo  { width: 60px; height: 60px; border-radius: 14px; margin-bottom: 12px; border: 2px solid rgba(255,255,255,.2); object-fit: cover; }
-.psp-title { font-size: 1.3em; font-weight: 900; color: #fff; margin-bottom: 5px; text-align: center; }
-.psp-sub   { font-size: .8em; color: rgba(255,255,255,.5); margin-bottom: 20px; text-align: center; line-height: 1.5; }
-.psp-scanner-wrap {
-  width: 100%; max-width: 360px; border-radius: 18px; overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0,0,0,.6); margin-bottom: 14px;
-  border: 2.5px solid rgba(66,165,245,.4); position: relative; background: #000; min-height: 240px;
-}
-.psp-corner { position: absolute; width: 26px; height: 26px; border-color: #42a5f5; border-style: solid; border-width: 0; z-index: 5; pointer-events: none; }
-.psp-corner.tl { top:10px;right:10px; border-top-width:3px;border-right-width:3px; border-radius:0 5px 0 0; }
-.psp-corner.tr { top:10px;left:10px;  border-top-width:3px;border-left-width:3px;  border-radius:5px 0 0 0; }
-.psp-corner.bl { bottom:10px;right:10px; border-bottom-width:3px;border-right-width:3px; border-radius:0 0 0 5px; }
-.psp-corner.br { bottom:10px;left:10px;  border-bottom-width:3px;border-left-width:3px;  border-radius:0 0 5px 0; }
-.psp-scan-line {
-  position: absolute; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, transparent 0%, #42a5f5 30%, #90caf9 50%, #42a5f5 70%, transparent 100%);
-  animation: pspScanLine 2.2s ease-in-out infinite; z-index: 4; pointer-events: none; box-shadow: 0 0 8px #42a5f5;
-}
-@keyframes pspScanLine { 0%,100%{top:10%} 50%{top:82%} }
-.psp-status { font-size:.88em; font-weight:700; color:rgba(255,255,255,.75); text-align:center; margin-bottom:10px; min-height:1.5em; line-height:1.4; white-space:pre-line; }
-.psp-result-card {
-  background: rgba(105,240,174,.12); border: 1.5px solid rgba(105,240,174,.35);
-  border-radius: 16px; padding: 16px 20px; width: 100%; max-width: 360px;
-  text-align: center; display: none; margin-bottom: 12px;
-}
-.psp-result-card.show { display: block; animation: ssoIn .3s ease; }
-.psp-result-name { font-size: 1.05em; font-weight: 900; color: #fff; margin-bottom: 5px; }
-.psp-result-bc   { font-size: .75em; color: rgba(255,255,255,.45); font-family: monospace; letter-spacing:.04em; }
-.psp-result-ok   { font-size: .9em; color: #69f0ae; font-weight: 800; margin-top: 8px; }
-.psp-again-btn {
-  width: 100%; max-width: 360px; padding: 14px; margin-bottom: 10px;
-  border: 1.5px solid rgba(255,255,255,.2); border-radius: 12px;
-  background: rgba(255,255,255,.08); color: #fff;
-  font-family: 'Heebo', sans-serif; font-size: 15px; font-weight: 800; cursor: pointer; transition: all .2s;
-}
-.psp-again-btn:active { background: rgba(255,255,255,.16); }
-.psp-manual-wrap { width: 100%; max-width: 360px; display: flex; gap: 8px; margin-top: 8px; }
-.psp-manual-input {
-  flex: 1; padding: 12px 14px; border: 1.5px solid rgba(255,255,255,.2);
-  border-radius: 10px; font-family: 'Heebo', sans-serif; font-size: 15px;
-  background: rgba(255,255,255,.08); color: #fff; outline: none;
-}
-.psp-manual-input::placeholder { color: rgba(255,255,255,.35); }
-.psp-manual-input:focus { border-color: #42a5f5; background: rgba(255,255,255,.12); }
-.psp-manual-btn {
-  padding: 12px 20px; border: none; border-radius: 10px;
-  background: #1a6eb5; color: #fff;
-  font-family: 'Heebo', sans-serif; font-size: 15px; font-weight: 900; cursor: pointer;
-}
-/* Scan button upgrade: two modes */
-.scan-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-.scan-btn-option {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 5px; padding: 16px 12px; border: none; border-radius: var(--r-md);
-  font-family: 'Heebo', sans-serif; cursor: pointer; transition: var(--tr); font-weight: 800;
-}
-.scan-btn-option:hover { transform: translateY(-2px); box-shadow: var(--sh-md); }
-.scan-btn-option .sbo-icon  { font-size: 1.8em; }
-.scan-btn-option .sbo-title { font-size: .88em; }
-.scan-btn-option .sbo-sub   { font-size: .71em; opacity: .7; font-weight: 600; }
-.scan-btn-cam   { background: linear-gradient(135deg, var(--c-navy) 0%, #1a3a6b 100%); color: #fff; }
-.scan-btn-phone { background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); color: #fff; }
-
-/* ================================================================
-   V3 — DELIVERIES TAB (משלוחים)
-   ================================================================ */
-.delivery-card {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-md);
-  padding: 16px;
-  margin-bottom: 10px;
-  box-shadow: var(--sh-xs);
-  transition: var(--tr);
-  position: relative;
-  overflow: hidden;
-}
-.delivery-card::before {
-  content: '';
-  position: absolute;
-  top: 0; right: 0; bottom: 0;
-  width: 4px;
-  border-radius: 0 var(--r-md) var(--r-md) 0;
-  background: var(--border);
-}
-.delivery-card:hover { box-shadow: var(--sh-sm); transform: translateY(-1px); }
-.delivery-card.status-pending::before  { background: var(--c-gold); }
-.delivery-card.status-sent::before     { background: var(--c-blue); }
-.delivery-card.status-confirmed::before{ background: var(--c-green-light); }
-.delivery-header { display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:10px; }
-.delivery-id    { font-size:.72em;color:var(--text-muted);font-weight:700;letter-spacing:.04em;margin-bottom:3px; }
-.delivery-title { font-weight:900;font-size:1em;color:var(--text);margin-bottom:3px; }
-.delivery-meta  { font-size:.79em;color:var(--text-muted); }
-.delivery-status-pill {
-  padding: 5px 12px;
-  border-radius: var(--r-full);
-  font-size: .72em;
-  font-weight: 800;
-  white-space: nowrap;
-  flex-shrink: 0;
-  letter-spacing: .03em;
-}
-.pill-pending   { background: #fff8e1; color: #e65100; border: 1px solid #ffe0b2; }
-.pill-sent      { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
-.pill-confirmed { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
-.delivery-items-list {
-  font-size: .81em;
-  color: var(--text-soft);
-  margin-bottom: 12px;
-  line-height: 1.9;
-  background: var(--bg);
-  border-radius: var(--r-sm);
-  padding: 8px 12px;
-}
-.delivery-actions { display:flex;gap:8px;flex-wrap:wrap; }
-
-/* delivery confirm modal */
-#delivery-confirm-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(13,27,42,.78);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  z-index: 9600;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-#delivery-confirm-modal.show { display: flex; animation: fadeIn .2s ease; }
-@keyframes fadeIn { from{opacity:0} to{opacity:1} }
-.dcm-box {
-  background: var(--surface);
-  border-radius: var(--r-lg);
-  padding: 28px 24px 22px;
-  width: 100%;
-  max-width: 500px;
-  box-shadow: var(--sh-xl);
-  max-height: 88vh;
-  overflow-y: auto;
-  animation: slideUp .25s cubic-bezier(.34,1.56,.64,1);
-}
-.dcm-item-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-.dcm-item-row:last-child { border-bottom: none; }
-.dcm-item-name { flex: 1; font-weight: 800; font-size: .9em; }
-.dcm-item-bc   { font-size: .72em; color: var(--text-muted); font-family: monospace; margin-top: 2px; }
-.dcm-sent-lbl  { font-size: .78em; color: var(--text-muted); white-space: nowrap; }
-.dcm-recv-input {
-  width: 68px;
-  padding: 7px 8px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  font-family: 'Heebo', sans-serif;
-  font-size: 14px;
-  font-weight: 800;
-  text-align: center;
-  color: var(--c-navy);
-  transition: var(--tr);
-}
-.dcm-recv-input:focus { border-color: var(--c-green); box-shadow: 0 0 0 3px rgba(27,94,32,.12); outline: none; }
-
-/* delivery item builder rows */
-.del-item-builder-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 6px;
-  align-items: center;
-  background: var(--bg);
-  border-radius: var(--r-sm);
-  padding: 6px 8px;
-  border: 1px solid var(--border);
-  transition: var(--tr);
-}
-.del-item-builder-row:hover { border-color: var(--border-dark); }
-@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
-
-/* ================================================================
-   V3 — TRANSFER (העברות בין תחנות)
-   ================================================================ */
-.transfer-station-row { display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:14px; }
-.transfer-arrow { font-size:1.5em;text-align:center; }
-.transfer-item-row { display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:var(--r-sm);border:1.5px solid var(--border);margin-bottom:6px;cursor:pointer;transition:var(--tr); }
-.transfer-item-row:hover { border-color:var(--c-blue);background:#e3f2fd; }
-.transfer-item-row.selected { border-color:var(--c-green);background:var(--c-green-pale); }
-.transfer-item-check { font-size:1.1em;min-width:22px; }
-.transfer-qty-input { width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--r-xs);font-family:'Heebo',sans-serif;font-size:13px;text-align:center; }
-
-/* ================================================================
-   V3 — EMAILJS SETTINGS CARD
-   ================================================================ */
-.ejs-setup-card {
-  background: linear-gradient(135deg, #0d1b2a 0%, #1a3a5f 100%);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: var(--r-lg);
-  padding: 24px 20px;
-  margin-bottom: 14px;
-  position: relative;
-  overflow: hidden;
-}
-.ejs-setup-card::before {
-  content: '';
-  position: absolute;
-  top: -60px; right: -60px;
-  width: 200px; height: 200px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(33,150,243,.18) 0%, transparent 70%);
-  pointer-events: none;
-}
-.ejs-setup-card .card-title { color: #fff; }
-.ejs-setup-card .card-title span { opacity: .55; }
-.ejs-label {
-  font-size: .78em;
-  font-weight: 700;
-  color: rgba(255,255,255,.6);
-  letter-spacing: .04em;
-  margin-bottom: 5px;
-  display: block;
-}
-.ejs-input {
-  width: 100%;
-  padding: 11px 14px;
-  border: 1.5px solid rgba(255,255,255,.15);
-  border-radius: var(--r-sm);
-  font-family: 'Heebo', sans-serif;
-  font-size: 13px;
-  background: rgba(255,255,255,.08);
-  color: white;
-  transition: var(--tr);
-  outline: none;
-  margin-bottom: 10px;
-  font-family: monospace;
-  letter-spacing: .03em;
-}
-.ejs-input:focus { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.13); }
-.ejs-input::placeholder { color: rgba(255,255,255,.3); font-family: 'Heebo', sans-serif; }
-.ejs-status-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: var(--r-sm);
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.1);
-  margin-bottom: 12px;
-  font-size: .82em;
-  font-weight: 700;
-  color: rgba(255,255,255,.7);
-}
-.ejs-status-dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: #90a4ae;
-  flex-shrink: 0;
-  box-shadow: 0 0 0 0 #90a4ae;
-}
-.ejs-status-dot.connected { background: #69f0ae; animation: ejsPulse 1.8s infinite; box-shadow: 0 0 0 0 rgba(105,240,174,.7); }
-.ejs-status-dot.error     { background: #ff5252; }
-@keyframes ejsPulse { 0%,100%{box-shadow:0 0 0 0 rgba(105,240,174,.5)} 60%{box-shadow:0 0 0 7px rgba(105,240,174,0)} }
-.ejs-btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-.ejs-btn {
-  padding: 10px 18px;
-  border: none;
-  border-radius: var(--r-sm);
-  font-family: 'Heebo', sans-serif;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: var(--tr);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.ejs-btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
-.ejs-btn-save  { background: #1a6eb5; color: #fff; }
-.ejs-btn-test  { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.2); }
-.ejs-btn-docs  { background: rgba(255,255,255,.06); color: rgba(255,255,255,.6); font-size: .78em; border: 1px solid rgba(255,255,255,.1); }
-.ejs-divider   { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 14px 0; }
-.ejs-how-row {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  margin-bottom: 8px;
-  font-size: .79em;
-  color: rgba(255,255,255,.5);
-  line-height: 1.5;
-}
-.ejs-how-num {
-  background: rgba(255,255,255,.1);
-  color: rgba(255,255,255,.8);
-  font-weight: 900;
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  font-size: .85em;
-}
-.ejs-how-row b { color: rgba(255,255,255,.85); }
-.ejs-how-row a { color: #64b5f6; text-decoration: none; }
-.ejs-how-row a:hover { text-decoration: underline; }
-
-/* email send progress */
-.email-sending-overlay {
-  position: fixed; inset: 0; z-index: 20000;
-  background: rgba(13,27,42,.85);
-  backdrop-filter: blur(10px);
-  display: none; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 16px;
-}
-.email-sending-overlay.show { display: flex; }
-.email-spin {
-  width: 60px; height: 60px;
-  border: 4px solid rgba(255,255,255,.15);
-  border-top-color: var(--c-blue-glow);
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
-}
-.email-sending-title { color: #fff; font-size: 1.1em; font-weight: 900; }
-.email-sending-sub   { color: rgba(255,255,255,.5); font-size: .83em; }
-.email-success-check { font-size: 3.5em; animation: sosBadge .4s cubic-bezier(.34,1.56,.64,1) both; }
-
-/* INTRO SPLASH
+   INTRO SPLASH
    ================================================================ */
 #intro-splash {
   position:fixed;inset:0;z-index:99999;background:#000;overflow:hidden;
@@ -2221,7 +1618,7 @@ tr:hover td { background: var(--bg); }
   <canvas id="splash-c"></canvas>
   <div id="sp-logo">
     <img id="sp-logo-img" src="" alt="לוגו">
-    <div class="sp-t1">מערכת ניהול מלאי - הוד השרון</div>
+    <div class="sp-t1" id="splash-title">מערכת ניהול מלאי - הוד השרון</div>
     <div class="sp-t2">מגן דוד אדום</div>
   </div>
   <div id="sp-wipe-t"></div>
@@ -2336,6 +1733,8 @@ tr:hover td { background: var(--bg); }
 
   <div id="system-msg"></div>
 
+  <!-- Ticker bar (app) -->
+
   <!-- App Header -->
   <div class="app-header">
     <div class="header-logo">
@@ -2356,7 +1755,6 @@ tr:hover td { background: var(--bg); }
       <button class="tab-btn" onclick="showTab('tab-team',this)">👥 צוות</button>
       <button id="tab-logs-btn" class="tab-btn" onclick="showTab('tab-logs',this)">📜 לוגים</button>
       <button id="tab-alerts-btn" class="tab-btn" onclick="showTab('tab-alerts',this)">🚨 התראות</button>
-      <button class="tab-btn" onclick="showTab('tab-compare',this)">📈 השוואה</button>
       <button class="tab-btn" onclick="showTab('tab-settings',this)">⚙️ הגדרות</button>
       <button class="tab-btn tab-logout" onclick="logout()">↩ יציאה</button>
     </nav>
@@ -2365,10 +1763,7 @@ tr:hover td { background: var(--bg); }
 
       <!-- DASHBOARD -->
       <div id="tab-dash" class="tab-pane">
-        <div id="admin-alert-banner" class="alert-banner critical">
-          <h4>🚨 פריטים חסרים / מלאי נמוך</h4>
-          <div id="admin-alert-list" class="ab-list"></div>
-        </div>
+
         <div class="stats-grid">
           <div class="stat-card"><span id="st-total" class="stat-num">0</span><div class="stat-label">פריטים</div></div>
           <div class="stat-card"><span id="st-cats" class="stat-num">0</span><div class="stat-label">קטגוריות</div></div>
@@ -2380,36 +1775,18 @@ tr:hover td { background: var(--bg); }
         <!-- Biometric management banner (admin) -->
         <div id="bio-setup-banner-admin" class="bio-banner hidden"></div>
 
-        <!-- Phone-as-camera quick action -->
-        <div class="card" style="background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5f 100%);border-color:rgba(255,255,255,.1);">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-            <div>
-              <div style="font-size:.95em;font-weight:900;color:#fff;margin-bottom:4px;">📱 סריקה עם טלפון</div>
-              <div style="font-size:.78em;color:rgba(255,255,255,.5);">חבר טלפון למחשב לסריקה מרחוק</div>
-            </div>
-            <button onclick="openPhonePairing()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px 20px;font-family:'Heebo',sans-serif;font-size:14px;font-weight:800;color:#fff;cursor:pointer;white-space:nowrap;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.22)'" onmouseout="this.style.background='rgba(255,255,255,.12)'">
-              📷 פתח מצלמת טלפון
-            </button>
-          </div>
-        </div>
-
         <div class="card">
           <div class="card-title">📊 פיזור לפי קטגוריה</div>
           <div class="chart-wrap"><canvas id="chartPie"></canvas></div>
         </div>
         <div class="card">
-          <div class="card-title">🔥 פריטים שיוצאים הכי הרבה <span style="font-size:.72em;color:var(--text-muted);font-weight:600;">(30 ימים אחרונים)</span></div>
-          <div id="top-items-list" class="top-items-list">
-            <div class="empty-state" style="padding:16px 0;"><div class="es-icon">📊</div><p>טוען נתונים...</p></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">📊 שימוש ב-24 שעות האחרונות</div>
+          <div class="card-title">📊 שימוש ב-7 ימים אחרונים</div>
           <div class="chart-wrap"><canvas id="chartBar"></canvas></div>
         </div>
       </div>
 
       <!-- REPORTS -->
+<!-- REPORTS -->
 <div id="tab-reports" class="tab-pane hidden">
 
   <style>
@@ -2580,7 +1957,7 @@ tr:hover td { background: var(--bg); }
     </div>
 
   </div>
-</div>
+</div></div>
 
       <!-- INVENTORY -->
       <div id="tab-inv" class="tab-pane hidden">
@@ -2763,85 +2140,9 @@ tr:hover td { background: var(--bg); }
 
       </div><!-- /tab-alerts -->
 
-      <!-- ════════════ ORDERS TAB — הזמנות ════════════ -->
-      <!-- ════════════ ORDERS TAB — הזמנות ════════════ -->
-      <div id="tab-orders" class="tab-pane hidden">
-
-        <!-- Summary stats -->
-        <div class="stats-grid" style="margin-bottom:12px;">
-          <div class="stat-card danger"><span id="ord-out-num" class="stat-num">0</span><div class="stat-label">🚨 אזל</div></div>
-          <div class="stat-card warning"><span id="ord-low-num" class="stat-num">0</span><div class="stat-label">⚠️ נמוך</div></div>
-          <div class="stat-card"><span id="ord-cart-num" class="stat-num">0</span><div class="stat-label">🛒 בהזמנה</div></div>
-          <div class="stat-card success"><span id="ord-sent-num" class="stat-num">0</span><div class="stat-label">✅ נשלחו</div></div>
-        </div>
-
-        <!-- Controls -->
-        <div class="card" style="margin-bottom:10px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
-            <div class="card-title" style="margin-bottom:0;">🛒 פריטים לצורך הזמנה</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button class="btn w-auto sm btn-blue" onclick="ordSelectAll()">✓ בחר הכל</button>
-              <button class="btn w-auto sm btn-gold" onclick="openOrderCart()">🛒 הזמנה <span id="cart-count" style="background:#fff;color:#e65100;border-radius:999px;padding:1px 7px;font-size:.85em;font-weight:900;">0</span></button>
-              <button class="btn w-auto sm btn-green" onclick="sendOrderByEmail()">📧 שלח הזמנה</button>
-              <button class="btn w-auto sm btn-gray" onclick="exportOrderCsv()">📥 CSV</button>
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-            <span class="chip active-chip" data-of="all"  onclick="setOrdFilter('all',this)">הכל</span>
-            <span class="chip chip-red"   data-of="out"   onclick="setOrdFilter('out',this)">🚨 אזל</span>
-            <span class="chip chip-red"   data-of="low"   onclick="setOrdFilter('low',this)">⚠️ נמוך</span>
-            <span class="chip chip-blue"  data-of="cart"  onclick="setOrdFilter('cart',this)">🛒 בהזמנה</span>
-          </div>
-          <div class="search-wrap" style="margin-bottom:0;">
-            <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="order-search"
-              placeholder="חפש לפי שם / קטגוריה / ברקוד..."
-              oninput="renderOrdersTab()">
-            <button class="search-clear" onclick="document.getElementById('order-search').value='';renderOrdersTab()">✕</button>
-          </div>
-        </div>
-
-        <div id="orders-list"></div>
-
-        <!-- Sent orders history -->
-        <div class="card" style="margin-top:4px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-            <div class="card-title" style="margin-bottom:0;">📋 הזמנות שנשלחו</div>
-            <button class="btn w-auto sm btn-gray" onclick="loadSentOrders()">🔄 רענן</button>
-          </div>
-          <div id="sent-orders-list">
-            <div class="empty-state"><div class="es-icon">📋</div><p>אין הזמנות עדיין</p></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════════════ COMPARE TAB — השוואת תחנות ════════════ -->
-      <div id="tab-compare" class="tab-pane hidden">
-        <div class="card">
-          <div class="card-title">📈 השוואת מלאי בין תחנות</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
-            <select class="app-select" id="cmp-s1" style="width:auto;margin-bottom:0;">
-              <option value="hodhasharon">הוד השרון</option>
-              <option value="nave">נווה ימין</option>
-              <option value="karnei">קרני שומרון</option>
-              <option value="tnkids">ט.נ. ילדים</option>
-            </select>
-            <span style="font-weight:800;color:var(--text-muted);">vs</span>
-            <select class="app-select" id="cmp-s2" style="width:auto;margin-bottom:0;">
-              <option value="nave">נווה ימין</option>
-              <option value="hodhasharon">הוד השרון</option>
-              <option value="karnei">קרני שומרון</option>
-              <option value="tnkids">ט.נ. ילדים</option>
-            </select>
-            <button class="btn w-auto sm btn-blue" onclick="runComparison()">📊 השווה</button>
-            <button class="btn w-auto sm btn-green" onclick="exportComparisonCsv()">📥 ייצא</button>
-          </div>
-          <div id="compare-summary" style="font-size:.82em;color:var(--text-muted);margin-bottom:10px;font-weight:600;"></div>
-          <div id="compare-results"><div class="empty-state"><div class="es-icon">📈</div><p>בחר שתי תחנות ולחץ השווה</p></div></div>
-        </div>
-      </div>
-
       <div id="tab-settings" class="tab-pane hidden">
+        <div class="card">
+          <div class="card-title">⚙️ הגדרות מערכת</div>
           <div class="setting-row">
             <label>סף מלאי נמוך (גלובלי):</label>
             <input type="number" id="set-threshold" class="sr-input" value="3" min="0" max="99" style="width:80px;">
@@ -2869,90 +2170,6 @@ tr:hover td { background: var(--bg); }
             <label>גרסה נדרשת:</label>
             <input type="text" id="set-version" class="sr-input" style="width:90px;" placeholder="1.09">
             <button class="btn w-auto sm btn-blue" onclick="saveVersion()">שמור</button>
-          </div>
-        </div>
-
-        <!-- EmailJS Configuration + Weekly Report -->
-        <div class="ejs-setup-card">
-          <div class="card-title" style="margin-bottom:16px;">
-            📧 EmailJS — שליחת אימייל אמיתית
-            <span style="font-size:.7em;font-weight:600;margin-right:6px;">גרסה 3.0</span>
-          </div>
-
-          <!-- Status row -->
-          <div class="ejs-status-row" id="ejs-status-row">
-            <div class="ejs-status-dot" id="ejs-dot"></div>
-            <span id="ejs-status-text">לא מחובר — הזן את המפתחות כדי להפעיל</span>
-          </div>
-
-          <!-- How to get keys -->
-          <div style="margin-bottom:14px;">
-            <div class="ejs-how-row">
-              <div class="ejs-how-num">1</div>
-              <div>היכנס ל <a href="https://www.emailjs.com" target="_blank">emailjs.com</a> → צור חשבון חינמי</div>
-            </div>
-            <div class="ejs-how-row">
-              <div class="ejs-how-num">2</div>
-              <div><b>Email Services</b> → Add Service → Gmail/Outlook → העתק <b>Service ID</b></div>
-            </div>
-            <div class="ejs-how-row">
-              <div class="ejs-how-num">3</div>
-              <div><b>Email Templates</b> → Create Template → קבל <b>Template ID</b> (ראה הוראות מתחת)</div>
-            </div>
-            <div class="ejs-how-row">
-              <div class="ejs-how-num">4</div>
-              <div><b>Account</b> → General → העתק <b>Public Key</b></div>
-            </div>
-          </div>
-
-          <hr class="ejs-divider">
-
-          <!-- Keys -->
-          <label class="ejs-label">🔑 Public Key</label>
-          <input type="text" id="ejs-public-key" class="ejs-input" placeholder="user_xxxxxxxxxxxxxxxxxxxx">
-
-          <label class="ejs-label">📡 Service ID</label>
-          <input type="text" id="ejs-service-id" class="ejs-input" placeholder="service_xxxxxxx">
-
-          <label class="ejs-label">📝 Template ID (לאימיילים כלליים)</label>
-          <input type="text" id="ejs-template-id" class="ejs-input" placeholder="template_xxxxxxx">
-
-          <hr class="ejs-divider">
-
-          <!-- Template instructions -->
-          <div style="background:rgba(255,255,255,.05);border-radius:var(--r-sm);padding:12px;margin-bottom:14px;">
-            <div style="font-size:.78em;font-weight:800;color:rgba(255,255,255,.7);margin-bottom:8px;">📝 הגדרת Template ב-EmailJS:</div>
-            <div style="font-size:.75em;color:rgba(255,255,255,.45);line-height:1.9;font-family:monospace;">
-              Subject: {{subject}}<br>
-              Body fields: {{to_email}}, {{to_name}},<br>
-              {{content}}, {{station}}, {{date}}
-            </div>
-          </div>
-
-          <!-- Recipient settings -->
-          <label class="ejs-label">📧 אימייל לדוחות יומיים</label>
-          <input type="email" id="set-report-email" class="ejs-input" placeholder="manager@mda.org.il">
-
-          <label class="ejs-label">📧 אימייל למשלוחים / לוגיסטיקה</label>
-          <input type="email" id="set-delivery-email" class="ejs-input" placeholder="logistics@mda.org.il">
-
-          <label class="ejs-label">📧 אימייל להזמנות ציוד</label>
-          <input type="email" id="set-orders-email" class="ejs-input" placeholder="supply@mda.org.il">
-
-          <hr class="ejs-divider">
-
-          <!-- Schedule -->
-          <label class="ejs-label">⏰ שליחת דוח יומי אוטומטי בשעה</label>
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
-            <input type="time" id="set-report-time" class="ejs-input" value="20:00" style="width:120px;margin-bottom:0;">
-            <div style="font-size:.79em;color:rgba(255,255,255,.45);">כל יום בסוף שיחה</div>
-          </div>
-
-          <div class="ejs-btn-row">
-            <button class="ejs-btn ejs-btn-save"  onclick="saveEjsSettings()">💾 שמור הגדרות</button>
-            <button class="ejs-btn ejs-btn-test"  onclick="testEmailJs()">🧪 שלח טסט</button>
-            <button class="ejs-btn ejs-btn-test"  onclick="sendDailyReportNow()">📤 שלח דוח עכשיו</button>
-            <button class="ejs-btn ejs-btn-docs"  onclick="previewDailyReport()">👁️ תצוגה מקדימה</button>
           </div>
         </div>
         <div class="card">
@@ -3107,195 +2324,8 @@ tr:hover td { background: var(--bg); }
   <button onclick="event.stopPropagation();document.getElementById('imgViewer').style.display='none';" style="background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.2);border-radius:var(--r-full);padding:9px 28px;font-family:'Heebo',sans-serif;font-weight:800;cursor:pointer;font-size:.9em;">סגור</button>
 </div>
 
-<!-- Email Sending Progress Overlay -->
-<div class="email-sending-overlay" id="email-progress-overlay">
-  <div class="email-spin" id="email-spin-el"></div>
-  <div class="email-success-check hidden" id="email-check-el">✅</div>
-  <div class="email-sending-title" id="email-progress-title">שולח אימייל...</div>
-  <div class="email-sending-sub"   id="email-progress-sub">אנא המתן</div>
-</div>
-
 <!-- Toast -->
 <div id="toast"></div>
-
-<!-- ================================================================
-     V3 — PHONE-AS-CAMERA: Desktop pairing overlay
-     ================================================================ -->
-<div id="phone-pair-overlay">
-  <div class="pair-card">
-    <div class="pair-title">📱 חיבור טלפון כמצלמה</div>
-    <div class="pair-sub">סרוק את קוד ה-QR עם הטלפון — ואז הטלפון יסרוק ברקודים<br>
-      הפריט יוצג כאן על המחשב בזמן אמת</div>
-
-    <div class="pair-steps">
-      <div class="pair-step"><b>1️⃣</b>סרוק QR<br>עם הטלפון</div>
-      <div class="pair-step"><b>2️⃣</b>כוון לברקוד<br>של המוצר</div>
-      <div class="pair-step"><b>3️⃣</b>המחשב מציג<br>את הפריט</div>
-    </div>
-
-    <!-- QR Code -->
-    <div class="pair-qr-wrap">
-      <img id="pair-qr-img" src="" width="230" height="230" alt="QR">
-    </div>
-
-    <!-- Session ID -->
-    <div class="pair-session-id" id="pair-session-label">מחולל...</div>
-
-    <!-- Status -->
-    <div class="pair-status-row">
-      <div class="pair-dot waiting" id="pair-dot"></div>
-      <span id="pair-status-text">ממתין לחיבור הטלפון...</span>
-    </div>
-
-    <!-- Scan counter -->
-    <div id="pair-multi-count" style="font-size:.78em;color:rgba(255,255,255,.4);margin-bottom:14px;min-height:1.2em;"></div>
-
-    <!-- Link fallback (copy/paste if QR doesn't work) -->
-    <div style="display:flex;gap:6px;margin-bottom:16px;">
-      <input id="pair-link-input" type="text" readonly
-        style="flex:1;padding:8px 10px;border:1px solid rgba(255,255,255,.15);border-radius:8px;
-               background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);font-size:.72em;
-               font-family:monospace;outline:none;">
-      <button onclick="copyPairLink()"
-        style="padding:8px 14px;border:1px solid rgba(255,255,255,.2);border-radius:8px;
-               background:rgba(255,255,255,.1);color:#fff;font-family:'Heebo',sans-serif;
-               font-size:.78em;font-weight:800;cursor:pointer;white-space:nowrap;">
-        📋 העתק
-      </button>
-    </div>
-
-    <button class="pair-close-btn" onclick="closePhonePairing()">✕ סגור חיבור</button>
-  </div>
-</div>
-
-<!-- ================================================================
-     V3 — PHONE-AS-CAMERA: Mobile scanner landing page
-     ================================================================ -->
-<div id="phone-scan-page">
-  <img id="psp-logo" class="psp-logo" src="" alt="לוגו">
-  <div class="psp-title" id="psp-station-name">מערכת מלאי</div>
-  <div class="psp-sub">כוון את המצלמה לברקוד — הפריט יופיע במחשב</div>
-
-  <!-- Scanner -->
-  <div class="psp-scanner-wrap">
-    <div class="psp-corner tl"></div>
-    <div class="psp-corner tr"></div>
-    <div class="psp-corner bl"></div>
-    <div class="psp-corner br"></div>
-    <div class="psp-scan-line"></div>
-    <div id="psp-qr-reader" style="width:100%;min-height:260px;background:#000;"></div>
-  </div>
-
-  <!-- Status -->
-  <div class="psp-status" id="psp-status">🔗 מתחבר...</div>
-
-  <!-- Result card (shown after successful scan) -->
-  <div class="psp-result-card" id="psp-result-card">
-    <div style="font-size:2em;margin-bottom:6px;">✅</div>
-    <div class="psp-result-name" id="psp-result-name"></div>
-    <div class="psp-result-bc"   id="psp-result-bc"></div>
-    <div class="psp-result-ok">נשלח למחשב בהצלחה!</div>
-  </div>
-
-  <!-- Scan again button -->
-  <button class="psp-again-btn" id="psp-again-btn"
-    style="display:none;" onclick="pspScanAgain()">
-    🔄 סרוק פריט נוסף
-  </button>
-
-  <!-- Manual barcode entry -->
-  <div class="psp-manual-wrap">
-    <input type="text" class="psp-manual-input" id="psp-manual-input"
-      placeholder="הזן ברקוד ידנית..." inputmode="numeric" autocomplete="off">
-    <button class="psp-manual-btn" onclick="pspSubmitManual()">✓ שלח</button>
-  </div>
-  <div style="font-size:.72em;color:rgba(255,255,255,.25);margin-top:10px;text-align:center;">
-    מצלמה לא עובדת? הזן ברקוד ידנית
-  </div>
-</div>
-
-<!-- ================================================================
-     V3 — SCAN SUCCESS OVERLAY (Camera Mode)
-     ================================================================ -->
-<div id="scan-success-overlay">
-  <div class="sso-pulse-ring"></div>
-  <div class="sso-badge" id="sso-badge">✅</div>
-  <img id="sso-img" class="sso-img" src="" alt="" style="display:none;">
-  <div class="sso-name" id="sso-name">שם מוצר</div>
-  <div class="sso-cat"  id="sso-cat">קטגוריה</div>
-  <div class="sso-qty-wrap">
-    <div>
-      <div class="sso-qty-num"  id="sso-qty">0</div>
-      <div class="sso-qty-label">במלאי</div>
-    </div>
-    <div style="width:1px;height:48px;background:rgba(255,255,255,.15);"></div>
-    <div>
-      <div class="sso-qty-num"  id="sso-thr" style="font-size:2em;color:rgba(255,255,255,.5);">3</div>
-      <div class="sso-qty-label">סף מינימום</div>
-    </div>
-  </div>
-  <div class="sso-status-pill" id="sso-status">תקין</div>
-  <div class="sso-actions">
-    <button class="sso-btn sso-btn-take" onclick="ssoTake()">➖ הוצאה / נטילה</button>
-    <button class="sso-btn sso-btn-add"  onclick="ssoAdd()">➕ הוספת מלאי</button>
-    <button class="sso-btn sso-btn-close" onclick="closeScanSuccess()">✕ סגור / סרוק שוב</button>
-  </div>
-  <div class="sso-barcode-tag" id="sso-barcode"></div>
-</div>
-
-<!-- ================================================================
-     V3 — DELIVERY CONFIRM MODAL
-     ================================================================ -->
-<div id="delivery-confirm-modal">
-  <div class="dcm-box">
-    <h3 style="font-size:1.1em;font-weight:900;color:var(--c-navy);margin-bottom:8px;">✅ אישור משלוח</h3>
-    <p style="font-size:.83em;color:var(--text-muted);margin-bottom:16px;">מלא את הפריטים שהתקבלו בפועל ואשר את המשלוח</p>
-    <div id="dcm-delivery-id" style="font-size:.75em;color:var(--text-muted);font-weight:700;margin-bottom:12px;"></div>
-    <div id="dcm-items-list" style="margin-bottom:14px;max-height:320px;overflow-y:auto;"></div>
-    <textarea id="dcm-notes" class="app-input" placeholder="הערות אישור..." rows="2" style="resize:vertical;margin-bottom:10px;"></textarea>
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-green" onclick="confirmDeliverySubmit()">✅ אשר משלוח</button>
-      <button class="btn btn-ghost w-auto" onclick="closeDeliveryConfirm()">ביטול</button>
-    </div>
-  </div>
-</div>
-
-<!-- ================================================================
-     V3 — ORDER CART PANEL (slide-up from bottom)
-     ================================================================ -->
-<div id="order-cart-panel">
-  <div class="cart-panel-title">
-    🛒 הזמנה שלי
-    <span id="cart-badge" style="background:var(--c-gold);color:#000;border-radius:999px;padding:2px 9px;font-size:.75em;font-weight:900;">0</span>
-  </div>
-  <div id="cart-items-list"></div>
-  <div style="display:flex;gap:8px;margin-top:12px;">
-    <button class="btn btn-green" onclick="sendOrderByEmail()">📧 שלח הזמנה עכשיו</button>
-    <button class="btn btn-ghost w-auto" onclick="closeOrderCart()">סגור</button>
-  </div>
-</div>
-
-<!-- ================================================================
-     V3 — ORDER RECEIPT CONFIRM MODAL
-     ================================================================ -->
-<div id="order-receipt-modal">
-  <div class="rcm-box">
-    <div class="rcm-header">
-      <h3>✅ אישור קבלת הזמנה</h3>
-      <p id="rcm-order-id"></p>
-      <p style="margin-top:4px;">עדכן כמה יחידות התקבלו בפועל מכל פריט</p>
-    </div>
-    <div class="rcm-body">
-      <div id="rcm-items-list"></div>
-      <textarea id="rcm-notes" class="app-input" placeholder="הערות (אופציונלי — חסרים, נזק, תאריך תפוגה...)"
-        rows="2" style="resize:vertical;margin-top:14px;"></textarea>
-    </div>
-    <div class="rcm-footer">
-      <button class="btn btn-green" onclick="submitReceiptConfirm()">✅ אשר קבלה ועדכן מלאי</button>
-      <button class="btn btn-ghost w-auto" onclick="closeReceiptConfirm()">ביטול</button>
-    </div>
-  </div>
-</div>
 
 <!-- ================================================================
      JAVASCRIPT
@@ -3312,10 +2342,9 @@ const SITE_CONFIG = {
     title:      'מערכת מלאי מד"א קרני שומרון',
     logoUrl:    'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/Karnei_Shomron-@main/קרני%20שומרון.png',
     headerText: 'מד"א קרני שומרון',
-    logoutUrl:  'https://sites.google.com/view/karnei-shomroni',
     firebase: {
       apiKey: "AIzaSyD9ApZOKj7aRUmcAG8MVncsCitOOJBH-cs",
-      authDomain: "mda-inventory.firebaseapp.com",
+      authDomain:  "meda-inventory-karnei-shomron.firebaseapp.com",
       databaseURL: "https://meda-inventory-karnei-shomron-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "mda-inventory",
       storageBucket: "meda-inventory-karnei-shomron.firebasestorage.app",
@@ -3325,9 +2354,8 @@ const SITE_CONFIG = {
   },
   nave: {
     title:      'מערכת מלאי מד"א נווה ימין',
-    logoUrl:    'https://cdn.jsdelivr.net/gh/ofireng/MDAAppImages/NeveYamin.png',
+    logoUrl:    'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/Nave_Yamin@main/Neve-Yamin.png',
     headerText: 'מד"א נווה ימין',
-    logoutUrl:  'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system-Neve_Yamin@main/Neve-Yamin.png',
     firebase: {
       apiKey: "AIzaSyBfpldPI5gydNrrF0UaJJUkCKhejJiQq3U",
       authDomain: "meda-inventory-neve-yamin.firebaseapp.com",
@@ -3338,26 +2366,10 @@ const SITE_CONFIG = {
       appId: "1:279956329748:web:957413804db84343691e01"
     }
   },
-  tnkids: {
-    title:      'מערכת מלאי טיפול נמרץ ילדים',
-    logoUrl:    'https://cdn.jsdelivr.net/gh/ofireng/MDAAppImages/birthLogo.webp',
-    headerText: 'טיפול נמרץ ילדים',
-    logoutUrl:  'https://sites.google.com/view/aten-warehouse',
-    firebase: {
-      apiKey: "AIzaSyA28chh4_gehbDVvd5mlln3w-G3uB6FX8s",
-      authDomain: "aten-warehouse.firebaseapp.com",
-      databaseURL: "https://aten-warehouse-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "aten-warehouse",
-      storageBucket: "aten-warehouse.firebasestorage.app",
-      messagingSenderId: "1007963863702",
-      appId: "1:1007963863702:web:57e18aadc387e341dea0b7"
-    }
-  },
   hodhasharon: {
     title:      'מערכת מלאי מד"א הוד השרון',
     logoUrl:    'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system@main/Hod_Hasharon_photo.png',
     headerText: 'מד"א הוד השרון',
-    logoutUrl:  'https://sites.google.com/view/madehod-hasharon',
     firebase: {
       apiKey: "AIzaSyCe4yRcJF9_3HXze3HGCwKMLNUjDdlORRM",
       authDomain: "mda-inventory.firebaseapp.com",
@@ -3384,7 +2396,8 @@ const auth = firebase.auth();
    ================================================================ */
 let inv = [], team = [], logs = [], admins = {};
 let localChanges = {};
-let chartPie = null, chartBar = null, _chartReport = null;
+let chartPie = null, chartBar = null;
+let _chartReport = null;
 let LOW_STOCK_THRESHOLD = 3;
 let _uFilter = 'all', _uSearch = '';
 let _aFilter = 'all', _aSearch = '';
@@ -3394,11 +2407,10 @@ let _logRows = [];
    DOM READY — INIT
    ================================================================ */
 document.addEventListener('DOMContentLoaded', () => {
-  /* In phone-scan mode, skip ALL main app initialization */
-  if (_IS_PHONE_SCAN_MODE) return;
 
   // Apply site config
   document.getElementById('page-title').textContent  = CFG.title;
+  document.getElementById('splash-title').textContent = CFG.title;
   document.getElementById('site-logo').src            = CFG.logoUrl;
   document.getElementById('header-logo').src          = CFG.logoUrl;
   document.getElementById('site-header').textContent  = CFG.headerText;
@@ -3770,6 +2782,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBiometricLoginButton(); // show biometric quick-login if device is registered
 
   loadData();
+  initDiscordSystem().catch(e => console.warn("[Discord] init error:", e));
 });
 
 /* ================================================================
@@ -3937,16 +2950,6 @@ function getThreshold(item) {
 function checkLowStock() {
   const low = inv.filter(i => { const q = Number.isFinite(i.qty) ? i.qty : 0; return q <= getThreshold(i); });
   const out = inv.filter(i => (Number.isFinite(i.qty) ? i.qty : 0) === 0);
-  const makeList = items => items.map(i => {
-    const q = Number.isFinite(i.qty) ? i.qty : 0;
-    return `${q===0?'🚨':'⚠️'} <b>${esc(i.name)}</b> — נותרו <b style="color:var(--c-red)">${q}</b>`;
-  }).join('<br>');
-  const ab = document.getElementById('admin-alert-banner');
-  const al = document.getElementById('admin-alert-list');
-  if (ab && al) {
-    if (low.length) { ab.classList.add('show'); al.innerHTML = makeList(low); }
-    else ab.classList.remove('show');
-  }
   document.getElementById('st-low').textContent = low.length;
   document.getElementById('st-out').textContent = out.length;
   const logBtn = document.getElementById('tab-logs-btn');
@@ -3974,6 +2977,8 @@ function checkLowStock() {
   if (!document.getElementById('tab-alerts')?.classList.contains('hidden')) {
     renderAlertsTab();
   }
+  // Discord: detect low/out stock changes
+  _dcCheckLowStockPatch();
 }
 
 /* ================================================================
@@ -4011,14 +3016,12 @@ function buildCharts(cats) {
   if (ctxBar) {
     if (chartBar) chartBar.destroy();
     const labels = [], data = [];
-    // Last 24 hours — hourly buckets
-    const nowTs = Date.now();
-    for (let i = 23; i >= 0; i--) {
-      const hStart = nowTs - (i+1)*3600000;
-      const hEnd   = nowTs - i*3600000;
-      const hDate  = new Date(hEnd);
-      labels.push(hDate.getHours() + ':00');
-      data.push(logs.filter(l=>l.timestamp>=hStart&&l.timestamp<hEnd&&(l.action==='take'||l.action==='sub')).reduce((s,l)=>s+(Number.isFinite(l.amount)?l.amount:0),0));
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      labels.push(d.toLocaleDateString('he-IL', { weekday:'short', day:'numeric' }));
+      const ds = new Date(d); ds.setHours(0,0,0,0);
+      const de = new Date(d); de.setHours(23,59,59,999);
+      data.push(logs.filter(l=>l.timestamp>=ds.getTime()&&l.timestamp<=de.getTime()&&(l.action==='take'||l.action==='sub')).reduce((s,l)=>s+(Number.isFinite(l.amount)?l.amount:0),0));
     }
     chartBar = new Chart(ctxBar, {
       type: 'bar',
@@ -4320,12 +3323,28 @@ function renderUser() {
       const metaExtra = [];
       if (Number.isFinite(i.minQty) && i.minQty >= 0) metaExtra.push(`מינ׳: ${i.minQty}`);
       if (i.barcode) metaExtra.push(`📦 ${i.barcode}`);
+
+      const madanetText = i.madanet_name
+    ? `<div style="
+          display:block;
+          font-size:0.8em;
+          color:#0d47a1;
+          background:#e3f2fd;
+          padding:3px 10px;
+          border-radius:999px;
+          margin-top:4px;
+          width:fit-content;
+      ">
+        <b>מדאנט:</b> ${i.madanet_name}${i.madanet_id ? ` (${i.madanet_id})` : ''}
+      </div>`
+    : "";
       card.innerHTML = `
         ${i.image ? `<img src="${esc(i.image)}" onclick="viewImage('${esc(i.image)}')" style="width:52px;height:52px;border-radius:var(--r-sm);object-fit:cover;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;transition:var(--tr);" title="לחץ להגדלה">` : ''}
         <div class="item-info">
           <span class="item-name">${esc(i.name)}${isOut?'<span class="badge badge-out">חסר</span>':isLow?'<span class="badge badge-low">נמוך</span>':''}</span>
           <span class="item-meta ${isOut?'is-out':isLow?'is-low':''}">
             במלאי: <span class="qty-val">${qty}</span>${metaExtra.length?' · <span style="font-size:.88em;opacity:.7;">'+metaExtra.join(' · ')+'</span>':''}
+          ${madanetText}
           </span>
           <div class="stock-bar" style="margin-top:6px;">
             <div class="stock-bar-fill" style="width:${barPct}%;background:${barColor};"></div>
@@ -4411,6 +3430,20 @@ function buildAdminItem(i) {
   const isOut = qty === 0;
   const wrap = document.createElement('div');
   wrap.className = `admin-item${isOut?' ai-out':isLow?' ai-low':''}`;
+  const madanetText = i.madanet_name
+    ? `<div style="
+          display:block;
+          font-size:0.8em;
+          color:#0d47a1;
+          background:#e3f2fd;
+          padding:3px 10px;
+          border-radius:999px;
+          margin-top:4px;
+          width:fit-content;
+      ">
+        <b>מדאנט:</b> ${i.madanet_name}${i.madanet_id ? ` (${i.madanet_id})` : ''}
+      </div>`
+    : "";
   wrap.innerHTML = `
     <div class="ai-row" style="grid-template-columns:auto 1fr 88px auto;gap:10px;">
       ${i.image
@@ -4421,7 +3454,7 @@ function buildAdminItem(i) {
         <div class="ai-cat">
           קטגוריה: ${esc(i.category||'—')} · סף: ${thr}
           ${i.barcode?`<span class="barcode-tag has-bc">📦 ${esc(i.barcode)}</span>`:'<span class="barcode-tag no-bc">ללא ברקוד</span>'}
-          ${i.madanet_id?`<span class="barcode-tag has-bc" style="background:#e3f2fd;color:#0277bd;" title="${esc(i.madanet_name||'')}">מד"אנט: ${esc(i.madanet_id)}</span>`:''}
+          ${madanetText}
         </div>
       </div>
       <input type="number" class="ai-qty-input" value="${qty}" min="0">
@@ -4533,6 +3566,8 @@ async function changeQuantity({ itemId, delta, user, reason = '', action = 'upda
     reason, timestamp: Date.now(),
     date: new Date().toLocaleString('he-IL')
   });
+  // Discord: send alert for add/take actions (non-blocking)
+  _dcAfterChangeQuantity({ itemId, delta, action, user, reason, afterQty }).catch(() => {});
   return { itemId, itemName, beforeQty, afterQty, delta };
 }
 
@@ -4711,9 +3746,6 @@ function downloadInv() {
 }
 
 /* ================================================================
-   REPORTS
-   ================================================================ */
-/* ================================================================
    REPORTS — enhanced (days / month / year / custom)
    ================================================================ */
 
@@ -4810,7 +3842,8 @@ function _buildChartData(filteredLogs, range) {
 
   if (_reportMode === 'days') {
     const days = parseInt(document.getElementById('report-range')?.value || 30);
-    if (days <= 90) {
+    const buckets = days <= 14 ? 'day' : days <= 90 ? 'day' : 'week';
+    if (buckets === 'day') {
       for (let i = days - 1; i >= 0; i--) {
         const d = new Date(range.to); d.setDate(d.getDate() - i);
         const ds = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
@@ -4834,6 +3867,7 @@ function _buildChartData(filteredLogs, range) {
     }
 
   } else if (_reportMode === 'month') {
+    // Daily buckets for the month
     let cur = new Date(range.from);
     while (cur <= range.to) {
       const ds = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate(), 0, 0, 0, 0).getTime();
@@ -4845,6 +3879,7 @@ function _buildChartData(filteredLogs, range) {
     }
 
   } else if (_reportMode === 'year') {
+    // Monthly buckets
     const mNames = ['ינו׳','פבר׳','מרץ','אפר׳','מאי','יוני','יולי','אוג׳','ספט׳','אוק׳','נוב׳','דצמ׳'];
     const y = parseInt(document.getElementById('rpt-year-sel')?.value || new Date().getFullYear());
     for (let m = 0; m < 12; m++) {
@@ -4856,6 +3891,7 @@ function _buildChartData(filteredLogs, range) {
     }
 
   } else {
+    // Custom: auto bucket size
     const diffDays = Math.round((range.toTS - range.fromTS) / 86400000);
     if (diffDays <= 31) {
       let cur = new Date(range.from);
@@ -4868,6 +3904,7 @@ function _buildChartData(filteredLogs, range) {
         cur.setDate(cur.getDate() + 1);
       }
     } else {
+      // Weekly
       let cur = new Date(range.from); cur.setHours(0,0,0,0);
       while (cur <= range.to) {
         const ws = cur.getTime(), we = Math.min(ws + 7*86400000-1, range.toTS);
@@ -5012,6 +4049,7 @@ function renderReportResults() {
     </div>`).join('');
 }
 
+/* ── CSV export ── */
 function downloadReportCSV() {
   const range = _getReportRange();
   if (!range || !_reportCache.length) return showToast('אין נתונים לייצוא','warning');
@@ -5026,10 +4064,11 @@ function downloadReportCSV() {
   Object.entries(summary).sort((a,b)=>b[1].qty-a[1].qty).forEach(([item, d]) => {
     csv += [csvSafe(item), d.qty, d.ops, csvSafe(range.label)].join(',') + '\n';
   });
-  dlFile(csv, `report_${(range.label||'').replace(/[^א-תa-z0-9]/gi,'_')}_${dateStamp()}.csv`, 'text/csv');
+  dlFile(csv, `report_${range.label.replace(/[^א-תa-z0-9]/gi,'_')}_${dateStamp()}.csv`, 'text/csv');
   showToast('📥 הדוח יוצא בהצלחה');
 }
 
+/* ── Print ── */
 function downloadReportPDF() {
   window.print();
 }
@@ -5942,1582 +4981,477 @@ function exportAlertsCsv() {
   dlFile(csv, `alerts_${dateStamp()}.csv`, 'text/csv');
   showToast(`📥 ייוצאו ${out.length + low.length} פריטים`);
 }
+/* ================================================================
+   Discord Webhook v4.0
+   ================================================================ */
 
+'use strict';
 
 /* ================================================================
-   V3 — TOP ITEMS (most used in last 30 days)
+   1. STATE
    ================================================================ */
-function renderTopItems() {
-  const el = document.getElementById('top-items-list');
-  if (!el) return;
-  const since = Date.now() - 30 * 86400000;
-  const counts = {};
-  logs.forEach(l => {
-    if ((l.action === 'take' || l.action === 'sub') && l.timestamp >= since) {
-      const key = l.itemId || l.itemName || '';
-      counts[key] = (counts[key] || 0) + Math.abs(Number(l.taken) || 1);
-    }
-  });
-  const ranked = Object.entries(counts)
-    .map(([id, total]) => {
-      const item = inv.find(i => i.id === id) || { name: id, category: '' };
-      return { id, name: item.name || id, category: item.category || '', total };
-    })
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 10);
-  if (!ranked.length) { el.innerHTML = '<div class="empty-state" style="padding:14px 0;"><div class="es-icon">📊</div><p>אין נתוני שימוש עדיין</p></div>'; return; }
-  const max = ranked[0].total;
-  const medals = ['🥇', '🥈', '🥉'];
-  el.innerHTML = ranked.map((r, i) => `
-    <div class="top-item-row">
-      <div class="top-item-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${medals[i] || (i+1)}</div>
-      <div class="top-item-bar-wrap">
-        <div class="top-item-name">${esc(r.name)}</div>
-        <div class="top-item-bar-bg"><div class="top-item-bar-fill" style="width:${Math.round(r.total/max*100)}%;"></div></div>
-      </div>
-      <div class="top-item-count">${r.total}✕</div>
-    </div>`).join('');
-}
+const DISCORD_CFG_PATH = 'settings/discord';
 
-/* ================================================================
-   V3 — SCAN SUCCESS OVERLAY
-   ================================================================ */
-let _ssoItem = null;
-
-function showScanSuccess(item) {
-  _ssoItem = item;
-  const qty = Number.isFinite(item.qty) ? item.qty : 0;
-  const thr = getThreshold(item);
-  document.getElementById('sso-name').textContent = item.name;
-  document.getElementById('sso-cat').textContent  = item.category || '';
-  document.getElementById('sso-qty').textContent  = qty;
-  document.getElementById('sso-thr').textContent  = thr;
-  document.getElementById('sso-barcode').textContent = item.barcode ? '📦 ' + item.barcode : '';
-  const imgEl = document.getElementById('sso-img');
-  const badge = document.getElementById('sso-badge');
-  if (item.image) { imgEl.src = item.image; imgEl.style.display = 'block'; badge.style.display = 'none'; }
-  else            { imgEl.style.display = 'none'; badge.style.display = 'block'; }
-  const sp = document.getElementById('sso-status');
-  if (qty === 0)      { sp.textContent = '🚨 אזל מהמלאי';    sp.className = 'sso-status-pill sso-status-out'; }
-  else if (qty <= thr){ sp.textContent = '⚠️ מלאי נמוך';    sp.className = 'sso-status-pill sso-status-low'; }
-  else                { sp.textContent = '✅ מלאי תקין';     sp.className = 'sso-status-pill sso-status-ok'; }
-  document.getElementById('scan-success-overlay').classList.add('show');
-  // haptic
-  if (navigator.vibrate) navigator.vibrate([30, 60, 30]);
-}
-
-function closeScanSuccess() {
-  document.getElementById('scan-success-overlay').classList.remove('show');
-  _ssoItem = null;
-}
-
-async function ssoTake() {
-  if (!_ssoItem) return;
-  const amtStr = await asyncPrompt('הוצאה', `כמה להוציא מ"${_ssoItem.name}"?`, '1');
-  if (!amtStr) return;
-  const amt = parseInt(amtStr, 10);
-  if (!Number.isInteger(amt) || amt <= 0) return showToast('כמות לא תקינה', 'error');
-  try {
-    const r = await changeQuantity({ itemId: _ssoItem.id, delta: -amt, user: window.curU, reason: 'סריקה מהירה', action: 'take' });
-    showToast(`✅ "${r.itemName}" עודכן: ${r.beforeQty} → ${r.afterQty}`);
-    closeScanSuccess();
-  } catch(e) { showToast('שגיאה בעדכון', 'error'); }
-}
-
-async function ssoAdd() {
-  if (!_ssoItem) return;
-  const amtStr = await asyncPrompt('הוספה', `כמה להוסיף ל"${_ssoItem.name}"?`, '1');
-  if (!amtStr) return;
-  const amt = parseInt(amtStr, 10);
-  if (!Number.isInteger(amt) || amt <= 0) return showToast('כמות לא תקינה', 'error');
-  try {
-    const r = await changeQuantity({ itemId: _ssoItem.id, delta: amt, user: window.curU, reason: 'סריקה מהירה', action: 'add' });
-    showToast(`✅ "${r.itemName}" עודכן: ${r.beforeQty} → ${r.afterQty}`);
-    closeScanSuccess();
-  } catch(e) { showToast('שגיאה בעדכון', 'error'); }
-}
-
-/* Extend scanner to show overlay after scan in "find" mode */
-const _origOnScanFind = window._onScanFind;
-window._onScanFindV3 = function(barcode) {
-  const found = inv.find(i => (i.barcode || '').trim() === barcode.trim());
-  if (found) {
-    closeScanner();
-    showScanSuccess(found);
-  } else {
-    showToast('⚠️ ברקוד לא נמצא במלאי: ' + barcode, 'warning');
-  }
+let _dc = {
+  webhookUrl:  '',
+  alertOut:    true,
+  alertLow:    true,
+  alertAdd:    false,
+  alertTake:   false,
+  alertOrder:  false,
+  mentionRole: '',   // Discord Role ID לציין ב-@mention כשמלאי אוזל
 };
 
+/* throttle map: itemId → timestamp of last alert per type */
+const _dcThrottle = {};
+const DC_THROTTLE_MS = 5 * 60 * 1000; // 5 דקות
+
+/* snapshot qty map לזיהוי שינויים */
+let _prevQtyMap = null;
+
 /* ================================================================
-   V3 — ORDERS ENGINE (Complete Rewrite)
-   Flow:
-     1. Admin sees all low/out items → checks boxes → adds to cart
-     2. Cart panel shows summary with qty-to-order per item
-     3. "Send Order" → EmailJS email + saved to Firebase /orders
-     4. History shows all sent orders with "Confirm Receipt" button
-     5. Confirm Receipt modal → per item: received? how many?
-     6. Confirms → updates inventory + sends confirmation email
+   2. LOAD / SAVE SETTINGS מ-Firebase
    ================================================================ */
-
-let _orderCart    = {};   // { itemId: { item, qtyToOrder } }
-let _ordFilter    = 'all';
-let _sentOrders   = [];
-let _receiptOrderId = null;
-
-/* ── Filter chips ── */
-function setOrdFilter(f, el) {
-  _ordFilter = f;
-  document.querySelectorAll('[data-of]').forEach(c => c.classList.toggle('active-chip', c.dataset.of === f));
-  renderOrdersTab();
+async function loadDiscordSettings() {
+  try {
+    const snap = await db.ref(DISCORD_CFG_PATH).once('value');
+    const cfg  = snap.val() || {};
+    _dc = {
+      webhookUrl:  cfg.webhookUrl  || '',
+      alertOut:    cfg.alertOut   !== false,
+      alertLow:    cfg.alertLow   !== false,
+      alertAdd:    !!cfg.alertAdd,
+      alertTake:   !!cfg.alertTake,
+      alertOrder:  !!cfg.alertOrder,
+      mentionRole: cfg.mentionRole || '',
+    };
+    _applyDcToUI();
+    _dcUpdateStatusUI();
+    console.log('[Discord] הגדרות נטענו:', _dc.webhookUrl ? '✅ URL קיים' : '❌ אין URL');
+  } catch(e) {
+    console.warn('[Discord] loadDiscordSettings error:', e);
+  }
 }
 
-/* ── Select all visible items ── */
-function ordSelectAll() {
-  const visible = _getFilteredOrderItems();
-  const allIn   = visible.every(i => _orderCart[i.id]);
-  visible.forEach(i => {
-    if (allIn) delete _orderCart[i.id];
-    else if (!_orderCart[i.id]) _orderCart[i.id] = { item: i, qtyToOrder: Math.max(1, getThreshold(i) - (Number.isFinite(i.qty)?i.qty:0)) };
-  });
-  _updateOrdStats();
-  renderOrdersTab();
+async function saveDcSettings() {
+  const url = (document.getElementById('dc-webhook-url')?.value || '').trim();
+  if (url && !url.startsWith('https://discord.com/api/webhooks/')) {
+    showToast('⚠️ URL לא תקין — חייב להתחיל עם https://discord.com/api/webhooks/', 'error', 5000);
+    return;
+  }
+  _dc = {
+    webhookUrl:  url,
+    alertOut:    !!document.getElementById('dc-out')?.checked,
+    alertLow:    !!document.getElementById('dc-low')?.checked,
+    alertAdd:    !!document.getElementById('dc-add')?.checked,
+    alertTake:   !!document.getElementById('dc-take')?.checked,
+    alertOrder:  !!document.getElementById('dc-order')?.checked,
+    mentionRole: (document.getElementById('dc-role')?.value || '').trim(),
+  };
+  try {
+    await db.ref(DISCORD_CFG_PATH).set(_dc);
+    _dcUpdateStatusUI();
+    showToast('✅ הגדרות Discord נשמרו ב-Firebase!');
+  } catch(e) {
+    showToast('❌ שגיאה בשמירה: ' + e.message, 'error');
+  }
 }
 
-/* ── Main render ── */
-function _getFilteredOrderItems() {
-  const q   = (document.getElementById('order-search')?.value||'').trim().toLowerCase();
-  const all = inv.filter(i => {
-    const qty = Number.isFinite(i.qty) ? i.qty : 0;
-    const thr = getThreshold(i);
-    if (_ordFilter === 'out')  return qty === 0;
-    if (_ordFilter === 'low')  return qty > 0 && qty <= thr;
-    if (_ordFilter === 'cart') return !!_orderCart[i.id];
-    return qty <= thr; // 'all' = out + low
-  });
-  if (!q) return all;
-  return all.filter(i =>
-    i.name.toLowerCase().includes(q) ||
-    (i.category||'').toLowerCase().includes(q) ||
-    (i.barcode||'').includes(q)
-  );
+function _applyDcToUI() {
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value   = val; };
+  const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+  set('dc-webhook-url', _dc.webhookUrl);
+  set('dc-role',        _dc.mentionRole);
+  chk('dc-out',         _dc.alertOut);
+  chk('dc-low',         _dc.alertLow);
+  chk('dc-add',         _dc.alertAdd);
+  chk('dc-take',        _dc.alertTake);
+  chk('dc-order',       _dc.alertOrder);
 }
 
-function renderOrdersTab() {
-  const el = document.getElementById('orders-list');
-  if (!el) return;
-  const items = _getFilteredOrderItems();
-  _updateOrdStats();
+function _dcUpdateStatusUI() {
+  const dot  = document.getElementById('dc-dot');
+  const text = document.getElementById('dc-status-text');
+  if (!dot || !text) return;
+  const valid = _dc.webhookUrl?.startsWith('https://discord.com/api/webhooks/');
+  dot.className  = 'dc-dot' + (valid ? ' active' : '');
+  text.textContent = valid
+    ? '✅ Webhook פעיל — התראות מחוברות'
+    : '⚪ לא מחובר — הזן Webhook URL';
+}
 
-  if (!items.length) {
-    el.innerHTML = `<div class="empty-state"><div class="es-icon">${_ordFilter==='cart'?'🛒':'✅'}</div><p>${_ordFilter==='cart'?'ההזמנה ריקה — הוסף פריטים':'כל הפריטים במלאי תקין!'}</p></div>`;
+/* ================================================================
+   3. CORE SEND FUNCTION
+   ================================================================ */
+async function sendDiscordAlert(type, item, extra = {}) {
+  if (!_dc.webhookUrl) return;
+
+  /* Throttle check */
+  const throttleKey = `${item?.id || 'global'}_${type}`;
+  const now = Date.now();
+  if (_dcThrottle[throttleKey] && now - _dcThrottle[throttleKey] < DC_THROTTLE_MS) {
+    console.log(`[Discord] throttled: ${throttleKey}`);
     return;
   }
 
-  el.innerHTML = items.map(i => {
-    const qty    = Number.isFinite(i.qty) ? i.qty : 0;
-    const thr    = getThreshold(i);
-    const isOut  = qty === 0;
-    const inCart = !!_orderCart[i.id];
-    const suggested = Math.max(1, thr - qty + Math.ceil(thr * 0.5)); // suggest 150% of threshold
-    const cartQty = _orderCart[i.id]?.qtyToOrder || suggested;
-    const pct  = thr > 0 ? Math.min(100, Math.round(qty / thr * 100)) : (qty > 0 ? 100 : 0);
-    const barColor = isOut ? '#d32f2f' : pct < 40 ? '#e65100' : '#f9a825';
+  /* Permission check */
+  if (type === 'out'   && !_dc.alertOut)   return;
+  if (type === 'low'   && !_dc.alertLow)   return;
+  if (type === 'add'   && !_dc.alertAdd)   return;
+  if (type === 'take'  && !_dc.alertTake)  return;
+  if (type === 'order' && !_dc.alertOrder) return;
 
-    return `<div class="ord-item-card ${inCart?'in-cart':''}${isOut?' is-out':''}">
-      <div class="ord-item-left">
-        ${i.image
-          ? `<img src="${esc(i.image)}" class="ord-item-img" onclick="viewImage('${esc(i.image)}')">`
-          : `<div class="ord-item-emoji">${isOut?'🚨':'⚠️'}</div>`}
-      </div>
-      <div class="ord-item-info">
-        <div class="ord-item-name">${esc(i.name)}</div>
-        <div class="ord-item-meta">
-          <span>${esc(i.category||'—')}</span>
-          <span class="${isOut?'ord-val-out':'ord-val-low'}">במלאי: <b>${qty}</b></span>
-          <span>סף: <b>${thr}</b></span>
-          ${i.barcode ? `<span style="font-family:monospace;">📦 ${esc(i.barcode)}</span>` : ''}
-        </div>
-        <div class="ord-bar-wrap">
-          <div class="ord-bar-fill" style="width:${pct}%;background:${barColor};"></div>
-        </div>
-      </div>
-      <div class="ord-item-right">
-        ${inCart ? `
-          <div class="ord-qty-ctrl">
-            <button class="ord-qty-btn" onclick="ordChangeQty('${esc(i.id)}',-1)">−</button>
-            <input type="number" class="ord-qty-input" value="${cartQty}" min="1"
-              onchange="ordSetQty('${esc(i.id)}',+this.value)"
-              onclick="this.select()">
-            <button class="ord-qty-btn" onclick="ordChangeQty('${esc(i.id)}',+1)">+</button>
-          </div>
-          <button class="ord-remove-btn" onclick="toggleOrdItem('${esc(i.id)}')">✕ הסר</button>
-        ` : `
-          <button class="ord-add-btn" onclick="toggleOrdItem('${esc(i.id)}')">
-            + הוסף
-          </button>
-        `}
-      </div>
-    </div>`;
-  }).join('');
-}
+  const siteTitle = CFG?.headerText || 'מד"א';
+  const qty = Number.isFinite(item?.qty) ? item.qty : 0;
+  const thr = item?.minQty ?? LOW_STOCK_THRESHOLD ?? 3;
+  const pct = thr > 0 ? Math.round(qty / thr * 100) : (qty > 0 ? 999 : 0);
 
-function toggleOrdItem(itemId) {
-  const item = inv.find(i => i.id === itemId);
-  if (!item) return;
-  if (_orderCart[itemId]) {
-    delete _orderCart[itemId];
-  } else {
-    const qty = Number.isFinite(item.qty) ? item.qty : 0;
-    const thr = getThreshold(item);
-    _orderCart[itemId] = { item, qtyToOrder: Math.max(1, thr - qty + Math.ceil(thr * 0.5)) };
-  }
-  _updateOrdStats();
-  renderOrdersTab();
-}
+  /* Color + title + icon per type */
+  const META = {
+    out:   { color: 0xD32F2F, title: '🚨 פריט אזל מהמלאי!',     icon: '🚨' },
+    low:   { color: 0xFF6F00, title: '⚠️ מלאי נמוך',              icon: '⚠️' },
+    add:   { color: 0x2E7D32, title: '✅ מלאי עודכן — הוסף',      icon: '➕' },
+    take:  { color: 0x1565C0, title: '📤 ציוד יצא מהמלאי',        icon: '📤' },
+    order: { color: 0xF57F17, title: '🛒 הזמנת ציוד נשלחה',       icon: '🛒' },
+  };
+  const m = META[type] || { color: 0x607D8B, title: '📦 עדכון מלאי', icon: '📦' };
 
-function ordChangeQty(itemId, delta) {
-  if (!_orderCart[itemId]) return;
-  const newQty = (_orderCart[itemId].qtyToOrder || 1) + delta;
-  if (newQty < 1) return;
-  _orderCart[itemId].qtyToOrder = newQty;
-  renderOrdersTab();
-}
-
-function ordSetQty(itemId, val) {
-  if (!_orderCart[itemId]) return;
-  const v = parseInt(val, 10);
-  if (!v || v < 1) return;
-  _orderCart[itemId].qtyToOrder = v;
-}
-
-function _updateOrdStats() {
-  const outItems = inv.filter(i => (Number.isFinite(i.qty)?i.qty:0) === 0);
-  const lowItems = inv.filter(i => { const q=Number.isFinite(i.qty)?i.qty:0; return q>0&&q<=getThreshold(i); });
-  const cartN = Object.keys(_orderCart).length;
-  _setEl('ord-out-num',  outItems.length);
-  _setEl('ord-low-num',  lowItems.length);
-  _setEl('ord-cart-num', cartN);
-  ['cart-count','cart-badge'].forEach(id => _setEl(id, cartN));
-}
-function _setEl(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
-
-/* ── Cart panel ── */
-function openOrderCart() {
-  _renderCartPanel();
-  document.getElementById('order-cart-panel')?.classList.add('open');
-}
-function closeOrderCart() {
-  document.getElementById('order-cart-panel')?.classList.remove('open');
-}
-
-function _renderCartPanel() {
-  const el = document.getElementById('cart-items-list');
-  if (!el) return;
-  const items = Object.values(_orderCart);
-  if (!items.length) {
-    el.innerHTML = '<p style="color:rgba(255,255,255,.5);font-size:.85em;text-align:center;padding:12px 0;">הסל ריק</p>';
-    return;
-  }
-  el.innerHTML = items.map(({item, qtyToOrder}) => `
-    <div class="cart-item-row">
-      <span class="ci-name">${esc(item.name)}</span>
-      <span class="ci-qty" style="background:rgba(255,255,255,.12);border-radius:999px;padding:2px 8px;font-size:.8em;">
-        × ${qtyToOrder}
-      </span>
-      <span class="ci-remove" onclick="toggleOrdItem('${esc(item.id)}');_renderCartPanel()">✕</span>
-    </div>`).join('');
-}
-
-/* ── Export CSV ── */
-function exportOrderCsv() {
-  const items = Object.values(_orderCart);
-  if (!items.length) return showToast('ההזמנה ריקה', 'warning');
-  let csv = '\uFEFFשם,קטגוריה,כמות להזמנה,במלאי,סף,ברקוד\n';
-  items.forEach(({item, qtyToOrder}) => {
-    const qty = Number.isFinite(item.qty) ? item.qty : 0;
-    csv += [csvSafe(item.name), csvSafe(item.category||''), qtyToOrder, qty, getThreshold(item), csvSafe(item.barcode||'')].join(',') + '\n';
-  });
-  dlFile(csv, `order_${dateStamp()}.csv`, 'text/csv');
-}
-
-/* ── Send Order Email (EmailJS) ── */
-async function sendOrderByEmail() {
-  const items = Object.values(_orderCart);
-  if (!items.length) return showToast('⚠️ ההזמנה ריקה — הוסף פריטים', 'warning');
-  if (!_ejsReady) return showToast('⚠️ EmailJS לא מוגדר — עבור להגדרות', 'warning');
-
-  const ordersEmail = await db.ref('settings/ordersEmail').once('value').then(s => s.val() || '');
-  const toEmail = ordersEmail || await asyncPrompt('שלח הזמנה', 'אימייל יעד להזמנה:', '');
-  if (!toEmail) return;
-
-  const orderId = 'ORD-' + Date.now().toString(36).toUpperCase().slice(-8);
-  const orderData = {
-    orderId,
-    items: items.map(({item, qtyToOrder}) => ({
-      id:         item.id,
-      name:       item.name,
-      category:   item.category || '',
-      qtyToOrder,
-      qtyInStock: Number.isFinite(item.qty) ? item.qty : 0,
-      threshold:  getThreshold(item),
-      barcode:    item.barcode || ''
-    })),
-    sentAt:  Date.now(),
-    sentBy:  window.curU || '',
-    toEmail,
-    status:  'sent',
-    station: CURRENT_SITE
+  /* Build embed */
+  const embed = {
+    title:       m.title,
+    description: item?.name
+      ? `**${item.name}** | ${item.category || '—'}`
+      : siteTitle,
+    color:       m.color,
+    fields:      [],
+    footer:      { text: `${siteTitle} · ${new Date().toLocaleString('he-IL')}` },
+    timestamp:   new Date().toISOString(),
   };
 
-  // Save to Firebase FIRST
-  const dbRef = db.ref('orders').push();
-  await dbRef.set(orderData);
-  const savedId = dbRef.key;
-
-  // Build confirmation URL
-  const confirmUrl = window.location.href.split('?')[0] + '?confirm_order=' + orderId;
-
-  // Build email HTML
-  const html = buildEmailHtml({
-    type:       'order',
-    heroIcon:   '🛒',
-    title:      `הזמנת ציוד — ${orderId}`,
-    subtitle:   `${items.length} פריטים · ${new Date().toLocaleDateString('he-IL')}`,
-    badgeText:  '🛒 דרוש מילוי מלאי',
-    badgeColor: '#e65100',
-    stats: [
-      { value: items.length, label: 'פריטים', color: '#e65100' },
-      { value: items.reduce((s, {qtyToOrder}) => s + qtyToOrder, 0), label: 'יחידות', color: '#1a6eb5' },
-      { value: items.filter(({item}) => (Number.isFinite(item.qty)?item.qty:0) === 0).length, label: 'אזל לגמרי', color: '#d32f2f' }
-    ],
-    body: `<p>שלום,</p>
-           <p>להלן פירוט הציוד הדרוש לרכישה עבור <strong>${esc(CFG.headerText)}</strong>.</p>
-           <p>לאחר קבלת ההזמנה, לחץ על הכפתור למטה לאישור הקבלה.</p>`,
-    tableHeaders: ['שם מוצר', 'קטגוריה', 'כמות להזמנה', 'במלאי', 'ברקוד'],
-    tableRows: items.map(({item, qtyToOrder}) => [
-      item.name,
-      item.category || '—',
-      String(qtyToOrder),
-      String(Number.isFinite(item.qty) ? item.qty : 0),
-      item.barcode || '—'
-    ]),
-    cta: { text: '✅ אשר קבלת ההזמנה', url: confirmUrl }
-  });
-
-  const sent = await ejsSend({
-    toEmail,
-    toName: 'ספק / מחסן',
-    subject: `🛒 הזמנת ציוד ${orderId} — ${CFG.headerText} — ${new Date().toLocaleDateString('he-IL')}`,
-    htmlContent: html,
-    type: 'order'
-  });
-
-  if (sent) {
-    _orderCart = {};
-    _updateOrdStats();
-    renderOrdersTab();
-    loadSentOrders();
-    closeOrderCart();
+  /* Fields per type */
+  if (type !== 'order' && item?.name) {
+    embed.fields.push(
+      { name: '📦 כמות במלאי', value: `**${qty}**`,          inline: true },
+      { name: '🎯 סף מינימום', value: `**${thr}**`,          inline: true },
+      { name: '📊 אחוז מהסף',  value: `**${pct > 900 ? '∞' : pct + '%'}**`, inline: true },
+    );
   }
-}
+  if (item?.category)     embed.fields.push({ name: '📁 קטגוריה',  value: item.category,                inline: true });
+  if (item?.barcode)      embed.fields.push({ name: '🔖 ברקוד',    value: `\`${item.barcode}\``,         inline: true });
+  if (extra.user)         embed.fields.push({ name: '👤 משתמש',    value: extra.user,                    inline: true });
+  if (extra.reason)       embed.fields.push({ name: '📝 סיבה',     value: extra.reason,                   inline: false });
+  if (extra.delta != null) embed.fields.push({ name: '🔢 שינוי',  value: (extra.delta > 0 ? '+' : '') + extra.delta, inline: true });
 
-/* ── Sent orders history ── */
-async function loadSentOrders() {
-  const snap = await db.ref('orders').orderByChild('sentAt').limitToLast(30).once('value');
-  _sentOrders = [];
-  if (snap.val()) {
-    snap.forEach(c => _sentOrders.push({ _key: c.key, ...c.val() }));
-    _sentOrders.sort((a, b) => b.sentAt - a.sentAt);
+  /* Order items list */
+  if (extra.items?.length) {
+    const list = extra.items.slice(0, 20).map(i => `• **${i.name}** × ${i.qty}`).join('\n');
+    embed.fields.push({
+      name:   `📋 פריטים בהזמנה (${extra.items.length})`,
+      value:  list + (extra.items.length > 20 ? `\n*...ועוד ${extra.items.length - 20}*` : ''),
+      inline: false
+    });
   }
-  _setEl('ord-sent-num', _sentOrders.length);
-  _renderSentOrders();
-}
 
-function _renderSentOrders() {
-  const el = document.getElementById('sent-orders-list');
-  if (!el) return;
-  if (!_sentOrders.length) {
-    el.innerHTML = '<div class="empty-state"><div class="es-icon">📋</div><p>אין הזמנות עדיין</p></div>';
-    return;
-  }
-  el.innerHTML = _sentOrders.map(o => {
-    const statusMap   = { sent: 'נשלח', confirmed: 'אושר חלקית', fully_confirmed: 'אושר הכל' };
-    const statusColor = { sent: '#e65100', confirmed: '#1a6eb5', fully_confirmed: '#1b5e20' };
-    const st   = o.status || 'sent';
-    const date = new Date(o.sentAt).toLocaleDateString('he-IL');
-    const total= (o.items||[]).reduce((s, it) => s + (it.qtyToOrder||0), 0);
-    const rcvd = (o.items||[]).reduce((s, it) => s + (it.qtyReceived||0), 0);
+  /* Thumbnail from item image */
+  if (item?.image?.startsWith('http')) embed.thumbnail = { url: item.image };
 
-    return `<div class="sent-order-card status-${st}">
-      <div class="so-header">
-        <div>
-          <div class="so-id">#${esc(o.orderId||o._key?.slice(-8).toUpperCase()||'—')}</div>
-          <div class="so-date">${date} · ${esc(o.sentBy||'')} · ${(o.items||[]).length} פריטים</div>
-          <div class="so-email" style="font-size:.75em;color:var(--text-muted);">📧 ${esc(o.toEmail||'—')}</div>
-        </div>
-        <span class="so-status-pill" style="background:${statusColor[st]}18;color:${statusColor[st]};border:1px solid ${statusColor[st]}35;">
-          ${statusMap[st]||'נשלח'}
-        </span>
-      </div>
-      ${st !== 'sent' ? `<div class="so-progress">
-        <div class="so-prog-bar">
-          <div class="so-prog-fill" style="width:${total?Math.round(rcvd/total*100):0}%"></div>
-        </div>
-        <span class="so-prog-lbl">${rcvd} / ${total} יחידות התקבלו</span>
-      </div>` : ''}
-      <div class="so-items-preview">${(o.items||[]).slice(0,4).map(it =>
-        `<span class="so-item-chip ${it.qtyReceived!=null?(it.qtyReceived>=it.qtyToOrder?'chip-done':'chip-partial'):''}">
-          ${esc(it.name)} × ${it.qtyToOrder}${it.qtyReceived!=null?' (קיבלנו '+it.qtyReceived+')':''}
-        </span>`).join('')}${(o.items||[]).length > 4 ? `<span class="so-item-chip">+${(o.items||[]).length-4} עוד</span>` : ''}</div>
-      <div class="so-actions">
-        ${st === 'sent'
-          ? `<button class="btn sm w-auto btn-green" onclick="openReceiptConfirm('${o._key}')">✅ אשר קבלה</button>`
-          : `<button class="btn sm w-auto btn-blue"  onclick="openReceiptConfirm('${o._key}')">✏️ עדכן קבלה</button>`}
-        <button class="btn sm w-auto btn-gray" onclick="exportSentOrderCsv('${o._key}')">📥 CSV</button>
-        ${_ejsReady && o.toEmail ? `<button class="btn sm w-auto" style="background:#1a6eb5;color:#fff;" onclick="resendOrder('${o._key}')">📧 שלח שוב</button>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-/* ── Receipt Confirmation Modal ── */
-function openReceiptConfirm(orderKey) {
-  const o = _sentOrders.find(x => x._key === orderKey);
-  if (!o) return showToast('הזמנה לא נמצאה', 'error');
-  _receiptOrderId = orderKey;
-
-  document.getElementById('rcm-order-id').textContent = '#' + (o.orderId || orderKey.slice(-8).toUpperCase()) + ' — ' + new Date(o.sentAt).toLocaleDateString('he-IL');
-
-  const el = document.getElementById('rcm-items-list');
-  el.innerHTML = (o.items||[]).map((it, idx) => {
-    const prev = it.qtyReceived ?? '';
-    const isFullyReceived = it.qtyReceived != null && it.qtyReceived >= it.qtyToOrder;
-    return `<div class="rcm-item-row" id="rcm-row-${idx}">
-      <div class="rcm-item-info">
-        <div class="rcm-item-name">${esc(it.name)}</div>
-        <div class="rcm-item-sub">
-          ${it.barcode ? `<span style="font-family:monospace;font-size:.78em;">📦 ${esc(it.barcode)}</span>` : ''}
-          <span>הוזמן: <b>${it.qtyToOrder}</b></span>
-        </div>
-      </div>
-      <div class="rcm-recv-wrap">
-        <div class="rcm-recv-label">התקבל</div>
-        <div class="rcm-recv-btns">
-          <button class="rcm-btn rcm-btn-none ${prev===0?'active':''}"
-            onclick="rcmSetReceived(${idx}, 0, this)">✕ לא</button>
-          <input type="number" class="rcm-qty-input" id="rcm-qty-${idx}"
-            value="${prev !== '' ? prev : it.qtyToOrder}" min="0" max="${it.qtyToOrder * 3}"
-            oninput="rcmInputChanged(${idx})">
-          <button class="rcm-btn rcm-btn-all ${isFullyReceived?'active':''}"
-            onclick="rcmSetReceived(${idx}, ${it.qtyToOrder}, this)">✓ הכל</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('rcm-notes').value = o.confirmNotes || '';
-  document.getElementById('order-receipt-modal').classList.add('show');
-}
-
-function closeReceiptConfirm() {
-  document.getElementById('order-receipt-modal').classList.remove('show');
-  _receiptOrderId = null;
-}
-
-function rcmSetReceived(idx, val, btn) {
-  const input = document.getElementById(`rcm-qty-${idx}`);
-  if (input) input.value = val;
-  // Style active button
-  const row = document.getElementById(`rcm-row-${idx}`);
-  row?.querySelectorAll('.rcm-btn').forEach(b => b.classList.remove('active'));
-  btn?.classList.add('active');
-}
-
-function rcmInputChanged(idx) {
-  const input = document.getElementById(`rcm-qty-${idx}`);
-  if (!input) return;
-  const row = document.getElementById(`rcm-row-${idx}`);
-  row?.querySelectorAll('.rcm-btn').forEach(b => b.classList.remove('active'));
-}
-
-async function submitReceiptConfirm() {
-  if (!_receiptOrderId) return;
-  const o = _sentOrders.find(x => x._key === _receiptOrderId);
-  if (!o) return;
-
-  const btn = document.querySelector('#order-receipt-modal .btn-green');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ שומר...'; }
+  /* @mention for out-of-stock */
+  const mention = (type === 'out' && _dc.mentionRole)
+    ? `<@&${_dc.mentionRole}> ` : '';
 
   try {
-    const notes = document.getElementById('rcm-notes').value.trim();
-    const updatedItems = (o.items||[]).map((it, idx) => {
-      const input = document.getElementById(`rcm-qty-${idx}`);
-      const qtyReceived = input ? Math.max(0, parseInt(input.value, 10) || 0) : (it.qtyReceived ?? 0);
-      return { ...it, qtyReceived };
+    const res = await fetch(_dc.webhookUrl, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content:    mention || undefined,
+        username:   `${siteTitle} · מלאי`,
+        avatar_url: CFG?.logoUrl || undefined,
+        embeds:     [embed],
+      }),
     });
 
-    const allFull = updatedItems.every(it => it.qtyReceived >= it.qtyToOrder);
-    const anyRcvd = updatedItems.some(it => it.qtyReceived > 0);
-    const newStatus = allFull ? 'fully_confirmed' : anyRcvd ? 'confirmed' : 'sent';
-
-    // Update Firebase
-    await db.ref('orders/' + _receiptOrderId).update({
-      items:          updatedItems,
-      status:         newStatus,
-      confirmedAt:    Date.now(),
-      confirmedBy:    window.curU || '',
-      confirmNotes:   notes
-    });
-
-    // Update inventory for received items
-    for (const it of updatedItems) {
-      if (it.id && it.qtyReceived > 0) {
-        const prev = o.items.find(x => x.id === it.id)?.qtyReceived || 0;
-        const delta = it.qtyReceived - prev;
-        if (delta > 0) {
-          try {
-            await changeQuantity({
-              itemId: it.id,
-              delta,
-              user:   window.curU,
-              reason: `קבלת הזמנה ${o.orderId || _receiptOrderId}`,
-              action: 'add'
-            });
-          } catch(e) { console.warn('qty update failed:', it.name, e); }
-        }
-      }
+    if (res.ok || res.status === 204) {
+      _dcThrottle[throttleKey] = now;
+      console.log(`[Discord] ✅ שנשלח: ${type} / ${item?.name || 'order'}`);
+    } else {
+      const body = await res.text().catch(() => '');
+      console.error(`[Discord] ❌ שגיאה ${res.status}:`, body);
     }
-
-    // Send confirmation email
-    if (_ejsReady) {
-      const reportEmail = await db.ref('settings/reportEmail').once('value').then(s => s.val() || '');
-      if (reportEmail) {
-        const html = buildEmailHtml({
-          type:       'confirm',
-          heroIcon:   '✅',
-          title:      `אישור קבלה — ${o.orderId}`,
-          subtitle:   `${new Date().toLocaleDateString('he-IL')}`,
-          badgeText:  allFull ? '✅ התקבל הכל' : '⚠️ התקבל חלקית',
-          badgeColor: allFull ? '#1b5e20' : '#e65100',
-          stats: [
-            { value: updatedItems.filter(it => it.qtyReceived >= it.qtyToOrder).length, label: 'הושלמו', color: '#1b5e20' },
-            { value: updatedItems.filter(it => it.qtyReceived > 0 && it.qtyReceived < it.qtyToOrder).length, label: 'חלקי', color: '#e65100' },
-            { value: updatedItems.filter(it => !it.qtyReceived).length, label: 'לא התקבל', color: '#d32f2f' }
-          ],
-          body: `<p>אישור קבלה ע"י <strong>${esc(window.curU)}</strong>.</p>${notes ? `<p><strong>הערות:</strong> ${esc(notes)}</p>` : ''}`,
-          tableHeaders: ['פריט', 'הוזמן', 'התקבל', 'סטטוס'],
-          tableRows: updatedItems.map(it => [
-            it.name,
-            String(it.qtyToOrder),
-            String(it.qtyReceived),
-            it.qtyReceived >= it.qtyToOrder ? '✅' : it.qtyReceived > 0 ? '⚠️ חלקי' : '❌'
-          ]),
-          cta: null
-        });
-        ejsSend({
-          toEmail:     reportEmail,
-          toName:      'מנהל',
-          subject:     `✅ אישור קבלה ${o.orderId} — ${CFG.headerText}`,
-          htmlContent: html,
-          type:        'confirm'
-        }).catch(() => {});
-      }
-    }
-
-    closeReceiptConfirm();
-    showToast(allFull ? '✅ אושר הכל! המלאי עודכן.' : '✅ קבלה חלקית נשמרה.');
-    loadSentOrders();
-
   } catch(e) {
-    console.error('submitReceiptConfirm:', e);
-    showToast('❌ שגיאה: ' + (e.message || e), 'error');
-    if (btn) { btn.disabled = false; btn.textContent = '✅ אשר קבלה'; }
+    console.error('[Discord] fetch error:', e);
   }
 }
 
-/* ── Resend order email ── */
-async function resendOrder(orderKey) {
-  const o = _sentOrders.find(x => x._key === orderKey);
-  if (!o || !o.toEmail) return showToast('אין אימייל', 'warning');
-  const confirmUrl = window.location.href.split('?')[0] + '?confirm_order=' + (o.orderId || orderKey);
-  const html = buildEmailHtml({
-    type: 'order', heroIcon: '🛒',
-    title: `תזכורת: הזמנה ${o.orderId}`,
-    subtitle: `${new Date(o.sentAt).toLocaleDateString('he-IL')}`,
-    badgeText: '⏳ ממתין לאישורך', badgeColor: '#e65100',
-    body: '<p>תזכורת — הזמנה ממתינה לאישור קבלתך.</p>',
-    tableHeaders: ['פריט', 'כמות'],
-    tableRows: (o.items||[]).map(it => [it.name, String(it.qtyToOrder)]),
-    cta: { text: '✅ אשר קבלת ההזמנה', url: confirmUrl }
-  });
-  await ejsSend({ toEmail: o.toEmail, toName: 'ספק', subject: `🛒 תזכורת הזמנה ${o.orderId}`, htmlContent: html, type: 'order' });
+/* ================================================================
+   4. TEST WEBHOOK
+   ================================================================ */
+async function testDcWebhook() {
+  const url = (document.getElementById('dc-webhook-url')?.value || '').trim();
+  if (!url) return showToast('הזן Webhook URL תחילה', 'warning');
+  if (!url.startsWith('https://discord.com/api/webhooks/'))
+    return showToast('URL לא תקין', 'error');
+
+  showToast('📡 שולח הודעת בדיקה...', 'info', 2500);
+
+  const siteTitle = CFG?.headerText || 'מד"א';
+  try {
+    const res = await fetch(url, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username:   `${siteTitle} · מלאי`,
+        avatar_url: CFG?.logoUrl || undefined,
+        embeds: [{
+          title:       '🧪 בדיקת חיבור Discord',
+          description: `מערכת **${siteTitle}** מחוברת בהצלחה! ✅`,
+          color:       0x2E7D32,
+          fields: [
+            { name: '🔌 סטטוס',  value: '✅ פעיל',                              inline: true },
+            { name: '⏰ זמן',    value: new Date().toLocaleString('he-IL'),       inline: true },
+            { name: '🏥 תחנה',  value: siteTitle,                               inline: true },
+            { name: '📢 התראות', value: [
+                                         _dc.alertOut   ? '🚨 אזל'    : '',
+                                         _dc.alertLow   ? '⚠️ נמוך'   : '',
+                                         _dc.alertAdd   ? '➕ הוסף'   : '',
+                                         _dc.alertTake  ? '📤 הוצאה'  : '',
+                                         _dc.alertOrder ? '🛒 הזמנה'  : '',
+                                       ].filter(Boolean).join('  ') || 'ללא',
+              inline: false },
+          ],
+          footer:    { text: `${siteTitle} · v4.0 · ${new Date().toLocaleString('he-IL')}` },
+          timestamp: new Date().toISOString(),
+        }],
+      }),
+    });
+
+    if (res.ok || res.status === 204) {
+      const dot  = document.getElementById('dc-dot');
+      const text = document.getElementById('dc-status-text');
+      if (dot)  dot.className  = 'dc-dot ok';
+      if (text) text.textContent = '✅ בדיקה עברה — Webhook תקין!';
+      showToast('✅ הודעת בדיקה נשלחה! בדוק את הערוץ ב-Discord');
+    } else {
+      showToast(`❌ שגיאה ${res.status} — בדוק שה-URL תקין`, 'error', 5000);
+    }
+  } catch(e) {
+    showToast('❌ שגיאת רשת: ' + e.message, 'error', 5000);
+  }
 }
 
-/* ── Export single sent order ── */
-function exportSentOrderCsv(orderKey) {
-  const o = _sentOrders.find(x => x._key === orderKey);
-  if (!o) return;
-  let csv = '\uFEFFפריט,קטגוריה,הוזמן,התקבל,ברקוד\n';
-  (o.items||[]).forEach(it => {
-    csv += [csvSafe(it.name), csvSafe(it.category||''), it.qtyToOrder||0, it.qtyReceived??'', csvSafe(it.barcode||'')].join(',') + '\n';
+/* ================================================================
+   5. PATCH checkLowStock() — מעקב שינויים אוטומטי
+   העתק את הקוד הבא לתוך הפונקציה checkLowStock() הקיימת
+   בסוף הפונקציה, לפני הסוגרייה האחרונה }
+   ================================================================ */
+function _dcCheckLowStockPatch() {
+  if (!inv || !inv.length) return;
+
+  /* first call — just build snapshot */
+  if (!_prevQtyMap) {
+    _prevQtyMap = {};
+    inv.forEach(i => { _prevQtyMap[i.id] = Number.isFinite(i.qty) ? i.qty : 0; });
+    return;
+  }
+
+  /* compare each item */
+  inv.forEach(item => {
+    if (!item?.id) return;
+    const qty     = Number.isFinite(item.qty) ? item.qty : 0;
+    const thr     = getThreshold(item);
+    const prevQty = _prevQtyMap[item.id];
+    if (prevQty === undefined) return;
+
+    /* אזל (0 יחידות) */
+    if (qty === 0 && prevQty > 0) {
+      sendDiscordAlert('out', item, { user: window.curU });
+    }
+    /* ירד מתחת לסף */
+    else if (qty > 0 && qty <= thr && prevQty > thr) {
+      sendDiscordAlert('low', item, { user: window.curU });
+    }
   });
-  dlFile(csv, `order_${o.orderId||orderKey}_${dateStamp()}.csv`, 'text/csv');
+
+  /* update snapshot */
+  inv.forEach(i => { _prevQtyMap[i.id] = Number.isFinite(i.qty) ? i.qty : 0; });
 }
 
-/* ── Handle ?confirm_order= URL param (for supplier link) ── */
-(function checkOrderConfirmParam() {
-  const orderId = new URLSearchParams(window.location.search).get('confirm_order');
-  if (!orderId) return;
-  // After data loads, find and open confirm
-  const check = setInterval(async () => {
-    if (!_sentOrders.length) return;
-    const o = _sentOrders.find(x => x.orderId === orderId || x._key === orderId);
-    if (o) { clearInterval(check); openReceiptConfirm(o._key); }
-  }, 800);
-  setTimeout(() => clearInterval(check), 20000);
+/* ================================================================
+   6. PATCH changeQuantity() — שלח התראה אחרי כל עדכון
+   הוסף את השורות האלה בסוף changeQuantity() אחרי ה-return
+   ================================================================ */
+async function _dcAfterChangeQuantity({ itemId, delta, action, user, reason, afterQty }) {
+  const rawItem = inv.find(i => i.id === itemId);
+  // Use fresh afterQty from Firebase transaction — more accurate than stale inv[]
+  const item = rawItem
+    ? { ...rawItem, qty: afterQty ?? rawItem.qty }
+    : { id: itemId, qty: afterQty ?? 0 };
+
+  if ((action === 'add' || (action === 'manual' && delta > 0)) && delta > 0) {
+    sendDiscordAlert('add', item, { user, reason, delta }).catch(() => {});
+  } else if ((action === 'take' || action === 'sub' || (action === 'manual' && delta < 0)) && delta < 0) {
+    sendDiscordAlert('take', item, { user, reason, delta }).catch(() => {});
+  }
+}
+
+/* ================================================================
+   7. HOOK לפעולות עתידיות — כפתור שליחת הזמנה
+   קרא לפונקציה הזו מתוך sendOrderByEmail() אחרי שליחה מוצלחת
+   ================================================================ */
+async function notifyDiscordOrder(orderItems, user) {
+  if (!_dc.alertOrder) return;
+  const fakeItem = { id: 'order', name: 'הזמנת ציוד', category: 'הזמנה', qty: 0 };
+  await sendDiscordAlert('order', fakeItem, {
+    user,
+    items: orderItems.map(oi => ({ name: oi.item?.name || oi.name, qty: oi.qty || oi.qtyToOrder })),
+  });
+}
+
+/* ================================================================
+   8. SETTINGS TAB HTML
+   הוסף את ה-HTML הבא לתוך tab-settings (לפני סגירת ה-div)
+   ================================================================ */
+function _getDcSettingsHTML() {
+  return `
+<div class="card" id="dc-settings-card" style="background:linear-gradient(145deg,#0e0b2e,#1a1560,#0d0e2e);border:1.5px solid rgba(88,101,242,.4);border-radius:20px;overflow:hidden;">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+    <div style="width:38px;height:38px;background:#5865f2;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1em;box-shadow:0 4px 16px rgba(88,101,242,.4);">💬</div>
+    <div>
+      <div style="font-size:1em;font-weight:900;color:white;">Discord Webhook — התראות מלאי</div>
+      <div style="font-size:.72em;color:rgba(255,255,255,.4);margin-top:2px;">התראות אוטומטיות בזמן אמת</div>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div id="dc-status" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);margin-bottom:16px;font-size:.82em;font-weight:700;color:rgba(255,255,255,.65);">
+    <div class="dc-dot" id="dc-dot" style="width:9px;height:9px;border-radius:50%;background:#4a5568;flex-shrink:0;"></div>
+    <span id="dc-status-text">טוען הגדרות...</span>
+  </div>
+
+  <!-- Instructions -->
+  <div style="margin-bottom:16px;">
+    <div style="display:flex;gap:9px;align-items:flex-start;margin-bottom:7px;font-size:.77em;color:rgba(255,255,255,.45);line-height:1.55;">
+      <div style="width:20px;height:20px;background:rgba(88,101,242,.35);color:#a5b4fc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78em;font-weight:900;flex-shrink:0;">1</div>
+      <div>פתח Discord → ⚙️ ליד שם הערוץ → <b style="color:rgba(255,255,255,.8);">Integrations</b></div>
+    </div>
+    <div style="display:flex;gap:9px;align-items:flex-start;margin-bottom:7px;font-size:.77em;color:rgba(255,255,255,.45);line-height:1.55;">
+      <div style="width:20px;height:20px;background:rgba(88,101,242,.35);color:#a5b4fc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78em;font-weight:900;flex-shrink:0;">2</div>
+      <div>לחץ <b style="color:rgba(255,255,255,.8);">Webhooks → New Webhook</b> → שם: מד"א מלאי → <b style="color:rgba(255,255,255,.8);">Copy Webhook URL</b></div>
+    </div>
+    <div style="display:flex;gap:9px;align-items:flex-start;font-size:.77em;color:rgba(255,255,255,.45);line-height:1.55;">
+      <div style="width:20px;height:20px;background:rgba(88,101,242,.35);color:#a5b4fc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78em;font-weight:900;flex-shrink:0;">3</div>
+      <div>הדבק ב-URL מטה ולחץ 💾 שמור — ההגדרות נשמרות ב-Firebase לכל המשתמשים</div>
+    </div>
+  </div>
+
+  <hr style="border:none;border-top:1px solid rgba(255,255,255,.07);margin:14px 0;">
+
+  <!-- Webhook URL -->
+  <label style="font-size:.74em;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.05em;margin-bottom:6px;display:block;">🔗 Webhook URL</label>
+  <input type="text" id="dc-webhook-url" oninput="_dcUpdateStatusUI()"
+    style="width:100%;padding:11px 14px;border:1.5px solid rgba(255,255,255,.14);border-radius:10px;font-family:monospace;font-size:12px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.9);outline:none;margin-bottom:12px;box-sizing:border-box;transition:border-color .2s;"
+    placeholder="https://discord.com/api/webhooks/123456789/xxxxxxxx">
+
+  <!-- Role mention -->
+  <label style="font-size:.74em;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.05em;margin-bottom:6px;display:block;">👥 Discord Role ID לציין כשמלאי אוזל (אופציונלי)</label>
+  <input type="text" id="dc-role"
+    style="width:100%;padding:11px 14px;border:1.5px solid rgba(255,255,255,.14);border-radius:10px;font-size:13px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.9);outline:none;margin-bottom:12px;box-sizing:border-box;"
+    placeholder="123456789012345678">
+
+  <!-- Alert toggles -->
+  <label style="font-size:.74em;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.05em;margin-bottom:8px;display:block;">📣 שלח התראה כאשר:</label>
+  <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;">
+    ${[
+      ['dc-out',   '🚨 פריט אזל (0 יח׳)'],
+      ['dc-low',   '⚠️ מלאי נמוך'],
+      ['dc-add',   '➕ הוספת מלאי'],
+      ['dc-take',  '📤 הוצאת ציוד'],
+      ['dc-order', '🛒 הזמנה נשלחה'],
+    ].map(([id, label]) => `
+      <label style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:9px;padding:8px 13px;cursor:pointer;font-size:.79em;color:rgba(255,255,255,.65);font-weight:700;">
+        <input type="checkbox" id="${id}" style="accent-color:#5865f2;cursor:pointer;"> ${label}
+      </label>`).join('')}
+  </div>
+
+  <!-- Buttons -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button onclick="saveDcSettings()"
+      style="padding:10px 18px;border:none;border-radius:10px;background:#5865f2;color:white;font-family:'Heebo',sans-serif;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(88,101,242,.35);">
+      💾 שמור ב-Firebase
+    </button>
+    <button onclick="testDcWebhook()"
+      style="padding:10px 18px;border:1.5px solid rgba(255,255,255,.18);border-radius:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);font-family:'Heebo',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
+      🧪 שלח בדיקה
+    </button>
+  </div>
+
+</div>`;
+}
+
+/* ================================================================
+   9. AUTO-INJECT — מוסיף את כרטיס Discord ל-tab-settings אוטומטית
+   ================================================================ */
+function _injectDcSettingsCard() {
+  const tabSettings = document.getElementById('tab-settings');
+  if (!tabSettings || document.getElementById('dc-settings-card')) return;
+  const div = document.createElement('div');
+  div.innerHTML = _getDcSettingsHTML();
+  tabSettings.appendChild(div.firstElementChild);
+  console.log('[Discord] כרטיס הגדרות הוזרק ל-tab-settings');
+}
+
+/* ================================================================
+   10. CSS שנדרש ל-dc-dot animation — הוסף לתוך ה-<style>
+   ================================================================ */
+const _DC_CSS = `
+  .dc-dot { transition: background .3s ease; }
+  .dc-dot.active { background: #5865f2 !important; animation: dcPulse 2s infinite; }
+  .dc-dot.ok     { background: #57f287 !important; }
+  .dc-dot.err    { background: #ed4245 !important; }
+  @keyframes dcPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(88,101,242,.5); }
+    55%     { box-shadow: 0 0 0 7px rgba(88,101,242,0); }
+  }
+`;
+(function _injectDcCSS() {
+  const style = document.createElement('style');
+  style.textContent = _DC_CSS;
+  document.head.appendChild(style);
 })();
 
-
-
 /* ================================================================
-   V3 — EMAILJS ENGINE (Fixed & Complete)
+   11. INIT — קרא לזה ב-DOMContentLoaded
    ================================================================ */
-let _ejsReady = false;
-let _ejsCfg   = { publicKey: '', serviceId: '', templateId: '' };
-let _v3AdminInited = false;
-
-/* ── Load & init EmailJS from Firebase settings ── */
-async function loadEjsSettings() {
-  try {
-    const snap = await db.ref('settings/emailjs').once('value');
-    const cfg  = snap.val() || {};
-    _ejsCfg = { publicKey: cfg.publicKey||'', serviceId: cfg.serviceId||'', templateId: cfg.templateId||'' };
-
-    const get = path => db.ref(path).once('value').then(s => s.val()||'');
-    const [rEmail, rTime, dEmail, oEmail] = await Promise.all([
-      get('settings/reportEmail'), get('settings/reportTime'),
-      get('settings/deliveryEmail'), get('settings/ordersEmail'),
-    ]);
-    const set = (id,v) => { const el=document.getElementById(id); if(el) el.value=v||''; };
-    set('ejs-public-key',    _ejsCfg.publicKey);
-    set('ejs-service-id',    _ejsCfg.serviceId);
-    set('ejs-template-id',   _ejsCfg.templateId);
-    set('set-report-email',  rEmail);
-    set('set-report-time',   rTime || '20:00');
-    set('set-delivery-email',dEmail);
-    set('set-orders-email',  oEmail);
-    _doInitEmailJs();
-  } catch(e) { console.error('loadEjsSettings:', e); }
-}
-
-function _doInitEmailJs() {
-  if (!_ejsCfg.publicKey) { _ejsReady=false; _ejsSetStatus('none'); return; }
-  try {
-    emailjs.init({ publicKey: _ejsCfg.publicKey });
-    _ejsReady = true;
-    _ejsSetStatus('connected');
-  } catch(e) { _ejsReady=false; _ejsSetStatus('error'); }
-}
-
-function _ejsSetStatus(state) {
-  const dot  = document.getElementById('ejs-dot');
-  const text = document.getElementById('ejs-status-text');
-  if (!dot||!text) return;
-  const map = {
-    none:      { cls:'',          txt:'לא מחובר — הזן מפתחות והצלח 🔑' },
-    connected: { cls:'connected', txt:'✅ מחובר ומוכן — אימיילים יישלחו אוטומטית' },
-    error:     { cls:'error',     txt:'❌ שגיאה בחיבור — בדוק מפתחות' },
-    testing:   { cls:'',          txt:'🧪 בודק חיבור...' },
-    sending:   { cls:'connected', txt:'📤 שולח...' },
-  };
-  const s = map[state]||map.none;
-  dot.className = 'ejs-status-dot '+(s.cls||'');
-  text.textContent = s.txt;
-}
-
-async function saveEjsSettings() {
-  const pub  = document.getElementById('ejs-public-key')?.value?.trim()||'';
-  const svc  = document.getElementById('ejs-service-id')?.value?.trim()||'';
-  const tpl  = document.getElementById('ejs-template-id')?.value?.trim()||'';
-  const rEm  = document.getElementById('set-report-email')?.value?.trim()||'';
-  const rTm  = document.getElementById('set-report-time')?.value||'20:00';
-  const dEm  = document.getElementById('set-delivery-email')?.value?.trim()||'';
-  const oEm  = document.getElementById('set-orders-email')?.value?.trim()||'';
-  if (!pub||!svc||!tpl) return showToast('⚠️ מלא Public Key + Service ID + Template ID', 'warning');
-  await Promise.all([
-    db.ref('settings/emailjs').set({ publicKey:pub, serviceId:svc, templateId:tpl }),
-    db.ref('settings/reportEmail').set(rEm),
-    db.ref('settings/reportTime').set(rTm),
-    db.ref('settings/deliveryEmail').set(dEm),
-    db.ref('settings/ordersEmail').set(oEm),
-  ]);
-  _ejsCfg = { publicKey:pub, serviceId:svc, templateId:tpl };
-  _doInitEmailJs();
-  showToast('✅ הגדרות EmailJS נשמרו בהצלחה!');
-}
-
-/* ── Core send via EmailJS ── */
-async function ejsSend({ toEmail, toName='', subject, htmlContent, type='general' }) {
-  if (!_ejsReady) { showToast('⚠️ EmailJS לא מוגדר — עבור להגדרות','warning'); return false; }
-  if (!toEmail)   { showToast('⚠️ אין אימייל יעד','warning'); return false; }
-  _showEmailProgress('📤 שולח אימייל...', toEmail);
-  try {
-    await emailjs.send(_ejsCfg.serviceId, _ejsCfg.templateId, {
-      to_email:  toEmail,
-      to_name:   toName||toEmail,
-      subject:   subject,
-      content:   htmlContent,
-      station:   CFG.headerText,
-      date:      new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric'}),
-      sent_by:   window.curU||'מערכת',
-      type:      type,
-    });
-    _showEmailSuccess('✅ נשלח בהצלחה!', toEmail);
-    return true;
-  } catch(err) {
-    _hideEmailProgress();
-    const msg = err?.text || err?.message || JSON.stringify(err);
-    showToast('❌ שגיאה: '+msg, 'error');
-    console.error('EmailJS error:', err);
-    return false;
-  }
-}
-
-function _showEmailProgress(title, sub) {
-  const ov = document.getElementById('email-progress-overlay'); if(!ov) return;
-  const sp = document.getElementById('email-spin-el');
-  const ck = document.getElementById('email-check-el');
-  document.getElementById('email-progress-title').textContent = title||'שולח...';
-  document.getElementById('email-progress-sub').textContent   = sub||'';
-  if(sp) sp.style.display='block';
-  if(ck) ck.style.display='none';
-  ov.classList.add('show');
-}
-function _showEmailSuccess(title, sub) {
-  const sp = document.getElementById('email-spin-el');
-  const ck = document.getElementById('email-check-el');
-  const t  = document.getElementById('email-progress-title');
-  const s  = document.getElementById('email-progress-sub');
-  if(sp) sp.style.display='none';
-  if(ck){ ck.style.display='block'; ck.textContent='✅'; }
-  if(t) t.textContent=title;
-  if(s) s.textContent=sub;
-  setTimeout(_hideEmailProgress, 2200);
-}
-function _hideEmailProgress() {
-  document.getElementById('email-progress-overlay')?.classList.remove('show');
-}
-
-async function testEmailJs() {
-  const pub = document.getElementById('ejs-public-key')?.value?.trim();
-  const svc = document.getElementById('ejs-service-id')?.value?.trim();
-  const tpl = document.getElementById('ejs-template-id')?.value?.trim();
-  const to  = document.getElementById('set-report-email')?.value?.trim();
-  if (!pub||!svc||!tpl) return showToast('⚠️ מלא מפתחות תחילה','warning');
-  if (!to) return showToast('⚠️ הזן אימייל יעד (שדה דוחות)','warning');
-  _ejsSetStatus('testing');
-  await saveEjsSettings();
-  const html = buildEmailHtml({
-    type:'test', title:'🧪 בדיקת חיבור — EmailJS',
-    subtitle:`מערכת מלאי ${CFG.headerText}`,
-    heroIcon:'🔬',
-    stats:[], items:[],
-    body:`<p style="margin:0 0 12px;">שלום,</p>
-          <p style="margin:0 0 12px;">אימייל זה אומת בהצלחה ממערכת מלאי <strong>${esc(CFG.headerText)}</strong>.</p>
-          <p style="margin:0;">כל ההגדרות תקינות ✅ — אימיילים אוטומטיים יעבדו כרגיל.</p>`,
-    cta:null
-  });
-  const ok = await ejsSend({ toEmail:to, toName:'מנהל', subject:`🧪 טסט — מערכת מלאי ${CFG.headerText}`, htmlContent:html, type:'test' });
-  _ejsSetStatus(ok ? 'connected' : 'error');
+async function initDiscordSystem() {
+  await loadDiscordSettings();
+  _injectDcSettingsCard();
+  console.log('[Discord] מערכת Discord אותחלה ✅');
 }
 
 /* ================================================================
-   V3 — HTML EMAIL BUILDER
-   Beautiful, responsive, RTL Hebrew emails
-   ================================================================ */
-function buildEmailHtml({ type='general', title, subtitle='', heroIcon='📧',
-  stats=[], body='', tableHeaders=[], tableRows=[], cta=null,
-  badgeText='', badgeColor='#1a6eb5', accentColor=null }) {
-
-  const accent = accentColor || {
-    order:'#e65100', delivery:'#1a6eb5', report:'#1b5e20',
-    alert:'#d32f2f', test:'#6a1b9a', confirm:'#1b5e20'
-  }[type] || '#1a6eb5';
-
-  const logo    = CFG.logoUrl || '';
-  const station = CFG.headerText || '';
-  const date    = new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
-
-  /* Stats boxes */
-  const statsHtml = stats.length ? `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-    style="margin:0 0 28px;direction:rtl;">
-    <tr>
-      ${stats.map(s=>`
-      <td align="center" style="padding:0 4px;">
-        <div style="background:${s.color||accent}18;border:2px solid ${s.color||accent}35;
-                    border-radius:14px;padding:14px 8px;min-width:80px;">
-          <div style="font-family:Arial,sans-serif;font-size:28px;font-weight:900;
-                      color:${s.color||accent};line-height:1;">${s.value}</div>
-          <div style="font-family:Arial,sans-serif;font-size:11px;color:#64748b;
-                      margin-top:4px;font-weight:600;">${s.label}</div>
-        </div>
-      </td>`).join('')}
-    </tr>
-  </table>` : '';
-
-  /* Table */
-  const tableHtml = tableRows.length && tableHeaders.length ? `
-  <div style="border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;margin:0 0 24px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-      style="direction:rtl;border-collapse:collapse;">
-      <thead>
-        <tr style="background:${accent};">
-          ${tableHeaders.map(h=>`
-          <th style="padding:11px 14px;font-family:Arial,sans-serif;font-size:12px;
-                     font-weight:800;color:#fff;text-align:right;
-                     border-left:1px solid rgba(255,255,255,.15);">${h}</th>`).join('')}
-        </tr>
-      </thead>
-      <tbody>
-        ${tableRows.map((row,i)=>`
-        <tr style="background:${i%2===0?'#f8fafc':'#fff'};">
-          ${row.map((c,ci)=>`
-          <td style="padding:10px 14px;font-family:Arial,sans-serif;font-size:13px;
-                     color:#334155;border-bottom:1px solid #e2e8f0;text-align:right;
-                     ${ci===0?'font-weight:700;':''}">${c}</td>`).join('')}
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>` : '';
-
-  /* CTA Button */
-  const ctaHtml = cta ? `
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0"
-    style="margin:28px auto 0;direction:rtl;">
-    <tr>
-      <td align="center"
-        style="background:${accent};border-radius:10px;
-               box-shadow:0 4px 15px ${accent}55;">
-        <a href="${cta.url||'#'}"
-          style="display:block;padding:15px 36px;font-family:Arial,sans-serif;
-                 font-size:15px;font-weight:900;color:#fff;text-decoration:none;
-                 letter-spacing:.02em;">${cta.text}</a>
-      </td>
-    </tr>
-  </table>` : '';
-
-  /* Badge */
-  const badgeHtml = badgeText ? `
-  <div style="margin:0 0 18px;">
-    <span style="display:inline-block;background:${badgeColor}18;
-                 border:1.5px solid ${badgeColor}45;border-radius:999px;
-                 padding:5px 16px;font-family:Arial,sans-serif;font-size:12px;
-                 font-weight:800;color:${badgeColor};letter-spacing:.04em;">
-      ${badgeText}
-    </span>
-  </div>` : '';
-
-  return `<!DOCTYPE html>
-<html dir="rtl" lang="he" xmlns="http://www.w3.org/1999/xhtml">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>${esc(title)}</title>
-</head>
-<body style="margin:0;padding:0;background:#eef2f7;font-family:Arial,sans-serif;direction:rtl;">
-
-<!-- WRAPPER -->
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-  style="background:#eef2f7;padding:28px 12px;">
-<tr><td align="center">
-
-<!-- CONTAINER -->
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
-  style="max-width:600px;width:100%;">
-
-  <!-- ═══ PRE-HEADER ═══ -->
-  <tr>
-    <td style="padding:0 0 8px;font-family:Arial,sans-serif;font-size:11px;
-               color:#94a3b8;text-align:center;direction:rtl;">
-      ${esc(title)} · ${esc(station)} · ${date}
-    </td>
-  </tr>
-
-  <!-- ═══ HEADER ═══ -->
-  <tr>
-    <td style="background:linear-gradient(140deg,#0a1628 0%,#0d2246 45%,#163366 100%);
-               border-radius:20px 20px 0 0;padding:0;overflow:hidden;">
-
-      <!-- Decorative top line -->
-      <div style="height:4px;background:linear-gradient(90deg,${accent} 0%,${accent}99 50%,#ffffff22 100%);"></div>
-
-      <!-- Header content -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-        style="padding:28px 32px 24px;">
-        <tr>
-          <!-- Logo + name -->
-          <td style="vertical-align:middle;">
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-              <tr>
-                <td style="padding-left:12px;vertical-align:middle;">
-                  ${logo ? `<img src="${logo}" width="48" height="48"
-                    style="border-radius:10px;border:2px solid rgba(255,255,255,.2);
-                           box-shadow:0 4px 14px rgba(0,0,0,.4);display:block;"
-                    alt="${esc(station)}">` : `<div style="width:48px;height:48px;background:${accent};border-radius:10px;
-                       display:flex;align-items:center;justify-content:center;
-                       font-size:24px;line-height:48px;text-align:center;">🏥</div>`}
-                </td>
-                <td style="vertical-align:middle;">
-                  <div style="font-family:Arial,sans-serif;font-size:17px;font-weight:900;
-                              color:#fff;line-height:1.2;">${esc(station)}</div>
-                  <div style="font-family:Arial,sans-serif;font-size:10px;font-weight:600;
-                              color:rgba(255,255,255,.45);letter-spacing:.1em;margin-top:3px;
-                              text-transform:uppercase;">מערכת ניהול מלאי · v3.0</div>
-                </td>
-              </tr>
-            </table>
-          </td>
-          <!-- Date badge -->
-          <td align="left" style="vertical-align:top;">
-            <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
-                        border-radius:8px;padding:7px 12px;text-align:center;">
-              <div style="font-family:Arial,sans-serif;font-size:18px;font-weight:900;
-                          color:#fff;line-height:1;">
-                ${new Date().getDate()}
-              </div>
-              <div style="font-family:Arial,sans-serif;font-size:9px;color:rgba(255,255,255,.5);
-                          letter-spacing:.06em;text-transform:uppercase;margin-top:2px;">
-                ${new Date().toLocaleDateString('he-IL',{month:'short'})}
-              </div>
-            </div>
-          </td>
-        </tr>
-      </table>
-
-      <!-- Hero section -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-        style="padding:0 32px 32px;">
-        <tr>
-          <td>
-            <!-- Divider -->
-            <div style="height:1px;background:rgba(255,255,255,.1);margin-bottom:22px;"></div>
-            <!-- Hero icon + title -->
-            <div style="font-size:36px;margin-bottom:10px;">${heroIcon}</div>
-            <h1 style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:24px;
-                       font-weight:900;color:#fff;line-height:1.25;">
-              ${esc(title)}
-            </h1>
-            ${subtitle ? `<p style="margin:0;font-family:Arial,sans-serif;font-size:13px;
-                              color:rgba(255,255,255,.5);">${esc(subtitle)}</p>` : ''}
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-
-  <!-- ═══ ACCENT BAR ═══ -->
-  <tr>
-    <td style="height:5px;background:linear-gradient(90deg,${accent} 0%,${accent}bb 60%,${accent}44 100%);"></td>
-  </tr>
-
-  <!-- ═══ BODY ═══ -->
-  <tr>
-    <td style="background:#fff;padding:32px 32px 28px;direction:rtl;">
-
-      <!-- Sent by pill -->
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0"
-        style="margin-bottom:22px;">
-        <tr>
-          <td style="background:#f1f5f9;border-radius:999px;padding:6px 14px 6px 8px;">
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-              <tr>
-                <td style="font-size:13px;padding-left:6px;">👤</td>
-                <td style="font-family:Arial,sans-serif;font-size:12px;font-weight:700;color:#64748b;">
-                  נשלח ע"י:&nbsp;<strong style="color:#0f172a;">${esc(window.curU||'מערכת')}</strong>
-                  &nbsp;·&nbsp;<span style="color:#94a3b8;">${date}</span>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-
-      ${badgeHtml}
-      ${statsHtml}
-
-      <!-- Main body text -->
-      <div style="font-family:Arial,sans-serif;font-size:14px;color:#334155;
-                  line-height:1.8;direction:rtl;margin-bottom:${tableRows.length||cta?'24px':'0'};">
-        ${body}
-      </div>
-
-      ${tableHtml}
-      ${ctaHtml}
-
-    </td>
-  </tr>
-
-  <!-- ═══ DIVIDER ═══ -->
-  <tr>
-    <td style="height:3px;background:linear-gradient(90deg,#e2e8f0,${accent}44,#e2e8f0);"></td>
-  </tr>
-
-  <!-- ═══ FOOTER ═══ -->
-  <tr>
-    <td style="background:linear-gradient(135deg,#0a1628 0%,#0d1f3c 100%);
-               border-radius:0 0 20px 20px;padding:24px 32px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td style="vertical-align:middle;">
-            <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:800;
-                        color:rgba(255,255,255,.8);margin-bottom:4px;">${esc(station)}</div>
-            <div style="font-family:Arial,sans-serif;font-size:11px;color:rgba(255,255,255,.35);
-                        line-height:1.6;">
-              מערכת ניהול מלאי v3.0<br>
-              שלח אוטומטית · ${date}
-            </div>
-          </td>
-          <td align="left" style="vertical-align:middle;">
-            <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
-                        border-radius:10px;padding:10px 16px;text-align:center;">
-              <div style="font-size:22px;line-height:1;">🚑</div>
-              <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:800;
-                          color:rgba(255,255,255,.4);letter-spacing:.12em;margin-top:4px;">מד"א</div>
-            </div>
-          </td>
-        </tr>
-      </table>
-      <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06);
-                  font-family:Arial,sans-serif;font-size:10px;color:rgba(255,255,255,.2);
-                  text-align:center;direction:rtl;">
-        הודעה זו נשלחה אוטומטית ממערכת מלאי ${esc(station)} · לא להשיב לאימייל זה
-      </div>
-    </td>
-  </tr>
-
-  <!-- Bottom spacing -->
-  <tr><td style="height:24px;"></td></tr>
-
-</table>
-<!-- /CONTAINER -->
-
-</td></tr>
-</table>
-<!-- /WRAPPER -->
-
-</body>
-</html>`;
-}
-
-/* ================================================================
-   V3 — WEEKLY / DAILY REPORT EMAIL
-   ================================================================ */
-async function sendDailyReportNow() {
-  const reportEmail = await db.ref('settings/reportEmail').once('value').then(s=>s.val()||'');
-  const toEmail = reportEmail || await asyncPrompt('שלח דוח','אימייל יעד:','');
-  if (!toEmail) return;
-
-  const since    = Date.now() - 1*86400000;
-  const actions  = logs.filter(l=>l.timestamp>=since);
-  const outItems = inv.filter(i=>(Number.isFinite(i.qty)?i.qty:0)===0);
-  const lowItems = inv.filter(i=>{ const q=Number.isFinite(i.qty)?i.qty:0; return q>0&&q<=getThreshold(i); });
-  const takes    = actions.filter(l=>l.action==='take'||l.action==='sub');
-  const adds     = actions.filter(l=>l.action==='add');
-  const counts   = {};
-  takes.forEach(l=>{ const k=l.item||l.itemName||l.itemId||''; if(k) counts[k]=(counts[k]||0)+1; });
-  const top5     = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-  const top5Body = top5.length ? `
-    <h3 style="font-family:Arial,sans-serif;font-size:14px;font-weight:800;
-               color:#0f172a;margin:24px 0 10px;">🔥 פריטים שנלקחו הכי הרבה</h3>
-    ${top5.map(([name,n],i)=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;
-                background:${i%2?'#f8fafc':'#fff'};border-radius:8px;
-                margin-bottom:5px;direction:rtl;border:1px solid #e2e8f0;">
-      <span style="font-size:18px;">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]}</span>
-      <span style="flex:1;font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#1e293b;">${esc(name)}</span>
-      <span style="background:#1a6eb5;color:#fff;padding:3px 12px;border-radius:999px;
-                   font-family:Arial,sans-serif;font-size:11px;font-weight:800;">${n}✕</span>
-    </div>`).join('')}` : '';
-
-  const alertBody = (outItems.length||lowItems.length) ? `
-    ${outItems.length?`
-    <h3 style="font-family:Arial,sans-serif;font-size:13px;font-weight:800;
-               color:#d32f2f;margin:20px 0 8px;">🚨 פריטים שאזלו (${outItems.length})</h3>
-    ${outItems.slice(0,10).map(i=>`
-    <div style="padding:7px 12px 7px 10px;background:#fff5f5;
-                border-right:3px solid #d32f2f;border-radius:4px;
-                margin-bottom:4px;font-family:Arial,sans-serif;font-size:12px;color:#1e293b;">
-      ${esc(i.name)} <span style="color:#94a3b8;">(${esc(i.category||'—')})</span>
-    </div>`).join('')}`:''}
-    ${lowItems.length?`
-    <h3 style="font-family:Arial,sans-serif;font-size:13px;font-weight:800;
-               color:#e65100;margin:20px 0 8px;">⚠️ מלאי נמוך (${lowItems.length})</h3>
-    ${lowItems.slice(0,10).map(i=>`
-    <div style="padding:7px 12px 7px 10px;background:#fff8f0;
-                border-right:3px solid #e65100;border-radius:4px;
-                margin-bottom:4px;font-family:Arial,sans-serif;font-size:12px;color:#1e293b;">
-      ${esc(i.name)} —
-      <strong>${i.qty}</strong> מתוך <strong>${getThreshold(i)}</strong>
-    </div>`).join('')}`:''}` : '';
-
-  const html = buildEmailHtml({
-    type:'report', heroIcon:'📊',
-    title:`דוח יומי — ${CFG.headerText}`,
-    subtitle:new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric',weekday:'long'}),
-    badgeText:'📊 דוח יומי אוטומטי', badgeColor:'#1b5e20',
-    stats:[
-      { value:actions.length,  label:'פעולות',  color:'#1a6eb5' },
-      { value:takes.length,    label:'הוצאות',   color:'#e65100' },
-      { value:adds.length,     label:'הוספות',    color:'#1b5e20' },
-      { value:outItems.length, label:'🚨 אזל',   color:'#d32f2f' },
-      { value:lowItems.length, label:'⚠️ נמוך',  color:'#f9a825' },
-    ],
-    body:`<p>שלום,</p><p>להלן סיכום פעילות המלאי של היום עבור <strong>${esc(CFG.headerText)}</strong>.</p>
-          ${top5Body}${alertBody}`,
-    cta: null
-  });
-
-  await ejsSend({ toEmail, toName:'מנהל', subject:`📊 דוח יומי — ${CFG.headerText} — ${new Date().toLocaleDateString('he-IL')}`, htmlContent:html, type:'report' });
-}
-
-function previewDailyReport() {
-  const w = window.open('','_blank');
-  if (!w) return showToast('אפשר חלונות קופצים','warning');
-  const since    = Date.now()-1*86400000;
-  const actions  = logs.filter(l=>l.timestamp>=since);
-  const outItems = inv.filter(i=>(Number.isFinite(i.qty)?i.qty:0)===0);
-  const lowItems = inv.filter(i=>{ const q=Number.isFinite(i.qty)?i.qty:0; return q>0&&q<=getThreshold(i); });
-  const html = buildEmailHtml({
-    type:'report', heroIcon:'📊',
-    title:`תצוגה מקדימה — דוח יומי`,
-    subtitle:CFG.headerText,
-    badgeText:'👁️ תצוגה מקדימה בלבד', badgeColor:'#64748b',
-    stats:[{ value:actions.length, label:'פעולות', color:'#1a6eb5' },{ value:outItems.length, label:'🚨 אזל', color:'#d32f2f' },{ value:lowItems.length, label:'⚠️ נמוך', color:'#f9a825' }],
-    body:`<p>זוהי תצוגה מקדימה של הדוח היומי.</p>`,
-    cta:null
-  });
-  w.document.write(html); w.document.close();
-}
-
-/* ================================================================
-   V3 — DAILY REPORT SCHEDULER
-   ================================================================ */
-let _reportTimer = null;
-function initReportScheduler() {
-  if (_reportTimer) clearInterval(_reportTimer);
-  _reportTimer = setInterval(async () => {
-    try {
-      if (!_ejsReady) return;
-      const reportTime = await db.ref('settings/reportTime').once('value').then(s=>s.val()||'20:00');
-      const email      = await db.ref('settings/reportEmail').once('value').then(s=>s.val()||'');
-      if (!email) return;
-      const [hh,mm] = reportTime.split(':').map(Number);
-      const now = new Date();
-      if (now.getHours()===hh && now.getMinutes()===mm) {
-        const key = 'lastReport_'+CURRENT_SITE;
-        if (Date.now()-parseInt(localStorage.getItem(key)||'0',10) > 23*3600000) {
-          localStorage.setItem(key, String(Date.now()));
-          sendDailyReportNow();
-        }
-      }
-    } catch(e){}
-  }, 60000);
-}
-
-/* ================================================================
-   V3 — INIT (hooks into existing functions properly)
+   HOW TO INTEGRATE — הוראות שילוב
+   ================================================================
+   
+   שלב 1: הוסף את כל הקובץ הזה לפני <\/script> בקובץ הראשי
+   
+   שלב 2: ב-DOMContentLoaded הוסף:
+     await initDiscordSystem();
+   
+   שלב 3: בפונקציית checkLowStock() הוסף בסוף:
+     _dcCheckLowStockPatch();
+   
+   שלב 4: בפונקציית changeQuantity() אחרי ה-return הוסף:
+     await _dcAfterChangeQuantity({ itemId, delta, action, user, reason });
+     (כלומר, return את ה-result FIRST, ואז שלח לדיסקורד)
+   
+   שלב 5 (אופציונלי): ב-sendOrderByEmail() אחרי שליחה:
+     await notifyDiscordOrder(orderItemsList, window.curU);
+   
    ================================================================ */
 
-/* 1. Patch showApp — fires when admin logs in */
-const _origShowApp_v3 = window.showApp;
-window.showApp = function(screenId, ...rest) {
-  _origShowApp_v3.call(this, screenId, ...rest);
-  if (screenId === 'scr-admin' && !_v3AdminInited) {
-    _v3AdminInited = true;
-    loadEjsSettings();
-    initReportScheduler();
-    loadSentOrders();
-    setTimeout(() => {
-      renderOrdersTab();
-      _updateOrdStats();
-    }, 400);
-  }
-};
-
-/* 2. Patch showTab — render correct data when switching to V3 tabs */
-const _origShowTab_v3 = window.showTab;
-window.showTab = function(id, btn, ...rest) {
-  _origShowTab_v3.call(this, id, btn, ...rest);
-  if (id === 'tab-orders') {
-    renderOrdersTab();
-    loadSentOrders();
-  }
-  if (id === 'tab-dash') { setTimeout(renderTopItems, 100); }
-  if (id === 'tab-compare') { /* comparison is triggered manually */ }
-};
-
-/* 3. Patch updateStats — show top items on dashboard */
-const _origUpdateStats_v3 = window.updateStats;
-window.updateStats = function(...rest) {
-  _origUpdateStats_v3.apply(this, rest);
-  renderTopItems();
-};
-
-/* 4. Patch _onScanFound — intercept for V3 scan success overlay */
-const _origOnScanFound_v3 = _onScanFound;
-window._onScanFound = async function(code) {
-  if (_scanMode === 'find') {
-    const found = inv.find(i => i.barcode && String(i.barcode).trim() === String(code).trim());
-    if (found) { closeScanner(); showScanSuccess(found); return; }
-  }
-  return _origOnScanFound_v3.call(this, code);
-};
-
-/* ================================================================
-   V3 — PHONE-AS-CAMERA ENGINE (Fixed & Reliable)
-
-   Architecture:
-   ─────────────────────────────────────────────────────────────────
-   DESKTOP  →  creates  /scan_sessions/{id}  {status:'waiting'}
-   DESKTOP  →  shows QR code + listens to Firebase for changes
-   MOBILE   →  opens URL with ?phone_scan={id}
-   MOBILE   →  shows ONLY scanner page (hides all other app UI)
-   MOBILE   →  scans barcode → writes to Firebase {status:'done', barcode}
-   DESKTOP  →  Firebase listener fires → shows product overlay
-   MOBILE   →  can scan again: resets session to 'scanning'
-   ─────────────────────────────────────────────────────────────────
-   Supports multiple scans per session (until desktop closes overlay)
-   ================================================================ */
-
-/* ── Detect mobile scan mode BEFORE anything else ── */
-const _IS_PHONE_SCAN_MODE = new URLSearchParams(window.location.search).has('phone_scan');
-const _PHONE_SCAN_SESSION = new URLSearchParams(window.location.search).get('phone_scan') || '';
-
-/* If in phone-scan mode, block the main app init to avoid conflicts */
-if (_IS_PHONE_SCAN_MODE) {
-  // Prevent DOMContentLoaded from running main app
-  document.addEventListener('DOMContentLoaded', function phoneScanInit() {
-    _initMobileScanner();
-  }, { once: true });
-}
-
-/* ================================================================
-   DESKTOP SIDE
-   ================================================================ */
-
-let _pairSessionId = null;
-let _pairDbRef     = null;
-let _pairListener  = null;
-
-function openPhonePairing() {
-  /* Generate unique session ID */
-  _pairSessionId = 'ps_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-
-  const sessionData = {
-    status:    'waiting',
-    station:   CURRENT_SITE,
-    createdAt: Date.now(),
-    expiresAt: Date.now() + 15 * 60 * 1000,
-    scannedBarcodes: []
-  };
-
-  /* Store to Firebase */
-  _pairDbRef = db.ref('scan_sessions/' + _pairSessionId);
-  _pairDbRef.set(sessionData);
-
-  /* Build mobile URL */
-  const mobileUrl = window.location.href.split('?')[0] + '?phone_scan=' + _pairSessionId;
-
-  /* QR code via free API */
-  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=230x230&bgcolor=ffffff&color=0d1b2a&margin=12&data=' + encodeURIComponent(mobileUrl);
-  const qrImg = document.getElementById('pair-qr-img');
-  if (qrImg) qrImg.src = qrUrl;
-
-  /* Session label + URL copy button */
-  const lbl = document.getElementById('pair-session-label');
-  if (lbl) lbl.textContent = 'מזהה: ' + _pairSessionId.slice(-8).toUpperCase();
-
-  /* Update link input */
-  const linkInput = document.getElementById('pair-link-input');
-  if (linkInput) { linkInput.value = mobileUrl; }
-
-  _setPairStatus('waiting', 'ממתין לחיבור הטלפון...');
-  document.getElementById('phone-pair-overlay').classList.add('show');
-  _pairScanCount = 0;
-
-  /* ── Firebase real-time listener ── */
-  _pairListener = _pairDbRef.on('value', snap => {
-    const data = snap.val();
-    if (!data) return;
-
-    if (data.status === 'scanning') {
-      _setPairStatus('scanning', '📱 טלפון מוכן — כוון לברקוד...');
-      document.getElementById('pair-multi-count').textContent = _pairScanCount > 0 ? `${_pairScanCount} פריטים נסרקו` : '';
-    }
-
-    if (data.status === 'done' && data.barcode) {
-      _pairScanCount++;
-      _setPairStatus('scanning', `✅ נסרק! (${_pairScanCount}) — מחכה לסריקה הבאה...`);
-      document.getElementById('pair-multi-count').textContent = `${_pairScanCount} פריטים נסרקו`;
-
-      /* Show product on desktop */
-      _handlePhoneScanResult(data.barcode);
-
-      /* Reset session for next scan (don't close overlay) */
-      setTimeout(() => {
-        _pairDbRef.update({ status: 'scanning', barcode: null, scannedAt: null })
-          .catch(() => {});
-      }, 1200);
-    }
-
-    if (data.status === 'error') {
-      _setPairStatus('waiting', '⚠️ שגיאה בטלפון — נסה שוב');
-    }
-  });
-
-  /* Auto-expire */
-  setTimeout(() => {
-    if (_pairSessionId && document.getElementById('phone-pair-overlay').classList.contains('show')) {
-      closePhonePairing();
-      showToast('⏱️ פג תוקף החיבור — לחץ שוב לחיבור חדש', 'warning');
-    }
-  }, 15 * 60 * 1000);
-}
-
-let _pairScanCount = 0;
-
-function _setPairStatus(state, text) {
-  const dot  = document.getElementById('pair-dot');
-  const lbl  = document.getElementById('pair-status-text');
-  if (dot) dot.className = 'pair-dot ' + state;
-  if (lbl) lbl.textContent = text;
-}
-
-function closePhonePairing() {
-  document.getElementById('phone-pair-overlay')?.classList.remove('show');
-  if (_pairDbRef && _pairListener) {
-    _pairDbRef.off('value', _pairListener);
-    _pairListener = null;
-  }
-  if (_pairDbRef) {
-    _pairDbRef.remove().catch(() => {});
-    _pairDbRef = null;
-  }
-  _pairSessionId = null;
-  _pairScanCount = 0;
-}
-
-function copyPairLink() {
-  const input = document.getElementById('pair-link-input');
-  if (!input) return;
-  input.select();
-  document.execCommand('copy');
-  showToast('🔗 קישור הועתק!');
-}
-
-function _handlePhoneScanResult(barcode) {
-  const found = inv.find(i => i.barcode && String(i.barcode).trim() === String(barcode).trim());
-  if (found) {
-    showScanSuccess(found);
-    if (navigator.vibrate) navigator.vibrate([30, 60, 30]);
-  } else {
-    showToast('⚠️ ברקוד לא נמצא: ' + barcode, 'warning');
-  }
-}
-
-/* ================================================================
-   MOBILE SIDE — completely separate, no admin app running
-   ================================================================ */
-
-let _mobileScanner = null;
-let _mobileLock    = false;
-let _mobileSession = _PHONE_SCAN_SESSION;
-
-function _initMobileScanner() {
-  if (!_IS_PHONE_SCAN_MODE) return;
-
-  /* Hide everything except the phone scan page */
-  document.querySelectorAll('body > *:not(#phone-scan-page)').forEach(el => {
-    if (el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') {
-      el.style.display = 'none';
-    }
-  });
-
-  const page = document.getElementById('phone-scan-page');
-  if (page) {
-    page.style.display = 'flex';
-    page.classList.add('show');
-  }
-
-  /* Set station branding */
-  const logo = document.getElementById('psp-logo');
-  const name = document.getElementById('psp-station-name');
-  if (logo) logo.src = CFG.logoUrl;
-  if (name) name.textContent = CFG.headerText;
-
-  const st = document.getElementById('psp-status');
-
-  if (!_mobileSession) {
-    if (st) st.textContent = '⚠️ קישור לא תקין — בקש קישור חדש';
-    return;
-  }
-
-  /* Verify session still valid */
-  if (st) st.textContent = '🔗 מתחבר ל-Firebase...';
-
-  db.ref('scan_sessions/' + _mobileSession).once('value').then(snap => {
-    const data = snap.val();
-    if (!data) {
-      if (st) st.textContent = '⚠️ הסשן פג תוקף — סרוק QR חדש';
-      return;
-    }
-    if (data.status === 'done') {
-      if (st) st.textContent = '⚠️ הסשן כבר נוצל — סרוק QR חדש';
-      return;
-    }
-
-    /* Session valid — update status and start scanner */
-    db.ref('scan_sessions/' + _mobileSession).update({ status: 'scanning' }).catch(() => {});
-    _startMobileScanner();
-
-  }).catch(err => {
-    /* Firebase error — still try to start scanner */
-    if (st) st.textContent = '⚠️ שגיאת חיבור — מנסה בכל זאת...';
-    setTimeout(_startMobileScanner, 1000);
-  });
-
-  /* Manual input */
-  const manualInput = document.getElementById('psp-manual-input');
-  if (manualInput) {
-    manualInput.addEventListener('keydown', e => { if (e.key === 'Enter') pspSubmitManual(); });
-  }
-}
-
-function _startMobileScanner() {
-  const st       = document.getElementById('psp-status');
-  const readerEl = document.getElementById('psp-qr-reader');
-  if (!readerEl) return;
-
-  if (st) st.textContent = '📷 מפעיל מצלמה...';
-
-  try {
-    _mobileScanner = new Html5Qrcode('psp-qr-reader', { verbose: false });
-    _mobileScanner.start(
-      { facingMode: 'environment' },
-      {
-        fps: 12,
-        qrbox: (w, h) => ({
-          width:  Math.min(Math.round(w * .88), 360),
-          height: Math.min(Math.round(h * .38), 160)
-        }),
-        aspectRatio: 1.5,
-        disableFlip: false,
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats?.EAN_13,
-          Html5QrcodeSupportedFormats?.EAN_8,
-          Html5QrcodeSupportedFormats?.CODE_128,
-          Html5QrcodeSupportedFormats?.CODE_39,
-          Html5QrcodeSupportedFormats?.UPC_A,
-          Html5QrcodeSupportedFormats?.UPC_E,
-          Html5QrcodeSupportedFormats?.QR_CODE,
-        ].filter(Boolean)
-      },
-      code => _mobileOnScan(code),
-      () => {}
-    ).then(() => {
-      if (st) st.textContent = '🔍 כוון את המצלמה לברקוד';
-    }).catch(err => {
-      const m = String(err);
-      if (st) st.textContent =
-        m.includes('NotAllowed') || m.includes('Permission') || m.includes('denied')
-          ? '🚫 הרשאת מצלמה נדחתה\nעבור להגדרות הדפדפן ואפשר מצלמה'
-          : m.includes('NotFound') || m.includes('no camera')
-          ? '📵 לא נמצאה מצלמה במכשיר'
-          : '⚠️ שגיאת מצלמה: ' + m.slice(0, 50);
-    });
-  } catch(e) {
-    if (st) st.textContent = '⚠️ שגיאה: ' + e.message;
-  }
-}
-
-async function _mobileOnScan(barcode) {
-  if (_mobileLock) return;
-  _mobileLock = true;
-
-  /* Pause camera */
-  if (_mobileScanner) { try { await _mobileScanner.pause(true); } catch(e) {} }
-
-  const st         = document.getElementById('psp-status');
-  const resultCard = document.getElementById('psp-result-card');
-  const resultName = document.getElementById('psp-result-name');
-  const resultBc   = document.getElementById('psp-result-bc');
-  const againBtn   = document.getElementById('psp-again-btn');
-
-  if (st)         st.textContent = '📡 שולח למחשב...';
-  if (resultName) resultName.textContent = 'ברקוד: ' + barcode;
-  if (resultBc)   resultBc.textContent   = '📦 ' + barcode;
-  if (resultCard) resultCard.classList.add('show');
-  if (againBtn)   againBtn.style.display = 'block';
-
-  /* Vibrate */
-  if (navigator.vibrate) navigator.vibrate([40, 80, 40]);
-
-  /* Send to Firebase */
-  try {
-    await db.ref('scan_sessions/' + _mobileSession).update({
-      status:    'done',
-      barcode:   barcode,
-      scannedAt: Date.now()
-    });
-    if (st) st.textContent = '✅ נשלח למחשב! סרוק שוב?';
-  } catch(e) {
-    if (st) st.textContent = '❌ שגיאה בשליחה: ' + (e.message || e);
-    _mobileLock = false;
-  }
-}
-
-function pspSubmitManual() {
-  const v = document.getElementById('psp-manual-input')?.value?.trim();
-  if (!v) return;
-  _mobileOnScan(v);
-}
-
-function pspScanAgain() {
-  _mobileLock = false;
-  document.getElementById('psp-result-card')?.classList.remove('show');
-  const againBtn = document.getElementById('psp-again-btn');
-  if (againBtn) againBtn.style.display = 'none';
-  const st = document.getElementById('psp-status');
-  if (st) st.textContent = '🔍 כוון את המצלמה לברקוד';
-  const manualInput = document.getElementById('psp-manual-input');
-  if (manualInput) manualInput.value = '';
-
-  /* Resume camera */
-  if (_mobileScanner) { try { _mobileScanner.resume(); } catch(e) {} }
-
-  /* Tell desktop we're ready for next scan */
-  db.ref('scan_sessions/' + _mobileSession)
-    .update({ status: 'scanning' })
-    .catch(() => {});
-}
-
-/* ── Auto-cleanup old sessions (desktop only) ── */
-if (!_IS_PHONE_SCAN_MODE) {
-  setTimeout(() => {
-    try {
-      const cutoff = Date.now() - 20 * 60 * 1000;
-      db.ref('scan_sessions').orderByChild('createdAt').endAt(cutoff).once('value').then(snap => {
-        if (!snap.val()) return;
-        const upd = {};
-        snap.forEach(c => { upd[c.key] = null; });
-        db.ref('scan_sessions').update(upd).catch(() => {});
-      }).catch(() => {});
-    } catch(e) {}
-  }, 5000);
-}
+console.log('[Discord] מודול Discord v4.0 נטען ✅');
 
 </script>
 </body>
