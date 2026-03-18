@@ -1818,7 +1818,123 @@ tr:hover td { background: var(--bg); }
       border-radius:var(--r-full); padding:3px 12px; font-size:.72em; color:rgba(255,255,255,.55);
       font-weight:600; margin-top:6px;
     }
-  </style>
+  
+/* ── Discord Integration Styles ── */
+.dc-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #4a5568; flex-shrink: 0;
+  transition: background .3s ease;
+}
+.dc-dot.active {
+  background: #5865f2 !important;
+  animation: dcPulse 2s infinite;
+}
+.dc-dot.ok  { background: #57f287 !important; }
+.dc-dot.err { background: #ed4245 !important; }
+@keyframes dcPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(88,101,242,.5); }
+  55%     { box-shadow: 0 0 0 8px rgba(88,101,242,0); }
+}
+.dc-card {
+  background: linear-gradient(145deg, #0e0b2e 0%, #1a1560 50%, #0d0e2e 100%);
+  border: 1.5px solid rgba(88,101,242,.4);
+  border-radius: var(--r-lg);
+  padding: 22px 20px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.dc-card::before {
+  content: '';
+  position: absolute;
+  top: -60px; left: -60px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(88,101,242,.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.dc-label {
+  font-size: .74em; font-weight: 700;
+  color: rgba(255,255,255,.5);
+  letter-spacing: .05em;
+  margin-bottom: 6px;
+  display: block;
+}
+.dc-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid rgba(255,255,255,.14);
+  border-radius: 10px;
+  font-family: monospace;
+  font-size: 12.5px;
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.9);
+  outline: none;
+  margin-bottom: 12px;
+  transition: border-color .2s, background .2s;
+  box-sizing: border-box;
+}
+.dc-input:focus {
+  border-color: #5865f2;
+  background: rgba(88,101,242,.12);
+}
+.dc-input::placeholder { color: rgba(255,255,255,.22); font-family: 'Heebo', sans-serif; font-size: 11px; }
+.dc-checks { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.dc-check {
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,.06);
+  border: 1.5px solid rgba(255,255,255,.1);
+  border-radius: 9px;
+  padding: 8px 13px;
+  cursor: pointer;
+  font-size: .79em; color: rgba(255,255,255,.65); font-weight: 700;
+  transition: all .15s;
+  user-select: none;
+}
+.dc-check:hover { background: rgba(255,255,255,.1); }
+.dc-check input:checked ~ * { color: #a5b4fc; }
+.dc-check:has(input:checked) {
+  background: rgba(88,101,242,.22);
+  border-color: rgba(88,101,242,.55);
+  color: #a5b4fc;
+}
+.dc-check input { accent-color: #5865f2; cursor: pointer; }
+.dc-btn {
+  padding: 10px 18px; border: none; border-radius: 10px;
+  font-family: 'Heebo', sans-serif; font-size: 13px; font-weight: 800;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+  transition: filter .15s, transform .15s;
+}
+.dc-btn:hover  { filter: brightness(1.15); transform: translateY(-1px); }
+.dc-btn:active { transform: translateY(0); }
+.dc-btn-save { background: #5865f2; color: white; box-shadow: 0 4px 16px rgba(88,101,242,.35); }
+.dc-btn-test { background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); border: 1.5px solid rgba(255,255,255,.18); }
+.dc-step {
+  display: flex; gap: 9px; align-items: flex-start;
+  margin-bottom: 8px; font-size: .77em;
+  color: rgba(255,255,255,.45); line-height: 1.55;
+}
+.dc-step-num {
+  width: 20px; height: 20px;
+  background: rgba(88,101,242,.35); color: #a5b4fc;
+  border-radius: 50%; display: flex;
+  align-items: center; justify-content: center;
+  font-size: .78em; font-weight: 900; flex-shrink: 0; margin-top: 1px;
+}
+.dc-status-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  margin-bottom: 16px;
+  font-size: .82em; font-weight: 700; color: rgba(255,255,255,.65);
+}
+.dc-divider { border: none; border-top: 1px solid rgba(255,255,255,.07); margin: 14px 0; }
+.dc-throttle-note {
+  font-size: .7em; color: rgba(255,255,255,.28);
+  margin-bottom: 14px; padding: 0 2px;
+}
+</style>
 
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
@@ -2181,6 +2297,82 @@ tr:hover td { background: var(--bg); }
             סה"כ לוגים: <b id="info-logs">0</b>
           </p>
         </div>
+
+        <!-- ══════════════════════════════════════════
+             Discord Webhook Settings Card
+             ══════════════════════════════════════════ -->
+        <div class="dc-card" id="dc-settings-card">
+
+          <!-- Header -->
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;position:relative;z-index:1;">
+            <div style="width:40px;height:40px;background:#5865f2;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1em;box-shadow:0 4px 14px rgba(88,101,242,.4);flex-shrink:0;">💬</div>
+            <div>
+              <div style="font-size:1em;font-weight:900;color:white;line-height:1.2;">Discord Webhook — התראות מלאי</div>
+              <div style="font-size:.72em;color:rgba(255,255,255,.4);margin-top:2px;">התראות אוטומטיות בזמן אמת לכל הצוות</div>
+            </div>
+          </div>
+
+          <!-- Status indicator -->
+          <div class="dc-status-row">
+            <div class="dc-dot" id="dc-dot"></div>
+            <span id="dc-status-text">טוען הגדרות מ-Firebase...</span>
+          </div>
+
+          <!-- How-to steps -->
+          <div style="margin-bottom:14px;position:relative;z-index:1;">
+            <div class="dc-step">
+              <div class="dc-step-num">1</div>
+              <div>פתח Discord ← ⚙️ ליד שם הערוץ ← <b style="color:rgba(255,255,255,.8);">Integrations → Webhooks</b></div>
+            </div>
+            <div class="dc-step">
+              <div class="dc-step-num">2</div>
+              <div>לחץ <b style="color:rgba(255,255,255,.8);">New Webhook</b> ← שם: "מד&quot;א מלאי" ← <b style="color:rgba(255,255,255,.8);">Copy Webhook URL</b></div>
+            </div>
+            <div class="dc-step">
+              <div class="dc-step-num">3</div>
+              <div>הדבק ב-URL מטה ← לחץ <b style="color:rgba(255,255,255,.8);">💾 שמור</b> ← ההגדרות נשמרות ב-Firebase לכולם</div>
+            </div>
+          </div>
+
+          <hr class="dc-divider">
+
+          <!-- Webhook URL -->
+          <label class="dc-label">🔗 Webhook URL</label>
+          <input type="text" id="dc-webhook-url" class="dc-input"
+            placeholder="https://discord.com/api/webhooks/123456789/xxxxxxxx"
+            oninput="_dcUpdateStatusUI()">
+
+          <!-- Role Mention -->
+          <label class="dc-label">👥 Discord Role ID — יקבל ping כשמלאי אוזל (אופציונלי)</label>
+          <input type="text" id="dc-role" class="dc-input"
+            style="font-family:'Heebo',sans-serif;font-size:13px;"
+            placeholder="1234567890  (ID של Role)">
+
+          <!-- Alert toggles -->
+          <label class="dc-label" style="margin-top:2px;">📣 שלח התראה Discord כאשר:</label>
+          <div class="dc-checks">
+            <label class="dc-check"><input type="checkbox" id="dc-out"   checked> 🚨 פריט אזל</label>
+            <label class="dc-check"><input type="checkbox" id="dc-low"   checked> ⚠️ מלאי נמוך</label>
+            <label class="dc-check"><input type="checkbox" id="dc-add">           ➕ הוספת מלאי</label>
+            <label class="dc-check"><input type="checkbox" id="dc-take">          📤 הוצאת ציוד</label>
+            <label class="dc-check"><input type="checkbox" id="dc-order">         🛒 הזמנה נשלחה</label>
+          </div>
+
+          <!-- Throttle note -->
+          <div class="dc-throttle-note">⏱️ הגנת ספאם: אותה התראה לאותו פריט — מינימום 5 דקות בין שליחות</div>
+
+          <!-- Action buttons -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="dc-btn dc-btn-save" onclick="saveDcSettings()">💾 שמור ב-Firebase</button>
+            <button class="dc-btn dc-btn-test" onclick="testDcWebhook()">🧪 שלח בדיקה</button>
+          </div>
+
+          <!-- Send counter (shown after first save) -->
+          <div id="dc-sent-info" style="display:none;margin-top:12px;font-size:.72em;color:rgba(255,255,255,.3);text-align:center;">
+            📊 נשלחו: <span id="dc-sent-total">0</span> הודעות ב-session הזה
+          </div>
+
+        </div><!-- /dc-card -->
       </div>
 
     </div><!-- /content admin -->
@@ -4982,16 +5174,14 @@ function exportAlertsCsv() {
   showToast(`📥 ייוצאו ${out.length + low.length} פריטים`);
 }
 /* ================================================================
-   Discord Webhook v4.0
+   Discord Webhook v4.0 — מערכת התראות מלאי
    ================================================================ */
 
-'use strict';
-
-/* ================================================================
-   1. STATE
-   ================================================================ */
+/* ── Config path ── */
 const DISCORD_CFG_PATH = 'settings/discord';
+const DC_THROTTLE_MS   = 5 * 60 * 1000; // 5 min anti-spam
 
+/* ── State ── */
 let _dc = {
   webhookUrl:  '',
   alertOut:    true,
@@ -4999,19 +5189,13 @@ let _dc = {
   alertAdd:    false,
   alertTake:   false,
   alertOrder:  false,
-  mentionRole: '',   // Discord Role ID לציין ב-@mention כשמלאי אוזל
+  mentionRole: '',
 };
+const _dcThrottle  = {};   // itemId_type → timestamp
+let   _prevQtyMap  = null; // snapshot for diff detection
+let   _dcSentTotal = 0;    // session counter
 
-/* throttle map: itemId → timestamp of last alert per type */
-const _dcThrottle = {};
-const DC_THROTTLE_MS = 5 * 60 * 1000; // 5 דקות
-
-/* snapshot qty map לזיהוי שינויים */
-let _prevQtyMap = null;
-
-/* ================================================================
-   2. LOAD / SAVE SETTINGS מ-Firebase
-   ================================================================ */
+/* ── Load from Firebase ── */
 async function loadDiscordSettings() {
   try {
     const snap = await db.ref(DISCORD_CFG_PATH).once('value');
@@ -5025,201 +5209,112 @@ async function loadDiscordSettings() {
       alertOrder:  !!cfg.alertOrder,
       mentionRole: cfg.mentionRole || '',
     };
-    _applyDcToUI();
+    _dcApplyToUI();
     _dcUpdateStatusUI();
-    console.log('[Discord] הגדרות נטענו:', _dc.webhookUrl ? '✅ URL קיים' : '❌ אין URL');
+    console.log('[Discord] ✅ טעינה:', _dc.webhookUrl ? 'URL קיים' : 'אין URL');
   } catch(e) {
     console.warn('[Discord] loadDiscordSettings error:', e);
   }
 }
 
-async function saveDcSettings() {
-  const url = (document.getElementById('dc-webhook-url')?.value || '').trim();
-  if (url && !url.startsWith('https://discord.com/api/webhooks/')) {
-    showToast('⚠️ URL לא תקין — חייב להתחיל עם https://discord.com/api/webhooks/', 'error', 5000);
-    return;
-  }
-  _dc = {
-    webhookUrl:  url,
-    alertOut:    !!document.getElementById('dc-out')?.checked,
-    alertLow:    !!document.getElementById('dc-low')?.checked,
-    alertAdd:    !!document.getElementById('dc-add')?.checked,
-    alertTake:   !!document.getElementById('dc-take')?.checked,
-    alertOrder:  !!document.getElementById('dc-order')?.checked,
-    mentionRole: (document.getElementById('dc-role')?.value || '').trim(),
-  };
-  try {
-    await db.ref(DISCORD_CFG_PATH).set(_dc);
-    _dcUpdateStatusUI();
-    showToast('✅ הגדרות Discord נשמרו ב-Firebase!');
-  } catch(e) {
-    showToast('❌ שגיאה בשמירה: ' + e.message, 'error');
-  }
+/* ── Apply loaded config to UI elements ── */
+function _dcApplyToUI() {
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value   = v; };
+  const setChk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = v; };
+  setVal('dc-webhook-url', _dc.webhookUrl  || '');
+  setVal('dc-role',        _dc.mentionRole || '');
+  setChk('dc-out',   _dc.alertOut);
+  setChk('dc-low',   _dc.alertLow);
+  setChk('dc-add',   _dc.alertAdd);
+  setChk('dc-take',  _dc.alertTake);
+  setChk('dc-order', _dc.alertOrder);
 }
 
-function _applyDcToUI() {
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value   = val; };
-  const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
-  set('dc-webhook-url', _dc.webhookUrl);
-  set('dc-role',        _dc.mentionRole);
-  chk('dc-out',         _dc.alertOut);
-  chk('dc-low',         _dc.alertLow);
-  chk('dc-add',         _dc.alertAdd);
-  chk('dc-take',        _dc.alertTake);
-  chk('dc-order',       _dc.alertOrder);
-}
-
+/* ── Update status dot & text ── */
 function _dcUpdateStatusUI() {
   const dot  = document.getElementById('dc-dot');
   const text = document.getElementById('dc-status-text');
   if (!dot || !text) return;
-  const valid = _dc.webhookUrl?.startsWith('https://discord.com/api/webhooks/');
-  dot.className  = 'dc-dot' + (valid ? ' active' : '');
+  const url   = document.getElementById('dc-webhook-url')?.value || _dc.webhookUrl || '';
+  const valid = url.startsWith('https://discord.com/api/webhooks/');
+  dot.className    = 'dc-dot' + (valid ? ' active' : '');
   text.textContent = valid
-    ? '✅ Webhook פעיל — התראות מחוברות'
-    : '⚪ לא מחובר — הזן Webhook URL';
+    ? '✅ Webhook מחובר — התראות פעילות'
+    : '⚪ לא מחובר — הזן Webhook URL ולחץ שמור';
 }
 
-/* ================================================================
-   3. CORE SEND FUNCTION
-   ================================================================ */
-async function sendDiscordAlert(type, item, extra = {}) {
-  if (!_dc.webhookUrl) return;
+/* ── Save to Firebase ── */
+async function saveDcSettings() {
+  const urlEl = document.getElementById('dc-webhook-url');
+  const url   = (urlEl?.value || '').trim();
 
-  /* Throttle check */
-  const throttleKey = `${item?.id || 'global'}_${type}`;
-  const now = Date.now();
-  if (_dcThrottle[throttleKey] && now - _dcThrottle[throttleKey] < DC_THROTTLE_MS) {
-    console.log(`[Discord] throttled: ${throttleKey}`);
+  if (url && !url.startsWith('https://discord.com/api/webhooks/')) {
+    showToast('⚠️ URL לא תקין — חייב להתחיל עם https://discord.com/api/webhooks/', 'error', 5000);
     return;
   }
 
-  /* Permission check */
-  if (type === 'out'   && !_dc.alertOut)   return;
-  if (type === 'low'   && !_dc.alertLow)   return;
-  if (type === 'add'   && !_dc.alertAdd)   return;
-  if (type === 'take'  && !_dc.alertTake)  return;
-  if (type === 'order' && !_dc.alertOrder) return;
+  const getChk = id => !!document.getElementById(id)?.checked;
 
-  const siteTitle = CFG?.headerText || 'מד"א';
-  const qty = Number.isFinite(item?.qty) ? item.qty : 0;
-  const thr = item?.minQty ?? LOW_STOCK_THRESHOLD ?? 3;
-  const pct = thr > 0 ? Math.round(qty / thr * 100) : (qty > 0 ? 999 : 0);
-
-  /* Color + title + icon per type */
-  const META = {
-    out:   { color: 0xD32F2F, title: '🚨 פריט אזל מהמלאי!',     icon: '🚨' },
-    low:   { color: 0xFF6F00, title: '⚠️ מלאי נמוך',              icon: '⚠️' },
-    add:   { color: 0x2E7D32, title: '✅ מלאי עודכן — הוסף',      icon: '➕' },
-    take:  { color: 0x1565C0, title: '📤 ציוד יצא מהמלאי',        icon: '📤' },
-    order: { color: 0xF57F17, title: '🛒 הזמנת ציוד נשלחה',       icon: '🛒' },
+  _dc = {
+    webhookUrl:  url,
+    alertOut:    getChk('dc-out'),
+    alertLow:    getChk('dc-low'),
+    alertAdd:    getChk('dc-add'),
+    alertTake:   getChk('dc-take'),
+    alertOrder:  getChk('dc-order'),
+    mentionRole: (document.getElementById('dc-role')?.value || '').trim(),
   };
-  const m = META[type] || { color: 0x607D8B, title: '📦 עדכון מלאי', icon: '📦' };
-
-  /* Build embed */
-  const embed = {
-    title:       m.title,
-    description: item?.name
-      ? `**${item.name}** | ${item.category || '—'}`
-      : siteTitle,
-    color:       m.color,
-    fields:      [],
-    footer:      { text: `${siteTitle} · ${new Date().toLocaleString('he-IL')}` },
-    timestamp:   new Date().toISOString(),
-  };
-
-  /* Fields per type */
-  if (type !== 'order' && item?.name) {
-    embed.fields.push(
-      { name: '📦 כמות במלאי', value: `**${qty}**`,          inline: true },
-      { name: '🎯 סף מינימום', value: `**${thr}**`,          inline: true },
-      { name: '📊 אחוז מהסף',  value: `**${pct > 900 ? '∞' : pct + '%'}**`, inline: true },
-    );
-  }
-  if (item?.category)     embed.fields.push({ name: '📁 קטגוריה',  value: item.category,                inline: true });
-  if (item?.barcode)      embed.fields.push({ name: '🔖 ברקוד',    value: `\`${item.barcode}\``,         inline: true });
-  if (extra.user)         embed.fields.push({ name: '👤 משתמש',    value: extra.user,                    inline: true });
-  if (extra.reason)       embed.fields.push({ name: '📝 סיבה',     value: extra.reason,                   inline: false });
-  if (extra.delta != null) embed.fields.push({ name: '🔢 שינוי',  value: (extra.delta > 0 ? '+' : '') + extra.delta, inline: true });
-
-  /* Order items list */
-  if (extra.items?.length) {
-    const list = extra.items.slice(0, 20).map(i => `• **${i.name}** × ${i.qty}`).join('\n');
-    embed.fields.push({
-      name:   `📋 פריטים בהזמנה (${extra.items.length})`,
-      value:  list + (extra.items.length > 20 ? `\n*...ועוד ${extra.items.length - 20}*` : ''),
-      inline: false
-    });
-  }
-
-  /* Thumbnail from item image */
-  if (item?.image?.startsWith('http')) embed.thumbnail = { url: item.image };
-
-  /* @mention for out-of-stock */
-  const mention = (type === 'out' && _dc.mentionRole)
-    ? `<@&${_dc.mentionRole}> ` : '';
 
   try {
-    const res = await fetch(_dc.webhookUrl, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content:    mention || undefined,
-        username:   `${siteTitle} · מלאי`,
-        avatar_url: CFG?.logoUrl || undefined,
-        embeds:     [embed],
-      }),
-    });
-
-    if (res.ok || res.status === 204) {
-      _dcThrottle[throttleKey] = now;
-      console.log(`[Discord] ✅ שנשלח: ${type} / ${item?.name || 'order'}`);
-    } else {
-      const body = await res.text().catch(() => '');
-      console.error(`[Discord] ❌ שגיאה ${res.status}:`, body);
-    }
+    await db.ref(DISCORD_CFG_PATH).set(_dc);
+    _dcUpdateStatusUI();
+    showToast('✅ הגדרות Discord נשמרו ב-Firebase!');
+    console.log('[Discord] ✅ הגדרות נשמרו:', _dc);
   } catch(e) {
-    console.error('[Discord] fetch error:', e);
+    console.error('[Discord] Save error:', e);
+    showToast('❌ שגיאה בשמירה: ' + (e.message || e), 'error', 5000);
   }
 }
 
-/* ================================================================
-   4. TEST WEBHOOK
-   ================================================================ */
+/* ── Test webhook ── */
 async function testDcWebhook() {
-  const url = (document.getElementById('dc-webhook-url')?.value || '').trim();
-  if (!url) return showToast('הזן Webhook URL תחילה', 'warning');
-  if (!url.startsWith('https://discord.com/api/webhooks/'))
-    return showToast('URL לא תקין', 'error');
+  const urlEl = document.getElementById('dc-webhook-url');
+  const url   = (urlEl?.value || _dc.webhookUrl || '').trim();
 
-  showToast('📡 שולח הודעת בדיקה...', 'info', 2500);
+  if (!url) { showToast('הזן Webhook URL תחילה', 'warning'); return; }
+  if (!url.startsWith('https://discord.com/api/webhooks/')) {
+    showToast('❌ URL לא תקין', 'error'); return;
+  }
+
+  showToast('📡 שולח הודעת בדיקה ל-Discord...', 'info', 2500);
 
   const siteTitle = CFG?.headerText || 'מד"א';
+  const alerts = [
+    _dc.alertOut   ? '🚨 אזל'    : '',
+    _dc.alertLow   ? '⚠️ נמוך'   : '',
+    _dc.alertAdd   ? '➕ הוסף'   : '',
+    _dc.alertTake  ? '📤 הוצאה'  : '',
+    _dc.alertOrder ? '🛒 הזמנה'  : '',
+  ].filter(Boolean).join('  ') || 'ללא';
+
   try {
     const res = await fetch(url, {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        username:   `${siteTitle} · מלאי`,
+        username:   siteTitle + ' · מלאי',
         avatar_url: CFG?.logoUrl || undefined,
         embeds: [{
-          title:       '🧪 בדיקת חיבור Discord',
-          description: `מערכת **${siteTitle}** מחוברת בהצלחה! ✅`,
-          color:       0x2E7D32,
+          title:       '🧪 בדיקת חיבור Discord Webhook',
+          description: 'מערכת **' + siteTitle + '** מחוברת בהצלחה! ✅',
+          color: 0x2E7D32,
           fields: [
-            { name: '🔌 סטטוס',  value: '✅ פעיל',                              inline: true },
-            { name: '⏰ זמן',    value: new Date().toLocaleString('he-IL'),       inline: true },
-            { name: '🏥 תחנה',  value: siteTitle,                               inline: true },
-            { name: '📢 התראות', value: [
-                                         _dc.alertOut   ? '🚨 אזל'    : '',
-                                         _dc.alertLow   ? '⚠️ נמוך'   : '',
-                                         _dc.alertAdd   ? '➕ הוסף'   : '',
-                                         _dc.alertTake  ? '📤 הוצאה'  : '',
-                                         _dc.alertOrder ? '🛒 הזמנה'  : '',
-                                       ].filter(Boolean).join('  ') || 'ללא',
-              inline: false },
+            { name: '🔌 סטטוס',       value: '✅ מחובר ופעיל', inline: true  },
+            { name: '🏥 תחנה',        value: siteTitle,         inline: true  },
+            { name: '⏰ זמן',         value: new Date().toLocaleString('he-IL'), inline: true },
+            { name: '📢 התראות פעילות', value: alerts,          inline: false },
           ],
-          footer:    { text: `${siteTitle} · v4.0 · ${new Date().toLocaleString('he-IL')}` },
+          footer:    { text: siteTitle + ' · Discord v4.0' },
           timestamp: new Date().toISOString(),
         }],
       }),
@@ -5228,228 +5323,171 @@ async function testDcWebhook() {
     if (res.ok || res.status === 204) {
       const dot  = document.getElementById('dc-dot');
       const text = document.getElementById('dc-status-text');
-      if (dot)  dot.className  = 'dc-dot ok';
+      if (dot)  dot.className    = 'dc-dot ok';
       if (text) text.textContent = '✅ בדיקה עברה — Webhook תקין!';
-      showToast('✅ הודעת בדיקה נשלחה! בדוק את הערוץ ב-Discord');
+      showToast('✅ נשלח! בדוק את ערוץ Discord שלך');
     } else {
-      showToast(`❌ שגיאה ${res.status} — בדוק שה-URL תקין`, 'error', 5000);
+      const body = await res.text().catch(() => '');
+      showToast('❌ שגיאה ' + res.status + ': ' + (body.slice(0,60) || 'בדוק URL'), 'error', 6000);
     }
   } catch(e) {
-    showToast('❌ שגיאת רשת: ' + e.message, 'error', 5000);
+    showToast('❌ שגיאת רשת: ' + (e.message || e), 'error', 5000);
   }
 }
 
-/* ================================================================
-   5. PATCH checkLowStock() — מעקב שינויים אוטומטי
-   העתק את הקוד הבא לתוך הפונקציה checkLowStock() הקיימת
-   בסוף הפונקציה, לפני הסוגרייה האחרונה }
-   ================================================================ */
+/* ── Core send function ── */
+async function sendDiscordAlert(type, item, extra) {
+  extra = extra || {};
+  if (!_dc.webhookUrl) return false;
+
+  // Throttle check
+  const key = (item && item.id ? item.id : 'global') + '_' + type;
+  const now  = Date.now();
+  if (_dcThrottle[key] && now - _dcThrottle[key] < DC_THROTTLE_MS) return false;
+
+  // Permission check
+  const PERM = { out:'alertOut', low:'alertLow', add:'alertAdd', take:'alertTake', order:'alertOrder' };
+  if (PERM[type] && !_dc[PERM[type]]) return false;
+
+  const siteTitle = CFG?.headerText || 'מד"א';
+  const qty = Number.isFinite(item && item.qty) ? item.qty : 0;
+  const thr = (item && item.minQty != null) ? item.minQty : (LOW_STOCK_THRESHOLD || 3);
+  const pct = thr > 0 ? Math.round(qty / thr * 100) : (qty > 0 ? 999 : 0);
+
+  const META = {
+    out:   { color: 0xD32F2F, emoji: '🚨', title: 'פריט אזל מהמלאי!'   },
+    low:   { color: 0xF57F17, emoji: '⚠️', title: 'מלאי נמוך'           },
+    add:   { color: 0x2E7D32, emoji: '✅', title: 'מלאי עודכן — נוסף'   },
+    take:  { color: 0x1565C0, emoji: '📤', title: 'ציוד יצא מהמלאי'     },
+    order: { color: 0xE65100, emoji: '🛒', title: 'הזמנת ציוד נשלחה'    },
+  };
+  const m = META[type] || { color: 0x607D8B, emoji: '📦', title: 'עדכון מלאי' };
+
+  // Visual stock bar
+  const barLen  = 8;
+  const barFill = pct > 900 ? barLen : Math.min(barLen, Math.round(pct / 100 * barLen));
+  const bar     = '█'.repeat(barFill) + '░'.repeat(barLen - barFill);
+
+  const embed = {
+    title:       m.emoji + ' ' + m.title,
+    description: (item && item.name) ? '**' + item.name + '** | ' + (item.category || '—') : siteTitle,
+    color:       m.color,
+    fields:      [],
+    footer:      { text: siteTitle + ' · ' + new Date().toLocaleString('he-IL') },
+    timestamp:   new Date().toISOString(),
+  };
+
+  if (type !== 'order' && item && item.name) {
+    embed.fields.push(
+      { name: '📦 כמות', value: '**' + qty + '**',                          inline: true  },
+      { name: '🎯 סף',   value: '**' + thr + '**',                          inline: true  },
+      { name: '📊 מלאי', value: '`' + bar + '` ' + (pct > 900 ? '∞' : pct + '%'), inline: false },
+    );
+  }
+  if (item && item.category) embed.fields.push({ name: '📁 קטגוריה', value: item.category, inline: true });
+  if (item && item.barcode)  embed.fields.push({ name: '🔖 ברקוד',   value: '`' + item.barcode + '`', inline: true });
+  if (extra.user)            embed.fields.push({ name: '👤 משתמש',   value: String(extra.user),  inline: true  });
+  if (extra.reason)          embed.fields.push({ name: '📝 סיבה',    value: String(extra.reason), inline: false });
+  if (extra.delta != null)   embed.fields.push({ name: '🔢 שינוי',   value: (extra.delta > 0 ? '+' : '') + extra.delta, inline: true });
+
+  if (extra.items && extra.items.length) {
+    const list = extra.items.slice(0, 20).map(function(i) { return '• **' + (i.name || '?') + '** × ' + (i.qty || 1); }).join('\n');
+    embed.fields.push({
+      name:   '📋 פריטים (' + extra.items.length + ')',
+      value:  list + (extra.items.length > 20 ? '\n*...ועוד ' + (extra.items.length - 20) + '*' : ''),
+      inline: false,
+    });
+  }
+
+  if (item && item.image && item.image.startsWith('http')) {
+    embed.thumbnail = { url: item.image };
+  }
+
+  const content = (type === 'out' && _dc.mentionRole) ? '<@&' + _dc.mentionRole + '> ⚠️ דרוש מילוי!' : undefined;
+
+  try {
+    const body = { embeds: [embed], username: siteTitle + ' · מלאי' };
+    if (content) body.content = content;
+    if (CFG && CFG.logoUrl) body.avatar_url = CFG.logoUrl;
+
+    const res = await fetch(_dc.webhookUrl, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body),
+    });
+
+    const ok = res.ok || res.status === 204;
+    if (ok) {
+      _dcThrottle[key] = now;
+      _dcSentTotal++;
+      const el = document.getElementById('dc-sent-total');
+      const info = document.getElementById('dc-sent-info');
+      if (el)   el.textContent  = _dcSentTotal;
+      if (info) info.style.display = 'block';
+      console.log('[Discord] ✅ ' + type + ' / ' + (item && item.name ? item.name : 'order'));
+    } else {
+      console.error('[Discord] ❌ ' + res.status);
+    }
+    return ok;
+  } catch(e) {
+    console.error('[Discord] fetch error:', e);
+    return false;
+  }
+}
+
+/* ── Called at end of checkLowStock() ── */
 function _dcCheckLowStockPatch() {
   if (!inv || !inv.length) return;
-
-  /* first call — just build snapshot */
   if (!_prevQtyMap) {
     _prevQtyMap = {};
-    inv.forEach(i => { _prevQtyMap[i.id] = Number.isFinite(i.qty) ? i.qty : 0; });
-    return;
+    inv.forEach(function(i) { _prevQtyMap[i.id] = Number.isFinite(i.qty) ? i.qty : 0; });
+    return; // first call — just snapshot
   }
-
-  /* compare each item */
-  inv.forEach(item => {
-    if (!item?.id) return;
-    const qty     = Number.isFinite(item.qty) ? item.qty : 0;
-    const thr     = getThreshold(item);
-    const prevQty = _prevQtyMap[item.id];
+  inv.forEach(function(item) {
+    if (!item || !item.id) return;
+    var qty     = Number.isFinite(item.qty) ? item.qty : 0;
+    var thr     = getThreshold(item);
+    var prevQty = _prevQtyMap[item.id];
     if (prevQty === undefined) return;
-
-    /* אזל (0 יחידות) */
     if (qty === 0 && prevQty > 0) {
-      sendDiscordAlert('out', item, { user: window.curU });
-    }
-    /* ירד מתחת לסף */
-    else if (qty > 0 && qty <= thr && prevQty > thr) {
-      sendDiscordAlert('low', item, { user: window.curU });
+      sendDiscordAlert('out', item, { user: window.curU || 'מערכת' });
+    } else if (qty > 0 && qty <= thr && prevQty > thr) {
+      sendDiscordAlert('low', item, { user: window.curU || 'מערכת' });
+    } else if (qty > 0 && prevQty === 0 && _dc.alertAdd) {
+      sendDiscordAlert('add', item, { user: window.curU || 'מערכת', reason: 'מלאי חודש' });
     }
   });
-
-  /* update snapshot */
-  inv.forEach(i => { _prevQtyMap[i.id] = Number.isFinite(i.qty) ? i.qty : 0; });
+  inv.forEach(function(i) { _prevQtyMap[i.id] = Number.isFinite(i.qty) ? i.qty : 0; });
 }
 
-/* ================================================================
-   6. PATCH changeQuantity() — שלח התראה אחרי כל עדכון
-   הוסף את השורות האלה בסוף changeQuantity() אחרי ה-return
-   ================================================================ */
+/* ── Called at end of changeQuantity() ── */
 async function _dcAfterChangeQuantity({ itemId, delta, action, user, reason, afterQty }) {
-  const rawItem = inv.find(i => i.id === itemId);
-  // Use fresh afterQty from Firebase transaction — more accurate than stale inv[]
-  const item = rawItem
-    ? { ...rawItem, qty: afterQty ?? rawItem.qty }
-    : { id: itemId, qty: afterQty ?? 0 };
-
+  const rawItem = (inv || []).find(function(i) { return i.id === itemId; });
+  const item    = rawItem ? Object.assign({}, rawItem, { qty: afterQty != null ? afterQty : rawItem.qty }) : { id: itemId, qty: afterQty || 0 };
   if ((action === 'add' || (action === 'manual' && delta > 0)) && delta > 0) {
-    sendDiscordAlert('add', item, { user, reason, delta }).catch(() => {});
+    sendDiscordAlert('add',  item, { user: user, reason: reason, delta: delta }).catch(function(){});
   } else if ((action === 'take' || action === 'sub' || (action === 'manual' && delta < 0)) && delta < 0) {
-    sendDiscordAlert('take', item, { user, reason, delta }).catch(() => {});
+    sendDiscordAlert('take', item, { user: user, reason: reason, delta: delta }).catch(function(){});
   }
 }
 
-/* ================================================================
-   7. HOOK לפעולות עתידיות — כפתור שליחת הזמנה
-   קרא לפונקציה הזו מתוך sendOrderByEmail() אחרי שליחה מוצלחת
-   ================================================================ */
+/* ── Order notification ── */
 async function notifyDiscordOrder(orderItems, user) {
-  if (!_dc.alertOrder) return;
-  const fakeItem = { id: 'order', name: 'הזמנת ציוד', category: 'הזמנה', qty: 0 };
+  if (!_dc.alertOrder || !_dc.webhookUrl) return;
+  const fakeItem = { id: '__order__', name: 'הזמנת ציוד', category: 'הזמנה', qty: 0 };
   await sendDiscordAlert('order', fakeItem, {
-    user,
-    items: orderItems.map(oi => ({ name: oi.item?.name || oi.name, qty: oi.qty || oi.qtyToOrder })),
+    user:  user,
+    items: (orderItems || []).map(function(oi) {
+      return { name: oi.item && oi.item.name ? oi.item.name : (oi.name || '?'), qty: oi.qty || oi.qtyToOrder || 1 };
+    }),
   });
 }
 
-/* ================================================================
-   8. SETTINGS TAB HTML
-   הוסף את ה-HTML הבא לתוך tab-settings (לפני סגירת ה-div)
-   ================================================================ */
-function _getDcSettingsHTML() {
-  return `
-<div class="card" id="dc-settings-card" style="background:linear-gradient(145deg,#0e0b2e,#1a1560,#0d0e2e);border:1.5px solid rgba(88,101,242,.4);border-radius:20px;overflow:hidden;">
-
-  <!-- Header -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-    <div style="width:38px;height:38px;background:#5865f2;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1em;box-shadow:0 4px 16px rgba(88,101,242,.4);">💬</div>
-    <div>
-      <div style="font-size:1em;font-weight:900;color:white;">Discord Webhook — התראות מלאי</div>
-      <div style="font-size:.72em;color:rgba(255,255,255,.4);margin-top:2px;">התראות אוטומטיות בזמן אמת</div>
-    </div>
-  </div>
-
-  <!-- Status -->
-  <div id="dc-status" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);margin-bottom:16px;font-size:.82em;font-weight:700;color:rgba(255,255,255,.65);">
-    <div class="dc-dot" id="dc-dot" style="width:9px;height:9px;border-radius:50%;background:#4a5568;flex-shrink:0;"></div>
-    <span id="dc-status-text">טוען הגדרות...</span>
-  </div>
-
-  <!-- Instructions -->
-  <div style="margin-bottom:16px;">
-    <div style="display:flex;gap:9px;align-items:flex-start;margin-bottom:7px;font-size:.77em;color:rgba(255,255,255,.45);line-height:1.55;">
-      <div style="width:20px;height:20px;background:rgba(88,101,242,.35);color:#a5b4fc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78em;font-weight:900;flex-shrink:0;">1</div>
-      <div>פתח Discord → ⚙️ ליד שם הערוץ → <b style="color:rgba(255,255,255,.8);">Integrations</b></div>
-    </div>
-    <div style="display:flex;gap:9px;align-items:flex-start;margin-bottom:7px;font-size:.77em;color:rgba(255,255,255,.45);line-height:1.55;">
-      <div style="width:20px;height:20px;background:rgba(88,101,242,.35);color:#a5b4fc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78em;font-weight:900;flex-shrink:0;">2</div>
-      <div>לחץ <b style="color:rgba(255,255,255,.8);">Webhooks → New Webhook</b> → שם: מד"א מלאי → <b style="color:rgba(255,255,255,.8);">Copy Webhook URL</b></div>
-    </div>
-    <div style="display:flex;gap:9px;align-items:flex-start;font-size:.77em;color:rgba(255,255,255,.45);line-height:1.55;">
-      <div style="width:20px;height:20px;background:rgba(88,101,242,.35);color:#a5b4fc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78em;font-weight:900;flex-shrink:0;">3</div>
-      <div>הדבק ב-URL מטה ולחץ 💾 שמור — ההגדרות נשמרות ב-Firebase לכל המשתמשים</div>
-    </div>
-  </div>
-
-  <hr style="border:none;border-top:1px solid rgba(255,255,255,.07);margin:14px 0;">
-
-  <!-- Webhook URL -->
-  <label style="font-size:.74em;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.05em;margin-bottom:6px;display:block;">🔗 Webhook URL</label>
-  <input type="text" id="dc-webhook-url" oninput="_dcUpdateStatusUI()"
-    style="width:100%;padding:11px 14px;border:1.5px solid rgba(255,255,255,.14);border-radius:10px;font-family:monospace;font-size:12px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.9);outline:none;margin-bottom:12px;box-sizing:border-box;transition:border-color .2s;"
-    placeholder="https://discord.com/api/webhooks/123456789/xxxxxxxx">
-
-  <!-- Role mention -->
-  <label style="font-size:.74em;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.05em;margin-bottom:6px;display:block;">👥 Discord Role ID לציין כשמלאי אוזל (אופציונלי)</label>
-  <input type="text" id="dc-role"
-    style="width:100%;padding:11px 14px;border:1.5px solid rgba(255,255,255,.14);border-radius:10px;font-size:13px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.9);outline:none;margin-bottom:12px;box-sizing:border-box;"
-    placeholder="123456789012345678">
-
-  <!-- Alert toggles -->
-  <label style="font-size:.74em;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.05em;margin-bottom:8px;display:block;">📣 שלח התראה כאשר:</label>
-  <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;">
-    ${[
-      ['dc-out',   '🚨 פריט אזל (0 יח׳)'],
-      ['dc-low',   '⚠️ מלאי נמוך'],
-      ['dc-add',   '➕ הוספת מלאי'],
-      ['dc-take',  '📤 הוצאת ציוד'],
-      ['dc-order', '🛒 הזמנה נשלחה'],
-    ].map(([id, label]) => `
-      <label style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:9px;padding:8px 13px;cursor:pointer;font-size:.79em;color:rgba(255,255,255,.65);font-weight:700;">
-        <input type="checkbox" id="${id}" style="accent-color:#5865f2;cursor:pointer;"> ${label}
-      </label>`).join('')}
-  </div>
-
-  <!-- Buttons -->
-  <div style="display:flex;gap:8px;flex-wrap:wrap;">
-    <button onclick="saveDcSettings()"
-      style="padding:10px 18px;border:none;border-radius:10px;background:#5865f2;color:white;font-family:'Heebo',sans-serif;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(88,101,242,.35);">
-      💾 שמור ב-Firebase
-    </button>
-    <button onclick="testDcWebhook()"
-      style="padding:10px 18px;border:1.5px solid rgba(255,255,255,.18);border-radius:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);font-family:'Heebo',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
-      🧪 שלח בדיקה
-    </button>
-  </div>
-
-</div>`;
-}
-
-/* ================================================================
-   9. AUTO-INJECT — מוסיף את כרטיס Discord ל-tab-settings אוטומטית
-   ================================================================ */
-function _injectDcSettingsCard() {
-  const tabSettings = document.getElementById('tab-settings');
-  if (!tabSettings || document.getElementById('dc-settings-card')) return;
-  const div = document.createElement('div');
-  div.innerHTML = _getDcSettingsHTML();
-  tabSettings.appendChild(div.firstElementChild);
-  console.log('[Discord] כרטיס הגדרות הוזרק ל-tab-settings');
-}
-
-/* ================================================================
-   10. CSS שנדרש ל-dc-dot animation — הוסף לתוך ה-<style>
-   ================================================================ */
-const _DC_CSS = `
-  .dc-dot { transition: background .3s ease; }
-  .dc-dot.active { background: #5865f2 !important; animation: dcPulse 2s infinite; }
-  .dc-dot.ok     { background: #57f287 !important; }
-  .dc-dot.err    { background: #ed4245 !important; }
-  @keyframes dcPulse {
-    0%,100% { box-shadow: 0 0 0 0 rgba(88,101,242,.5); }
-    55%     { box-shadow: 0 0 0 7px rgba(88,101,242,0); }
-  }
-`;
-(function _injectDcCSS() {
-  const style = document.createElement('style');
-  style.textContent = _DC_CSS;
-  document.head.appendChild(style);
-})();
-
-/* ================================================================
-   11. INIT — קרא לזה ב-DOMContentLoaded
-   ================================================================ */
+/* ── Init ── */
 async function initDiscordSystem() {
   await loadDiscordSettings();
-  _injectDcSettingsCard();
-  console.log('[Discord] מערכת Discord אותחלה ✅');
+  console.log('[Discord] ✅ מערכת Discord אותחלה v4.0');
 }
-
-/* ================================================================
-   HOW TO INTEGRATE — הוראות שילוב
-   ================================================================
-   
-   שלב 1: הוסף את כל הקובץ הזה לפני <\/script> בקובץ הראשי
-   
-   שלב 2: ב-DOMContentLoaded הוסף:
-     await initDiscordSystem();
-   
-   שלב 3: בפונקציית checkLowStock() הוסף בסוף:
-     _dcCheckLowStockPatch();
-   
-   שלב 4: בפונקציית changeQuantity() אחרי ה-return הוסף:
-     await _dcAfterChangeQuantity({ itemId, delta, action, user, reason });
-     (כלומר, return את ה-result FIRST, ואז שלח לדיסקורד)
-   
-   שלב 5 (אופציונלי): ב-sendOrderByEmail() אחרי שליחה:
-     await notifyDiscordOrder(orderItemsList, window.curU);
-   
-   ================================================================ */
 
 console.log('[Discord] מודול Discord v4.0 נטען ✅');
 
