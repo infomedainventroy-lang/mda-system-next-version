@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>
-  const APP_VERSION = "1.14";
+  const APP_VERSION = "1.16";
   const APP_BUILD_TS = 1773773371653;
 </script>
 <title id="page-title">מערכת מלאי מד"א</title>
@@ -1783,7 +1783,26 @@ tr:hover td { background: var(--bg); }
           <div class="card-title">📊 שימוש ב-7 ימים אחרונים</div>
           <div class="chart-wrap"><canvas id="chartBar"></canvas></div>
         </div>
-      </div>
+
+        <!-- Top consumed items today -->
+        <div class="card" id="dash-top-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div class="card-title" style="margin-bottom:0;">🔥 הכי בשימוש היום</div>
+            <span id="dash-top-date" style="font-size:.75em;color:var(--text-muted);font-weight:600;"></span>
+          </div>
+          <div id="dash-top-list"><div class="empty-state" style="padding:14px 0;"><div class="es-icon" style="font-size:1.4em;">😴</div><p>אין פעולות היום עדיין</p></div></div>
+        </div>
+
+        <!-- Recent activity feed -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div class="card-title" style="margin-bottom:0;">⏱️ פעולות אחרונות</div>
+            <button class="btn sm w-auto btn-ghost" onclick="showTab('tab-logs',document.querySelector('[onclick*=tab-logs]'))">הכל →</button>
+          </div>
+          <div id="dash-feed"></div>
+        </div>
+
+      </div><!-- /tab-dash -->
 
       <!-- REPORTS -->
 <!-- REPORTS -->
@@ -2130,6 +2149,20 @@ tr:hover td { background: var(--bg); }
         </div>
 
         <div id="admin-count" style="font-size:.78em;color:var(--text-muted);font-weight:600;padding:0 4px 10px;"></div>
+        <div id="inv-health-bar" style="display:none;margin-bottom:10px;padding:8px 12px;background:var(--bg);border-radius:var(--r-sm);border:1px solid var(--border);font-size:.78em;color:var(--text-soft);">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span>בריאות מלאי</span>
+            <span id="inv-health-pct" style="font-weight:800;"></span>
+          </div>
+          <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+            <div id="inv-health-fill" style="height:100%;border-radius:3px;transition:width .5s;"></div>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:5px;font-size:.88em;">
+            <span>✅ תקין: <b id="inv-ok-count">0</b></span>
+            <span>⚠️ נמוך: <b id="inv-low-count2">0</b></span>
+            <span>🚨 אזל: <b id="inv-out-count2">0</b></span>
+          </div>
+        </div>
         <div id="admin-list"></div>
       </div>
 
@@ -2188,6 +2221,7 @@ tr:hover td { background: var(--bg); }
               <option value="add">הוספות בלבד</option>
               <option value="manual">ידני בלבד</option>
             </select>
+            <button class="btn sm w-auto btn-ghost" onclick="clearLogFilters()" title="נקה פילטרים">✕ נקה</button>
           </div>
           <div id="logs-count" style="font-size:.78em;color:var(--text-muted);font-weight:600;margin-bottom:8px;"></div>
           <div class="table-outer">
@@ -2229,7 +2263,8 @@ tr:hover td { background: var(--bg); }
           <button class="alert-sort-btn" data-sort="name"     onclick="setAlertSort('name',this)">שם</button>
           <button class="alert-sort-btn" data-sort="category" onclick="setAlertSort('category',this)">קטגוריה</button>
           <button class="alert-sort-btn" data-sort="pct"      onclick="setAlertSort('pct',this)">% מלאי</button>
-          <button class="btn btn-green w-auto sm" style="margin-right:auto;" onclick="exportAlertsCsv()">📥 ייצא</button>
+        <button class="btn btn-green w-auto sm" style="margin-right:auto;" onclick="exportAlertsCsv()">📥 ייצא</button>
+        <button class="btn btn-blue w-auto sm" onclick="sendAllAlertsToDiscord()">📢 שלח ל-Discord</button>
         </div>
 
         <!-- Out-of-stock section -->
@@ -2298,8 +2333,14 @@ tr:hover td { background: var(--bg); }
           </p>
         </div>
 
-        <!-- ══════════════════════════════════════════
-             Discord Webhook Settings Card
+        <div class="card">
+          <div class="card-title">⌨️ קיצורי מקלדת</div>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.83em;line-height:1.9;">
+            <kbd style="background:var(--bg);border:1.5px solid var(--border);border-radius:5px;padding:1px 7px;font-family:monospace;font-size:.88em;font-weight:700;white-space:nowrap;">1–7</kbd><span>מעבר בין טאבים (דאשבורד=1 ... הגדרות=7)</span>
+            <kbd style="background:var(--bg);border:1.5px solid var(--border);border-radius:5px;padding:1px 7px;font-family:monospace;font-size:.88em;font-weight:700;white-space:nowrap;">Ctrl+F</kbd><span>פוקוס על שדה חיפוש המלאי</span>
+          </div>
+          <p style="font-size:.73em;color:var(--text-muted);margin-top:8px;">* קיצורים פעילים רק כאשר הסמן לא נמצא בתוך שדה קלט</p>
+        </div>
              ══════════════════════════════════════════ -->
         <div class="dc-card" id="dc-settings-card">
 
@@ -2359,12 +2400,45 @@ tr:hover td { background: var(--bg); }
           </div>
 
           <!-- Throttle note -->
-          <div class="dc-throttle-note">⏱️ הגנת ספאם: אותה התראה לאותו פריט — מינימום 5 דקות בין שליחות</div>
+          <div class="dc-throttle-note">⏱️ הגנת ספאם: אותה התראה לאותו פריט — מינימום 5 דקות בין שליחות | הודעות מרובות נאגרות ונשלחות יחד 🔔</div>
+
+          <hr class="dc-divider">
+
+          <!-- Scheduled Reports -->
+          <div style="margin-bottom:14px;position:relative;z-index:1;">
+            <div style="font-size:.82em;font-weight:800;color:rgba(255,255,255,.7);margin-bottom:10px;display:flex;align-items:center;gap:7px;">
+              📅 דוחות אוטומטיים
+            </div>
+            <div class="dc-checks" style="flex-direction:column;gap:10px;">
+              <label class="dc-check" style="width:100%;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" id="dc-sched-daily"> 🌙 דוח יומי
+                </div>
+                <span style="font-size:.75em;color:rgba(255,255,255,.4);">כל יום ב-20:00</span>
+              </label>
+              <label class="dc-check" style="width:100%;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" id="dc-sched-weekly"> 📊 דוח שבועי
+                </div>
+                <span style="font-size:.75em;color:rgba(255,255,255,.4);">כל שבת בצהריים</span>
+              </label>
+              <label class="dc-check" style="width:100%;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" id="dc-sched-monthly"> 📆 דוח חודשי
+                </div>
+                <span style="font-size:.75em;color:rgba(255,255,255,.4);">בסוף כל חודש</span>
+              </label>
+            </div>
+            <div id="dc-sched-status" style="display:none;margin-top:8px;font-size:.7em;color:rgba(255,255,255,.3);padding:8px 12px;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid rgba(255,255,255,.06);">
+              ⏰ <span id="dc-sched-next-text">בודק...</span>
+            </div>
+          </div>
 
           <!-- Action buttons -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="dc-btn dc-btn-save" onclick="saveDcSettings()">💾 שמור ב-Firebase</button>
             <button class="dc-btn dc-btn-test" onclick="testDcWebhook()">🧪 שלח בדיקה</button>
+            <button class="dc-btn" style="background:rgba(88,101,242,.25);color:#a5b4fc;border:1px solid rgba(88,101,242,.4);" onclick="sendScheduledReport('manual')">📊 שלח דוח עכשיו</button>
           </div>
 
           <!-- Send counter (shown after first save) -->
@@ -2518,6 +2592,15 @@ tr:hover td { background: var(--bg); }
 
 <!-- Toast -->
 <div id="toast"></div>
+
+<!-- Undo floating button -->
+<button id="undo-btn" onclick="undoLastAction()" style="
+  display:none;position:fixed;bottom:82px;left:50%;transform:translateX(-50%);
+  background:#37474f;color:white;border:none;border-radius:var(--r-full);
+  padding:10px 22px;font-family:'Heebo',sans-serif;font-size:13px;font-weight:800;
+  cursor:pointer;z-index:8999;box-shadow:0 4px 16px rgba(0,0,0,.3);
+  display:none;align-items:center;gap:8px;white-space:nowrap;
+  animation:fadeUp .25s var(--ease) both;">↩ בטל פעולה אחרונה</button>
 
 <!-- ================================================================
      JAVASCRIPT
@@ -2975,6 +3058,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadData();
   initDiscordSystem().catch(e => console.warn("[Discord] init error:", e));
+
+  // ── Global keyboard shortcuts ──────────────────────────────────
+  document.addEventListener('keydown', function(e) {
+    // Only when admin screen is visible
+    if (document.getElementById('scr-admin')?.classList.contains('hidden')) return;
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    const navBtns = document.querySelectorAll('#admin-nav .tab-btn:not(.tab-logout)');
+    const tabIds  = ['tab-dash','tab-reports','tab-inv','tab-team','tab-logs','tab-alerts','tab-settings'];
+
+    if (e.key >= '1' && e.key <= '7' && !e.ctrlKey && !e.metaKey) {
+      const idx = parseInt(e.key) - 1;
+      if (navBtns[idx] && tabIds[idx]) {
+        showTab(tabIds[idx], navBtns[idx]);
+        e.preventDefault();
+      }
+    }
+    // Ctrl+F → focus search in inventory tab
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      const tab = document.getElementById('tab-inv');
+      if (!tab?.classList.contains('hidden')) {
+        document.getElementById('admin-search')?.focus();
+        e.preventDefault();
+      }
+    }
+  });
 });
 
 /* ================================================================
@@ -3182,13 +3292,80 @@ function updateStats() {
   inv.forEach(i => cats[i.category] = (cats[i.category] || 0) + 1);
   document.getElementById('st-cats').textContent = Object.keys(cats).length;
   const now = new Date();
-  const todayCount = logs.filter(l => {
-    if (!l.timestamp) return false;
-    const d = new Date(l.timestamp);
-    return d.getDate()===now.getDate() && d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
-  }).length;
-  document.getElementById('st-today').textContent = todayCount;
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
+  const todayLogs = logs.filter(l => l.timestamp && l.timestamp >= todayStart);
+  document.getElementById('st-today').textContent = todayLogs.length;
   buildCharts(cats);
+  _buildDashFeed();
+  _buildDashTopItems(todayLogs, todayStart);
+}
+
+/* ── Dashboard: recent 8 actions ── */
+function _buildDashFeed() {
+  const el = document.getElementById('dash-feed');
+  if (!el) return;
+  const recent = logs.slice(0, 8);
+  if (!recent.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:.85em;text-align:center;padding:12px 0;">אין פעולות עדיין</div>';
+    return;
+  }
+  const ACTION_ICON = { take:'📤', sub:'📤', add:'➕', manual:'✏️', order:'🛒' };
+  const ACTION_COLOR = { take:'var(--c-red)', sub:'var(--c-red)', add:'var(--c-green)', manual:'var(--c-blue)', order:'var(--c-orange)' };
+  el.innerHTML = recent.map(function(l) {
+    const icon  = ACTION_ICON[l.action]  || '📦';
+    const color = ACTION_COLOR[l.action] || 'var(--text-soft)';
+    const delta = l.delta != null ? (l.delta > 0 ? '+' + l.delta : l.delta) : '';
+    const timeStr = l.timestamp ? new Date(l.timestamp).toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' }) : '';
+    const dateStr = l.timestamp ? new Date(l.timestamp).toLocaleDateString('he-IL', { day:'numeric', month:'short' }) : '';
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--border);">
+        <div style="font-size:1.1em;flex-shrink:0;">${icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.86em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(l.item || l.itemName || '—')}</div>
+          <div style="font-size:.75em;color:var(--text-muted);">${esc(l.user || '?')}${l.reason ? ' · ' + esc(l.reason) : ''}</div>
+        </div>
+        <div style="text-align:left;flex-shrink:0;">
+          ${delta ? `<div style="font-size:.9em;font-weight:800;color:${color};">${delta}</div>` : ''}
+          <div style="font-size:.7em;color:var(--text-muted);">${timeStr}<br>${dateStr}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ── Dashboard: top consumed items today ── */
+function _buildDashTopItems(todayLogs, todayStart) {
+  const el   = document.getElementById('dash-top-list');
+  const date = document.getElementById('dash-top-date');
+  if (!el) return;
+  if (date) date.textContent = new Date().toLocaleDateString('he-IL', { weekday:'long', day:'numeric', month:'long' });
+
+  const taken = (todayLogs || []).filter(function(l) { return l.action === 'take' || l.action === 'sub'; });
+  if (!taken.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:14px 0;"><div class="es-icon" style="font-size:1.4em;">😴</div><p>אין פעולות היום עדיין</p></div>';
+    return;
+  }
+  const totals = {};
+  taken.forEach(function(l) {
+    const nm = l.item || l.itemName || l.itemId || '?';
+    totals[nm] = (totals[nm] || 0) + (Number.isFinite(l.amount) ? l.amount : 0);
+  });
+  const top = Object.entries(totals).sort(function(a,b) { return b[1]-a[1]; }).slice(0, 6);
+  const maxVal = top[0]?.[1] || 1;
+  el.innerHTML = top.map(function([name, qty], idx) {
+    const pct = Math.round(qty / maxVal * 100);
+    const colors = ['var(--c-red)','var(--c-orange)','var(--c-gold)','var(--c-blue)','var(--c-teal)','var(--text-soft)'];
+    const color = colors[idx] || 'var(--text-soft)';
+    return `
+      <div style="margin-bottom:9px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+          <span style="font-size:.86em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:75%;">${(idx+1)}. ${esc(name)}</span>
+          <span style="font-weight:900;font-size:.86em;color:${color};flex-shrink:0;">${qty} יח'</span>
+        </div>
+        <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;background:${color};border-radius:3px;width:${pct}%;transition:width .6s var(--ease);"></div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function buildCharts(cats) {
@@ -3604,6 +3781,23 @@ function renderAdmin() {
     container.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div><p>לא נמצאו פריטים — <a onclick="clearAdminSearch();setAdminFilter('all',document.querySelector('#admin-chips .chip'))">נקה פילטר</a></p></div>`;
     return;
   }
+
+  // Update health bar
+  const healthBar = document.getElementById('inv-health-bar');
+  if (healthBar && inv.length > 0) {
+    const outC  = inv.filter(i => (Number.isFinite(i.qty) ? i.qty : 0) === 0).length;
+    const lowC  = inv.filter(i => { const q = Number.isFinite(i.qty) ? i.qty : 0; return q > 0 && q <= getThreshold(i); }).length;
+    const okC   = inv.length - outC - lowC;
+    const pct   = Math.round(okC / inv.length * 100);
+    const color = pct > 80 ? 'var(--c-green-light)' : pct > 50 ? 'var(--c-gold)' : 'var(--c-red)';
+    healthBar.style.display = 'block';
+    document.getElementById('inv-health-pct').textContent  = pct + '%';
+    document.getElementById('inv-health-fill').style.width = pct + '%';
+    document.getElementById('inv-health-fill').style.background = color;
+    document.getElementById('inv-ok-count').textContent   = okC;
+    document.getElementById('inv-low-count2').textContent = lowC;
+    document.getElementById('inv-out-count2').textContent = outC;
+  }
   const groups = {};
   filtered.forEach(i => { const cat = (i.category&&i.category.trim())?i.category.trim():'כללי'; groups[cat]=groups[cat]||[]; groups[cat].push(i); });
   Object.keys(groups).sort().forEach(cat => {
@@ -3694,8 +3888,9 @@ function buildAdminItem(i) {
     if (!v || v <= 0) return showToast('הזן כמות','warning');
     try {
       const r = await changeQuantity({ itemId:i.id, delta:v, user:window.curU, reason:deltaRsn.value||'הוספת ציוד', action:'add' });
-      showToast(`"${r.itemName}": ${r.beforeQty} → ${r.afterQty} (+${v})`);
+      showToast(`✅ "${r.itemName}": ${r.beforeQty} → ${r.afterQty} (+${v})`);
       qtyInp.value = r.afterQty; deltaQty.value=''; deltaRsn.value='';
+      _showUndoBtn();
     } catch { showToast('שגיאה','error'); }
   };
   minusBtn.onclick = async () => {
@@ -3703,9 +3898,10 @@ function buildAdminItem(i) {
     if (!v || v <= 0) return showToast('הזן כמות','warning');
     try {
       const r = await changeQuantity({ itemId:i.id, delta:-v, user:window.curU, reason:deltaRsn.value||'הסרת ציוד', action:'sub' });
-      showToast(`"${r.itemName}": ${r.beforeQty} → ${r.afterQty} (-${v})`);
+      showToast(`📤 "${r.itemName}": ${r.beforeQty} → ${r.afterQty} (-${v})`);
       qtyInp.value = r.afterQty; deltaQty.value=''; deltaRsn.value='';
-    } catch { showToast('אין מספיק מלאי','error'); }
+      _showUndoBtn();
+    } catch { showToast('⚠️ אין מספיק מלאי','error'); }
   };
   renameBtn.onclick = async () => {
     const n = await asyncPrompt('שינוי שם', 'הזן שם חדש:', i.name);
@@ -3737,8 +3933,10 @@ function buildAdminItem(i) {
 }
 
 /* ================================================================
-   CHANGE QUANTITY (Firebase transaction)
+   CHANGE QUANTITY (Firebase transaction) + Undo support
    ================================================================ */
+let _lastAction = null; // {itemId, itemName, delta, beforeQty, logKey}
+
 async function changeQuantity({ itemId, delta, user, reason = '', action = 'update' }) {
   const ref = db.ref('inventory/' + itemId);
   let beforeQty = 0, afterQty = 0;
@@ -3751,16 +3949,52 @@ async function changeQuantity({ itemId, delta, user, reason = '', action = 'upda
   if (!tx.committed) throw new Error('INSUFFICIENT_STOCK');
   const snap = await ref.once('value');
   const itemName = snap.val()?.name || 'לא ידוע';
-  await db.ref('logs').push({
+  const logRef = db.ref('logs').push();
+  await logRef.set({
     itemId, item: itemName, user, action,
     delta, amount: Math.abs(delta),
     qty_before: beforeQty, qty_after: afterQty,
     reason, timestamp: Date.now(),
     date: new Date().toLocaleString('he-IL')
   });
+  // Store for undo
+  _lastAction = { itemId, itemName, delta, beforeQty, afterQty, logKey: logRef.key, action, user };
   // Discord: send alert for add/take actions (non-blocking)
   _dcAfterChangeQuantity({ itemId, delta, action, user, reason, afterQty }).catch(() => {});
   return { itemId, itemName, beforeQty, afterQty, delta };
+}
+
+let _undoBtnTimer;
+function _showUndoBtn() {
+  const btn = document.getElementById('undo-btn');
+  if (!btn) return;
+  btn.style.display = 'flex';
+  clearTimeout(_undoBtnTimer);
+  _undoBtnTimer = setTimeout(() => { btn.style.display = 'none'; }, 8000);
+}
+
+async function undoLastAction() {
+  const btn = document.getElementById('undo-btn');
+  if (btn) btn.style.display = 'none';
+  clearTimeout(_undoBtnTimer);
+  if (!_lastAction) return showToast('אין פעולה לביטול', 'warning');
+  const { itemId, itemName, delta, beforeQty, afterQty, logKey } = _lastAction;
+  _lastAction = null;
+  try {
+    // Reverse the qty
+    const ref = db.ref('inventory/' + itemId);
+    await ref.child('qty').transaction(qty => {
+      qty = qty || 0;
+      const reverted = qty - delta;
+      if (reverted < 0) return; // can't go negative
+      return reverted;
+    });
+    // Remove the log entry
+    if (logKey) await db.ref('logs/' + logKey).remove();
+    showToast(`↩ בוטל: "${itemName}" חזר ל-${beforeQty}`, 'info', 4000);
+  } catch(e) {
+    showToast('שגיאה בביטול הפעולה', 'error');
+  }
 }
 
 /* ================================================================
@@ -4292,6 +4526,12 @@ function buildLogCache() {
     };
   });
 }
+function clearLogFilters() {
+  ['log-f-user','log-f-item'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+  const sel = document.getElementById('log-f-action'); if (sel) sel.value = 'all';
+  filterLogs();
+  showToast('פילטרים נוקו', 'info', 1800);
+}
 function filterLogs() {
   const fUser   = (document.getElementById('log-f-user')?.value  ||'').toLowerCase();
   const fItem   = (document.getElementById('log-f-item')?.value  ||'').toLowerCase();
@@ -4449,18 +4689,30 @@ function confirmYes() { document.getElementById('confirmOverlay').classList.add(
 function confirmNo()  { document.getElementById('confirmOverlay').classList.add('hidden'); _confirmCB = null; }
 
 /* ================================================================
-   TOAST
+   TOAST — upgraded with progress bar & duration support
    ================================================================ */
 let _toastTimer;
-function showToast(msg, type = 'success') {
+function showToast(msg, type = 'success', duration = 3200) {
   clearTimeout(_toastTimer);
   const toast = document.getElementById('toast');
-  toast.textContent = msg;
   const colors = { success:'#1b5e20', error:'#b71c1c', warning:'#e65100', info:'#01579b' };
-  toast.style.background = colors[type] || colors.success;
-  toast.style.display = 'block';
-  _toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3200);
+  const bg = colors[type] || colors.success;
+  toast.style.background = bg;
+  toast.innerHTML = `<span style="flex:1;">${msg}</span><div id="toast-bar" style="position:absolute;bottom:0;left:0;height:3px;background:rgba(255,255,255,.5);border-radius:2px;animation:toastBar ${duration}ms linear forwards;"></div>`;
+  toast.style.display = 'flex';
+  toast.style.alignItems = 'center';
+  toast.style.gap = '8px';
+  toast.style.position = 'fixed';
+  _toastTimer = setTimeout(() => { toast.style.display = 'none'; }, duration);
 }
+// Inject toast-bar keyframe once
+(function(){
+  if (document.getElementById('toast-bar-style')) return;
+  const s = document.createElement('style');
+  s.id = 'toast-bar-style';
+  s.textContent = '@keyframes toastBar { from { width: 100%; } to { width: 0%; } }';
+  document.head.appendChild(s);
+})();
 
 /* ================================================================
    BARCODE SCANNER
@@ -5155,7 +5407,17 @@ async function quickRestockAlert(itemId, itemName) {
   try {
     const r = await changeQuantity({ itemId, delta: amt, user: window.curU, reason: 'מילוי מלאי (התראות)', action: 'add' });
     showToast(`✅ "${r.itemName}" עודכן: ${r.beforeQty} → ${r.afterQty}`);
+    _showUndoBtn();
   } catch(e) { showToast('שגיאה בעדכון', 'error'); }
+}
+
+/* Send current alerts as a Discord summary */
+async function sendAllAlertsToDiscord() {
+  if (!_dc.webhookUrl) return showToast('❌ הגדר Webhook URL תחילה', 'error');
+  const out = inv.filter(i => (Number.isFinite(i.qty) ? i.qty : 0) === 0);
+  const low = inv.filter(i => { const q = Number.isFinite(i.qty) ? i.qty : 0; return q > 0 && q <= getThreshold(i); });
+  if (!out.length && !low.length) return showToast('✅ אין התראות פעילות', 'info');
+  await sendScheduledReport('manual');
 }
 
 /* Export alerts CSV */
@@ -5183,17 +5445,25 @@ const DC_THROTTLE_MS   = 5 * 60 * 1000; // 5 min anti-spam
 
 /* ── State ── */
 let _dc = {
-  webhookUrl:  '',
-  alertOut:    true,
-  alertLow:    true,
-  alertAdd:    false,
-  alertTake:   false,
-  alertOrder:  false,
-  mentionRole: '',
+  webhookUrl:    '',
+  alertOut:      true,
+  alertLow:      true,
+  alertAdd:      false,
+  alertTake:     false,
+  alertOrder:    false,
+  mentionRole:   '',
+  schedDaily:    false,
+  schedWeekly:   false,
+  schedMonthly:  false,
 };
 const _dcThrottle  = {};   // itemId_type → timestamp
 let   _prevQtyMap  = null; // snapshot for diff detection
 let   _dcSentTotal = 0;    // session counter
+
+/* ── Batching queue (replaces sending N separate messages) ── */
+let _dcBatchQueue  = [];   // pending alerts [{type, item, extra}]
+let _dcBatchTimer  = null; // debounce timer
+const DC_BATCH_MS  = 3000; // collect for 3s then send as one embed
 
 /* ── Load from Firebase ── */
 async function loadDiscordSettings() {
@@ -5201,16 +5471,20 @@ async function loadDiscordSettings() {
     const snap = await db.ref(DISCORD_CFG_PATH).once('value');
     const cfg  = snap.val() || {};
     _dc = {
-      webhookUrl:  cfg.webhookUrl  || '',
-      alertOut:    cfg.alertOut   !== false,
-      alertLow:    cfg.alertLow   !== false,
-      alertAdd:    !!cfg.alertAdd,
-      alertTake:   !!cfg.alertTake,
-      alertOrder:  !!cfg.alertOrder,
-      mentionRole: cfg.mentionRole || '',
+      webhookUrl:    cfg.webhookUrl  || '',
+      alertOut:      cfg.alertOut   !== false,
+      alertLow:      cfg.alertLow   !== false,
+      alertAdd:      !!cfg.alertAdd,
+      alertTake:     !!cfg.alertTake,
+      alertOrder:    !!cfg.alertOrder,
+      mentionRole:   cfg.mentionRole || '',
+      schedDaily:    !!cfg.schedDaily,
+      schedWeekly:   !!cfg.schedWeekly,
+      schedMonthly:  !!cfg.schedMonthly,
     };
     _dcApplyToUI();
     _dcUpdateStatusUI();
+    _dcStartScheduler();
     console.log('[Discord] ✅ טעינה:', _dc.webhookUrl ? 'URL קיים' : 'אין URL');
   } catch(e) {
     console.warn('[Discord] loadDiscordSettings error:', e);
@@ -5223,11 +5497,14 @@ function _dcApplyToUI() {
   const setChk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = v; };
   setVal('dc-webhook-url', _dc.webhookUrl  || '');
   setVal('dc-role',        _dc.mentionRole || '');
-  setChk('dc-out',   _dc.alertOut);
-  setChk('dc-low',   _dc.alertLow);
-  setChk('dc-add',   _dc.alertAdd);
-  setChk('dc-take',  _dc.alertTake);
-  setChk('dc-order', _dc.alertOrder);
+  setChk('dc-out',            _dc.alertOut);
+  setChk('dc-low',            _dc.alertLow);
+  setChk('dc-add',            _dc.alertAdd);
+  setChk('dc-take',           _dc.alertTake);
+  setChk('dc-order',          _dc.alertOrder);
+  setChk('dc-sched-daily',    _dc.schedDaily);
+  setChk('dc-sched-weekly',   _dc.schedWeekly);
+  setChk('dc-sched-monthly',  _dc.schedMonthly);
 }
 
 /* ── Update status dot & text ── */
@@ -5256,18 +5533,22 @@ async function saveDcSettings() {
   const getChk = id => !!document.getElementById(id)?.checked;
 
   _dc = {
-    webhookUrl:  url,
-    alertOut:    getChk('dc-out'),
-    alertLow:    getChk('dc-low'),
-    alertAdd:    getChk('dc-add'),
-    alertTake:   getChk('dc-take'),
-    alertOrder:  getChk('dc-order'),
-    mentionRole: (document.getElementById('dc-role')?.value || '').trim(),
+    webhookUrl:    url,
+    alertOut:      getChk('dc-out'),
+    alertLow:      getChk('dc-low'),
+    alertAdd:      getChk('dc-add'),
+    alertTake:     getChk('dc-take'),
+    alertOrder:    getChk('dc-order'),
+    mentionRole:   (document.getElementById('dc-role')?.value || '').trim(),
+    schedDaily:    getChk('dc-sched-daily'),
+    schedWeekly:   getChk('dc-sched-weekly'),
+    schedMonthly:  getChk('dc-sched-monthly'),
   };
 
   try {
     await db.ref(DISCORD_CFG_PATH).set(_dc);
     _dcUpdateStatusUI();
+    _dcStartScheduler();
     showToast('✅ הגדרות Discord נשמרו ב-Firebase!');
     console.log('[Discord] ✅ הגדרות נשמרו:', _dc);
   } catch(e) {
@@ -5335,7 +5616,7 @@ async function testDcWebhook() {
   }
 }
 
-/* ── Core send function ── */
+/* ── Core send function (with batching) ── */
 async function sendDiscordAlert(type, item, extra) {
   extra = extra || {};
   if (!_dc.webhookUrl) return false;
@@ -5349,10 +5630,24 @@ async function sendDiscordAlert(type, item, extra) {
   const PERM = { out:'alertOut', low:'alertLow', add:'alertAdd', take:'alertTake', order:'alertOrder' };
   if (PERM[type] && !_dc[PERM[type]]) return false;
 
+  // Mark throttle immediately to prevent duplicates in batch window
+  _dcThrottle[key] = now;
+
+  // Add to batch queue — flush after DC_BATCH_MS of inactivity
+  _dcBatchQueue.push({ type, item: item ? Object.assign({}, item) : null, extra: Object.assign({}, extra) });
+
+  if (_dcBatchTimer) clearTimeout(_dcBatchTimer);
+  _dcBatchTimer = setTimeout(_dcFlushBatch, DC_BATCH_MS);
+  return true;
+}
+
+/* ── Flush batch: send all queued alerts as embeds in one message ── */
+async function _dcFlushBatch() {
+  _dcBatchTimer = null;
+  if (!_dcBatchQueue.length || !_dc.webhookUrl) return;
+
+  const items    = _dcBatchQueue.splice(0);
   const siteTitle = CFG?.headerText || 'מד"א';
-  const qty = Number.isFinite(item && item.qty) ? item.qty : 0;
-  const thr = (item && item.minQty != null) ? item.minQty : (LOW_STOCK_THRESHOLD || 3);
-  const pct = thr > 0 ? Math.round(qty / thr * 100) : (qty > 0 ? 999 : 0);
 
   const META = {
     out:   { color: 0xD32F2F, emoji: '🚨', title: 'פריט אזל מהמלאי!'   },
@@ -5361,77 +5656,314 @@ async function sendDiscordAlert(type, item, extra) {
     take:  { color: 0x1565C0, emoji: '📤', title: 'ציוד יצא מהמלאי'     },
     order: { color: 0xE65100, emoji: '🛒', title: 'הזמנת ציוד נשלחה'    },
   };
-  const m = META[type] || { color: 0x607D8B, emoji: '📦', title: 'עדכון מלאי' };
 
-  // Visual stock bar
-  const barLen  = 8;
-  const barFill = pct > 900 ? barLen : Math.min(barLen, Math.round(pct / 100 * barLen));
-  const bar     = '█'.repeat(barFill) + '░'.repeat(barLen - barFill);
+  let embeds = [];
+  let content;
+
+  // If multiple items of same type → single embed with list
+  const grouped = {};
+  items.forEach(function(a) {
+    if (!grouped[a.type]) grouped[a.type] = [];
+    grouped[a.type].push(a);
+  });
+
+  Object.keys(grouped).forEach(function(type) {
+    const group = grouped[type];
+    const m = META[type] || { color: 0x607D8B, emoji: '📦', title: 'עדכון מלאי' };
+
+    if (group.length === 1) {
+      // Single alert → detailed embed
+      const { item, extra } = group[0];
+      const qty  = Number.isFinite(item && item.qty) ? item.qty : 0;
+      const thr  = (item && item.minQty != null) ? item.minQty : (LOW_STOCK_THRESHOLD || 3);
+      const pct  = thr > 0 ? Math.round(qty / thr * 100) : (qty > 0 ? 999 : 0);
+      const barLen  = 8;
+      const barFill = pct > 900 ? barLen : Math.min(barLen, Math.round(pct / 100 * barLen));
+      const bar     = '█'.repeat(barFill) + '░'.repeat(barLen - barFill);
+
+      const embed = {
+        title:       m.emoji + ' ' + m.title,
+        description: (item && item.name) ? '**' + item.name + '** | ' + (item.category || '—') : siteTitle,
+        color:       m.color,
+        fields:      [],
+        footer:      { text: siteTitle + ' · ' + new Date().toLocaleString('he-IL') },
+        timestamp:   new Date().toISOString(),
+      };
+
+      if (type !== 'order' && item && item.name) {
+        embed.fields.push(
+          { name: '📦 כמות', value: '**' + qty + '**',                                     inline: true  },
+          { name: '🎯 סף',   value: '**' + thr + '**',                                     inline: true  },
+          { name: '📊 מלאי', value: '`' + bar + '` ' + (pct > 900 ? '∞' : pct + '%'),     inline: false },
+        );
+      }
+      if (item && item.category)  embed.fields.push({ name: '📁 קטגוריה', value: item.category,                 inline: true });
+      if (item && item.barcode)   embed.fields.push({ name: '🔖 ברקוד',   value: '`' + item.barcode + '`',     inline: true });
+      if (extra.user)             embed.fields.push({ name: '👤 משתמש',   value: String(extra.user),            inline: true });
+      if (extra.reason)           embed.fields.push({ name: '📝 סיבה',    value: String(extra.reason),          inline: false });
+      if (extra.delta != null)    embed.fields.push({ name: '🔢 שינוי',   value: (extra.delta > 0 ? '+' : '') + extra.delta, inline: true });
+      if (extra.items && extra.items.length) {
+        const list = extra.items.slice(0, 20).map(function(i) { return '• **' + (i.name || '?') + '** × ' + (i.qty || 1); }).join('\n');
+        embed.fields.push({ name: '📋 פריטים (' + extra.items.length + ')', value: list + (extra.items.length > 20 ? '\n*...ועוד ' + (extra.items.length - 20) + '*' : ''), inline: false });
+      }
+      if (item && item.image && item.image.startsWith('http')) embed.thumbnail = { url: item.image };
+      if (type === 'out' && _dc.mentionRole) content = '<@&' + _dc.mentionRole + '> ⚠️ דרוש מילוי!';
+      embeds.push(embed);
+
+    } else {
+      // Multiple alerts of same type → one combined embed
+      const lines = group.map(function(a) {
+        const qty = Number.isFinite(a.item && a.item.qty) ? a.item.qty : 0;
+        return m.emoji + ' **' + (a.item ? a.item.name : '?') + '** — כמות: ' + qty;
+      }).join('\n');
+
+      embeds.push({
+        title:       m.emoji + ' ' + m.title + ' (' + group.length + ' פריטים)',
+        description: lines,
+        color:       m.color,
+        footer:      { text: siteTitle + ' · ' + new Date().toLocaleString('he-IL') },
+        timestamp:   new Date().toISOString(),
+      });
+      if (type === 'out' && _dc.mentionRole) content = '<@&' + _dc.mentionRole + '> ⚠️ דרוש מילוי!';
+    }
+  });
+
+  // Discord allows max 10 embeds per message
+  while (embeds.length > 0) {
+    const batch = embeds.splice(0, 10);
+    try {
+      const body = { embeds: batch, username: siteTitle + ' · מלאי' };
+      if (content) { body.content = content; content = undefined; }
+      if (CFG && CFG.logoUrl) body.avatar_url = CFG.logoUrl;
+
+      const res = await fetch(_dc.webhookUrl, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      });
+      const ok = res.ok || res.status === 204;
+      if (ok) {
+        _dcSentTotal++;
+        const el   = document.getElementById('dc-sent-total');
+        const info = document.getElementById('dc-sent-info');
+        if (el)   el.textContent   = _dcSentTotal;
+        if (info) info.style.display = 'block';
+      } else {
+        console.error('[Discord] ❌ batch ' + res.status);
+      }
+    } catch(e) {
+      console.error('[Discord] batch fetch error:', e);
+    }
+  }
+}
+
+/* ════════════════════════════════════════
+   SCHEDULED REPORTS
+   ════════════════════════════════════════ */
+
+let _schedIntervalId = null;
+const _schedSentKeys = {}; // e.g. 'daily_2025-03-18' → true  (prevent double-send)
+
+function _dcStartScheduler() {
+  if (_schedIntervalId) clearInterval(_schedIntervalId);
+  const anyEnabled = _dc.schedDaily || _dc.schedWeekly || _dc.schedMonthly;
+  const statusEl   = document.getElementById('dc-sched-status');
+  const nextEl     = document.getElementById('dc-sched-next-text');
+
+  if (!anyEnabled || !_dc.webhookUrl) {
+    if (statusEl) statusEl.style.display = 'none';
+    return;
+  }
+  if (statusEl) statusEl.style.display = 'block';
+
+  function tick() {
+    const now  = new Date();
+    const h    = now.getHours();
+    const m    = now.getMinutes();
+    const day  = now.getDay();    // 0=Sun … 6=Sat
+    const date = now.getDate();
+    const yr   = now.getFullYear();
+    const mo   = now.getMonth();
+
+    // Last day of month?
+    const lastDay = new Date(yr, mo + 1, 0).getDate();
+    const isLastDayOfMonth = (date === lastDay);
+
+    const todayStr = yr + '-' + (mo+1) + '-' + date;
+
+    // Daily — every day at 20:00
+    if (_dc.schedDaily && h === 20 && m === 0) {
+      const k = 'daily_' + todayStr;
+      if (!_schedSentKeys[k]) {
+        _schedSentKeys[k] = true;
+        sendScheduledReport('daily');
+      }
+    }
+
+    // Weekly — every Saturday (day=6) at 12:00
+    if (_dc.schedWeekly && day === 6 && h === 12 && m === 0) {
+      const k = 'weekly_' + todayStr;
+      if (!_schedSentKeys[k]) {
+        _schedSentKeys[k] = true;
+        sendScheduledReport('weekly');
+      }
+    }
+
+    // Monthly — last day of month at 21:00
+    if (_dc.schedMonthly && isLastDayOfMonth && h === 21 && m === 0) {
+      const k = 'monthly_' + todayStr;
+      if (!_schedSentKeys[k]) {
+        _schedSentKeys[k] = true;
+        sendScheduledReport('monthly');
+      }
+    }
+
+    // Update "next report" text
+    if (nextEl) {
+      const parts = [];
+      if (_dc.schedDaily)   parts.push('יומי — ' + _nextTimeLabel('daily'));
+      if (_dc.schedWeekly)  parts.push('שבועי — ' + _nextTimeLabel('weekly'));
+      if (_dc.schedMonthly) parts.push('חודשי — ' + _nextTimeLabel('monthly'));
+      nextEl.textContent = parts.join('  |  ');
+    }
+  }
+
+  // Fire every minute
+  _schedIntervalId = setInterval(tick, 60 * 1000);
+  tick(); // run once immediately to update UI
+}
+
+function _nextTimeLabel(type) {
+  const now = new Date();
+  if (type === 'daily') {
+    const next = new Date(now);
+    next.setHours(20, 0, 0, 0);
+    if (next <= now) next.setDate(next.getDate() + 1);
+    return next.toLocaleDateString('he-IL', { weekday:'short', day:'numeric', month:'short' }) + ' 20:00';
+  }
+  if (type === 'weekly') {
+    const next = new Date(now);
+    const daysUntilSat = (6 - next.getDay() + 7) % 7 || 7;
+    next.setDate(next.getDate() + daysUntilSat);
+    next.setHours(12, 0, 0, 0);
+    if (next <= now) next.setDate(next.getDate() + 7);
+    return next.toLocaleDateString('he-IL', { weekday:'short', day:'numeric', month:'short' }) + ' 12:00';
+  }
+  if (type === 'monthly') {
+    const yr = now.getFullYear(), mo = now.getMonth();
+    const lastDay = new Date(yr, mo + 1, 0);
+    lastDay.setHours(21, 0, 0, 0);
+    const next = lastDay <= now ? new Date(yr, mo + 2, 0) : lastDay;
+    next.setHours(21, 0, 0, 0);
+    return next.toLocaleDateString('he-IL', { day:'numeric', month:'short', year:'numeric' }) + ' 21:00';
+  }
+  return '—';
+}
+
+async function sendScheduledReport(period) {
+  if (!_dc.webhookUrl) return;
+  const siteTitle = CFG?.headerText || 'מד"א';
+  const now       = new Date();
+
+  // Period label
+  const LABELS = {
+    daily:   '📋 דוח יומי',
+    weekly:  '📊 דוח שבועי',
+    monthly: '📆 דוח חודשי',
+    manual:  '📊 דוח ידני',
+  };
+  const label = LABELS[period] || '📊 דוח';
+
+  // Build date range
+  let fromTS, toTS;
+  toTS = now.getTime();
+  if (period === 'daily') {
+    fromTS = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
+  } else if (period === 'weekly') {
+    fromTS = toTS - 7 * 24 * 60 * 60 * 1000;
+  } else { // monthly / manual
+    fromTS = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0).getTime();
+  }
+
+  // Stats from logs
+  const filtered = (logs || []).filter(function(l) {
+    return l.timestamp >= fromTS && l.timestamp <= toTS &&
+      (l.action === 'take' || l.action === 'sub' || l.action === 'manual' || l.action === 'add');
+  });
+  const taken  = filtered.filter(function(l) { return l.action === 'take' || l.action === 'sub'; });
+  const added  = filtered.filter(function(l) { return l.action === 'add'; });
+  const totalTaken = taken.reduce(function(s,l) { return s + (Number.isFinite(l.amount) ? l.amount : 0); }, 0);
+  const totalAdded = added.reduce(function(s,l) { return s + (Number.isFinite(l.amount) ? l.amount : 0); }, 0);
+  const uniqueItems = new Set(filtered.map(function(l) { return l.itemId || l.item; })).size;
+  const uniqueUsers = new Set(filtered.map(function(l) { return l.user; })).size;
+
+  // Top 5 consumed items
+  const itemTotals = {};
+  taken.forEach(function(l) {
+    const nm = l.item || l.itemName || l.itemId || '?';
+    itemTotals[nm] = (itemTotals[nm] || 0) + (Number.isFinite(l.amount) ? l.amount : 0);
+  });
+  const top5 = Object.entries(itemTotals).sort(function(a,b){ return b[1]-a[1]; }).slice(0, 5);
+
+  // Current stock health
+  const outItems  = (inv || []).filter(function(i) { return (Number.isFinite(i.qty) ? i.qty : 0) === 0; });
+  const lowItems  = (inv || []).filter(function(i) {
+    const q = Number.isFinite(i.qty) ? i.qty : 0;
+    return q > 0 && q <= getThreshold(i);
+  });
+
+  // Date range label
+  const fromStr = new Date(fromTS).toLocaleDateString('he-IL');
+  const toStr   = now.toLocaleDateString('he-IL');
+
+  const fields = [];
+
+  fields.push(
+    { name: '📤 יחידות יצאו',   value: '**' + totalTaken + '**',    inline: true },
+    { name: '➕ יחידות נוספו',  value: '**' + totalAdded + '**',    inline: true },
+    { name: '📦 סוגי פריטים',   value: '**' + uniqueItems + '**',   inline: true },
+    { name: '👥 משתמשים פעילים', value: '**' + uniqueUsers + '**',  inline: true },
+    { name: '🚨 אזלו מהמלאי',   value: '**' + outItems.length + '**', inline: true },
+    { name: '⚠️ מלאי נמוך',     value: '**' + lowItems.length + '**', inline: true },
+  );
+
+  if (top5.length) {
+    const topLines = top5.map(function(e, i) {
+      return (i+1) + '. **' + e[0] + '** — ' + e[1] + ' יח׳';
+    }).join('\n');
+    fields.push({ name: '🏆 פריטים שנצרכו הכי הרבה', value: topLines, inline: false });
+  }
+
+  if (outItems.length) {
+    const outNames = outItems.slice(0, 10).map(function(i) { return '• ' + i.name; }).join('\n');
+    fields.push({ name: '🚨 פריטים חסרים', value: outNames + (outItems.length > 10 ? '\n*...ועוד ' + (outItems.length-10) + '*' : ''), inline: false });
+  }
 
   const embed = {
-    title:       m.emoji + ' ' + m.title,
-    description: (item && item.name) ? '**' + item.name + '** | ' + (item.category || '—') : siteTitle,
-    color:       m.color,
-    fields:      [],
-    footer:      { text: siteTitle + ' · ' + new Date().toLocaleString('he-IL') },
+    title:       label + ' — ' + siteTitle,
+    description: '📅 תקופה: **' + fromStr + '** — **' + toStr + '**',
+    color:       period === 'monthly' ? 0x5865f2 : period === 'weekly' ? 0x1565c0 : 0x00695c,
+    fields,
+    footer:      { text: siteTitle + ' · מערכת מלאי v' + APP_VERSION },
     timestamp:   new Date().toISOString(),
   };
 
-  if (type !== 'order' && item && item.name) {
-    embed.fields.push(
-      { name: '📦 כמות', value: '**' + qty + '**',                          inline: true  },
-      { name: '🎯 סף',   value: '**' + thr + '**',                          inline: true  },
-      { name: '📊 מלאי', value: '`' + bar + '` ' + (pct > 900 ? '∞' : pct + '%'), inline: false },
-    );
-  }
-  if (item && item.category) embed.fields.push({ name: '📁 קטגוריה', value: item.category, inline: true });
-  if (item && item.barcode)  embed.fields.push({ name: '🔖 ברקוד',   value: '`' + item.barcode + '`', inline: true });
-  if (extra.user)            embed.fields.push({ name: '👤 משתמש',   value: String(extra.user),  inline: true  });
-  if (extra.reason)          embed.fields.push({ name: '📝 סיבה',    value: String(extra.reason), inline: false });
-  if (extra.delta != null)   embed.fields.push({ name: '🔢 שינוי',   value: (extra.delta > 0 ? '+' : '') + extra.delta, inline: true });
-
-  if (extra.items && extra.items.length) {
-    const list = extra.items.slice(0, 20).map(function(i) { return '• **' + (i.name || '?') + '** × ' + (i.qty || 1); }).join('\n');
-    embed.fields.push({
-      name:   '📋 פריטים (' + extra.items.length + ')',
-      value:  list + (extra.items.length > 20 ? '\n*...ועוד ' + (extra.items.length - 20) + '*' : ''),
-      inline: false,
-    });
-  }
-
-  if (item && item.image && item.image.startsWith('http')) {
-    embed.thumbnail = { url: item.image };
-  }
-
-  const content = (type === 'out' && _dc.mentionRole) ? '<@&' + _dc.mentionRole + '> ⚠️ דרוש מילוי!' : undefined;
-
   try {
-    const body = { embeds: [embed], username: siteTitle + ' · מלאי' };
-    if (content) body.content = content;
+    const body = { embeds: [embed], username: siteTitle + ' · דוחות אוטומטיים' };
     if (CFG && CFG.logoUrl) body.avatar_url = CFG.logoUrl;
-
     const res = await fetch(_dc.webhookUrl, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(body),
     });
-
-    const ok = res.ok || res.status === 204;
-    if (ok) {
-      _dcThrottle[key] = now;
-      _dcSentTotal++;
-      const el = document.getElementById('dc-sent-total');
-      const info = document.getElementById('dc-sent-info');
-      if (el)   el.textContent  = _dcSentTotal;
-      if (info) info.style.display = 'block';
-      console.log('[Discord] ✅ ' + type + ' / ' + (item && item.name ? item.name : 'order'));
+    if (res.ok || res.status === 204) {
+      console.log('[Discord] ✅ ' + period + ' report sent');
+      if (period === 'manual') showToast('📊 דוח נשלח ל-Discord!', 'success', 3000);
     } else {
-      console.error('[Discord] ❌ ' + res.status);
+      console.error('[Discord] ❌ report ' + res.status);
     }
-    return ok;
   } catch(e) {
-    console.error('[Discord] fetch error:', e);
-    return false;
+    console.error('[Discord] report error:', e);
   }
 }
 
@@ -5486,10 +6018,10 @@ async function notifyDiscordOrder(orderItems, user) {
 /* ── Init ── */
 async function initDiscordSystem() {
   await loadDiscordSettings();
-  console.log('[Discord] ✅ מערכת Discord אותחלה v4.0');
+  console.log('[Discord] ✅ מערכת Discord אותחלה v5.0');
 }
 
-console.log('[Discord] מודול Discord v4.0 נטען ✅');
+console.log('[Discord] מודול Discord v5.0 נטען ✅');
 
 </script>
 </body>
