@@ -6402,9 +6402,10 @@ async function saveEditItem() {
   }
 }
 
-// Close modal when clicking outside
-document.getElementById('editItemModal').addEventListener('click', function(e) {
-  if (e.target === this) closeEditItemModal();
+// Close modal when clicking outside (safe - element is outside script block)
+window.addEventListener('DOMContentLoaded', function() {
+  var em = document.getElementById('editItemModal');
+  if (em) em.addEventListener('click', function(e) { if (e.target === this) closeEditItemModal(); });
 });
 
 /* ================================================================
@@ -6679,7 +6680,14 @@ async function saveDelivery() {
 
   try {
     await db.ref('deliveries').push({ name: delivName, date: delivDate, user: window.curU||'מנהל', timestamp: Date.now(), items: resultItems, successCount: ok, failCount: fail, total: rows.length });
-  } catch(e) { console.error('[Delivery] Firebase error:', e); showToast('שגיאה בשמירה ל-Firebase', 'error'); }
+  } catch(e) {
+    console.error('[Delivery] Firebase error:', e);
+    if (e.message && e.message.includes('permission_denied')) {
+      showToast('⚠️ אין הרשאה לשמור — עדכן Firebase Rules (deliveries)', 'error', 7000);
+    } else {
+      showToast('שגיאה בשמירה ל-Firebase', 'error');
+    }
+  }
 
   if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 שמור ועדכן מלאי'; }
   showToast(`✅ משלוח נשמר! ${ok} עודכנו${fail ? ` · ⚠️ ${fail} לא נמצאו` : ''}`, ok>0?'success':'error', 6000);
@@ -6704,7 +6712,21 @@ function loadDeliveries() {
     snap.forEach(c => { const v = c.val(); if (v) list.push(Object.assign({ _key: c.key }, v)); });
     list.reverse();
     renderDeliveriesList(list);
-  }, e => console.error('[Delivery] load:', e));
+  }, e => {
+    console.warn('[Delivery] load:', e.message);
+    if (e.message && e.message.includes('permission_denied')) {
+      // Show instructions in the UI
+      const el = document.getElementById('deliveries-list');
+      if (el) el.innerHTML = `
+        <div style="background:#fff3e0;border:1.5px solid var(--c-orange);border-radius:var(--r-md);padding:14px 16px;font-size:.85em;line-height:1.8;">
+          <b>⚠️ נדרש עדכון Firebase Rules</b><br>
+          כדי שהמשלוחים יעבדו, עדכן ב-Firebase Console את ה-Realtime Database Rules:<br>
+          <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:.9em;">
+            "deliveries": { ".read": "auth != null", ".write": "auth != null" }
+          </code>
+        </div>`;
+    }
+  });
 }
 
 function renderDeliveriesList(list) {
@@ -6744,10 +6766,12 @@ function renderDeliveriesList(list) {
 }
 
 /* ── showTab hook ── */
-const _origShowTab = window.showTab;
-if (typeof _origShowTab === 'function') {
-  window.showTab = function(id, btn) { _origShowTab(id, btn); if (id === 'tab-deliveries') _initDeliveryTab(); };
-}
+(function() {
+  var _orig = window.showTab;
+  if (typeof _orig === 'function') {
+    window.showTab = function(id, btn) { _orig(id, btn); if (id === 'tab-deliveries') _initDeliveryTab(); };
+  }
+})();
 
 </script>
 <!-- Full Edit Item Modal -->
