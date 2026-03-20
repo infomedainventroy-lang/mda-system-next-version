@@ -1856,6 +1856,7 @@ tr:hover td { background: var(--bg); }
       <button class="tab-btn" onclick="showTab('tab-team',this)">👥 צוות</button>
       <button id="tab-logs-btn" class="tab-btn" onclick="showTab('tab-logs',this)">📜 לוגים</button>
       <button id="tab-alerts-btn" class="tab-btn" onclick="showTab('tab-alerts',this)">🚨 התראות</button>
+      <button class="tab-btn" onclick="showTab('tab-deliveries',this)">🚚 משלוחים</button>
       <button class="tab-btn" onclick="showTab('tab-settings',this)">⚙️ הגדרות</button>
       <button class="tab-btn tab-logout" onclick="logout()">↩ יציאה</button>
     </nav>
@@ -2392,6 +2393,62 @@ tr:hover td { background: var(--bg); }
 
       </div><!-- /tab-alerts -->
 
+      <!-- DELIVERIES -->
+      <div id="tab-deliveries" class="tab-pane hidden">
+        <div class="card">
+          <div class="card-title">🚚 רישום משלוח חדש</div>
+          <input type="text" id="del-name" class="app-input" placeholder="שם/סיבת המשלוח (לדוגמה: חידוש ציוד חירום)">
+          <input type="date" id="del-date" class="app-input">
+          <!-- Mode selector -->
+          <div style="display:flex;gap:8px;margin:10px 0;">
+            <button class="btn w-auto btn-blue" id="del-mode-file-btn" onclick="setDeliveryMode('file')" style="flex:1;">📁 ייבוא קובץ</button>
+            <button class="btn w-auto btn-ghost" id="del-mode-manual-btn" onclick="setDeliveryMode('manual')" style="flex:1;">✍️ הוספה ידנית</button>
+          </div>
+
+          <!-- FILE mode -->
+          <div id="del-file-panel">
+            <div style="font-size:.8em;color:var(--text-muted);margin-bottom:8px;">
+              פורמט CSV/Excel: עמודה 1 = שם מוצר · עמודה 2 = כמות שהתקבלה
+            </div>
+            <input type="file" id="del-file-input" accept=".csv,.xlsx,.xls" style="display:none;" onchange="handleDeliveryFile(this)">
+            <button class="btn btn-gray" onclick="document.getElementById('del-file-input').click()">📂 בחר קובץ</button>
+            <div id="del-file-preview" style="display:none;margin-top:12px;">
+              <div class="card-title" style="font-size:.85em;margin-bottom:8px;">תצוגה מקדימה:</div>
+              <div class="table-outer">
+                <table>
+                  <thead><tr><th>שם מוצר</th><th>כמות</th><th>מצב</th></tr></thead>
+                  <tbody id="del-preview-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- MANUAL mode -->
+          <div id="del-manual-panel" style="display:none;">
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <div style="flex:1;position:relative;">
+                <input type="text" id="del-manual-search" class="app-input" placeholder="🔍 חפש שם מוצר..." oninput="handleDeliverySearch(this.value)" autocomplete="off" style="margin-bottom:0;">
+                <div id="del-search-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:var(--surface);border:1.5px solid var(--c-blue);border-radius:var(--r-sm);box-shadow:var(--sh-md);z-index:500;max-height:200px;overflow-y:auto;"></div>
+              </div>
+              <input type="number" id="del-manual-qty" class="app-input" placeholder="כמות" min="1" style="width:100px;margin-bottom:0;">
+              <button class="btn btn-blue w-auto" onclick="addDeliveryManualRow()" style="white-space:nowrap;">➕ הוסף</button>
+            </div>
+            <div id="del-manual-rows" style="margin-top:4px;"></div>
+          </div>
+
+          <button class="btn btn-green" style="margin-top:14px;" onclick="saveDelivery()">💾 שמור משלוח</button>
+        </div>
+
+        <!-- Delivery history -->
+        <div class="card">
+          <div class="card-title">📋 היסטוריית משלוחים</div>
+          <div id="deliveries-list">
+            <div class="empty-state"><div class="es-icon">🚚</div><p>אין משלוחים רשומים עדיין</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
       <div id="tab-settings" class="tab-pane hidden">
         <div class="card">
           <div class="card-title">⚙️ הגדרות מערכת</div>
@@ -3174,6 +3231,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadData();
   initDiscordSystem().catch(e => console.warn("[Discord] init error:", e));
+  loadDeliveries();
 
   // ── Global keyboard shortcuts ──────────────────────────────────
   document.addEventListener('keydown', function(e) {
@@ -3183,7 +3241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
     const navBtns = document.querySelectorAll('#admin-nav .tab-btn:not(.tab-logout)');
-    const tabIds  = ['tab-dash','tab-reports','tab-inv','tab-team','tab-logs','tab-alerts','tab-settings'];
+    const tabIds  = ['tab-dash','tab-reports','tab-inv','tab-team','tab-logs','tab-alerts','tab-deliveries','tab-settings'];
 
     if (e.key >= '1' && e.key <= '7' && !e.ctrlKey && !e.metaKey) {
       const idx = parseInt(e.key) - 1;
@@ -4032,7 +4090,7 @@ function buildAdminItem(i) {
       <input type="number" class="ai-qty-input" value="${qty}" min="0">
       <div class="ai-actions">
         <button class="btn-icon del" title="מחק פריט">🗑️</button>
-        <button class="btn-icon edit" title="שנה שם">✏️</button>
+        <button class="btn-icon edit" title="עריכה מלאה" onclick="openEditItemModal('${i.id}')">✏️</button>
         <button class="btn-icon bc" title="סרוק ברקוד">📷</button>
         <button class="btn-icon edit" title="שנה קטגוריה">📁</button>
         <button class="btn-icon edit" title="שנה סף מינימום">🎯</button>
@@ -4089,12 +4147,7 @@ function buildAdminItem(i) {
       _showUndoBtn();
     } catch { showToast('⚠️ אין מספיק מלאי','error'); }
   };
-  renameBtn.onclick = async () => {
-    const n = await asyncPrompt('שינוי שם', 'הזן שם חדש:', i.name);
-    if (!n || n.trim() === i.name) return;
-    await db.ref(`inventory/${i.id}/name`).set(n.trim());
-    showToast('שם עודכן ✓');
-  };
+  // ✏️ edit button handled inline via openEditItemModal()
   catBtn.onclick = async () => {
     const c = await asyncPrompt('שינוי קטגוריה', 'הזן קטגוריה חדשה:', i.category || '');
     if (!c || c.trim() === (i.category||'')) return;
@@ -6239,7 +6292,352 @@ async function initDiscordSystem() {
 
 console.log('[Discord] מודול Discord v5.2 נטען ✅ | תיוג role פעיל לכל ההתראות');
 
+/* ================================================================
+   FULL EDIT ITEM MODAL
+   ================================================================ */
+function openEditItemModal(itemId) {
+  const item = (inv || []).find(i => i.id === itemId);
+  if (!item) return showToast('פריט לא נמצא', 'error');
+  document.getElementById('eim-id').value           = item.id;
+  document.getElementById('eim-name').value         = item.name || '';
+  document.getElementById('eim-cat').value          = item.category || '';
+  document.getElementById('eim-qty').value          = Number.isFinite(item.qty) ? item.qty : 0;
+  document.getElementById('eim-min').value          = Number.isFinite(item.minQty) ? item.minQty : (Number.isFinite(item.threshold) ? item.threshold : 3);
+  document.getElementById('eim-barcode').value      = item.barcode || '';
+  document.getElementById('eim-madanet-id').value   = item.madanet_id || '';
+  document.getElementById('eim-madanet-name').value = item.madanet_name || '';
+  // Populate category datalist
+  const dl = document.getElementById('eim-cat-list');
+  if (dl) {
+    const cats = [...new Set((inv||[]).map(i => i.category).filter(Boolean))].sort();
+    dl.innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
+  }
+  const modal = document.getElementById('editItemModal');
+  modal.style.display = 'flex';
+}
+
+function closeEditItemModal() {
+  document.getElementById('editItemModal').style.display = 'none';
+}
+
+async function saveEditItem() {
+  const id          = document.getElementById('eim-id').value;
+  const name        = document.getElementById('eim-name').value.trim();
+  const category    = document.getElementById('eim-cat').value.trim();
+  const qty         = parseInt(document.getElementById('eim-qty').value, 10);
+  const minQty      = parseInt(document.getElementById('eim-min').value, 10);
+  const barcode     = document.getElementById('eim-barcode').value.trim();
+  const madanetId   = document.getElementById('eim-madanet-id').value.trim();
+  const madanetName = document.getElementById('eim-madanet-name').value.trim();
+  if (!name) return showToast('שם מוצר הוא שדה חובה', 'error');
+  if (!id) return;
+  const item = (inv || []).find(i => i.id === id);
+  const oldQty = item ? (Number.isFinite(item.qty) ? item.qty : 0) : 0;
+  try {
+    const updates = { name, category, minQty: Number.isFinite(minQty) ? minQty : 3, barcode, madanet_id: madanetId, madanet_name: madanetName };
+    await db.ref('inventory/' + id).update(updates);
+    // If qty changed, use changeQuantity to log it
+    if (Number.isFinite(qty) && qty !== oldQty) {
+      await changeQuantity({ itemId: id, delta: qty - oldQty, user: window.curU, reason: 'עריכת מוצר', action: 'manual' });
+    }
+    showToast('✅ המוצר עודכן בהצלחה');
+    closeEditItemModal();
+  } catch(e) {
+    console.error(e);
+    showToast('שגיאה בשמירה', 'error');
+  }
+}
+
+// Close modal when clicking outside
+document.getElementById('editItemModal').addEventListener('click', function(e) {
+  if (e.target === this) closeEditItemModal();
+});
+
+/* ================================================================
+   DELIVERY SYSTEM
+   ================================================================ */
+let _deliveryRows = []; // { itemId, itemName, qty }
+let _deliveryMode = 'file';
+let _deliveryFileRows = []; // parsed from file
+
+function setDeliveryMode(mode) {
+  _deliveryMode = mode;
+  const filePanel   = document.getElementById('del-file-panel');
+  const manualPanel = document.getElementById('del-manual-panel');
+  const fileBtn     = document.getElementById('del-mode-file-btn');
+  const manualBtn   = document.getElementById('del-mode-manual-btn');
+  if (mode === 'file') {
+    filePanel.style.display   = '';
+    manualPanel.style.display = 'none';
+    fileBtn.className   = 'btn w-auto btn-blue';
+    manualBtn.className = 'btn w-auto btn-ghost';
+  } else {
+    filePanel.style.display   = 'none';
+    manualPanel.style.display = '';
+    fileBtn.className   = 'btn w-auto btn-ghost';
+    manualBtn.className = 'btn w-auto btn-blue';
+  }
+}
+
+function handleDeliveryFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    let rows = [];
+    if (ext === 'csv') {
+      rows = parseDeliveryCSV(e.target.result);
+    } else {
+      showToast('רק קבצי CSV נתמכים כרגע', 'error');
+      return;
+    }
+    _deliveryFileRows = rows;
+    renderDeliveryPreview(rows);
+  };
+  if (ext === 'csv') reader.readAsText(file, 'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+function parseDeliveryCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  // Skip header if first col looks like header
+  const rows = [];
+  lines.forEach((line, idx) => {
+    const cols = line.split(',').map(c => c.replace(/^"|"$/g, '').trim());
+    if (cols.length < 2) return;
+    const name = cols[0];
+    const qty  = parseInt(cols[1], 10);
+    if (!name || idx === 0 && isNaN(qty)) return; // skip header row
+    if (!isNaN(qty) && qty > 0) rows.push({ name, qty });
+  });
+  return rows;
+}
+
+function renderDeliveryPreview(rows) {
+  const preview = document.getElementById('del-file-preview');
+  const tbody   = document.getElementById('del-preview-body');
+  preview.style.display = rows.length ? '' : 'none';
+  tbody.innerHTML = rows.map(r => {
+    const match = (inv||[]).find(i => i.name.trim().toLowerCase() === r.name.trim().toLowerCase());
+    const status = match
+      ? `<span style="color:var(--c-green);font-weight:700;">✅ נמצא</span>`
+      : `<span style="color:var(--c-orange);font-weight:700;">⚠️ לא נמצא</span>`;
+    return `<tr><td>${esc(r.name)}</td><td>${r.qty}</td><td>${status}</td></tr>`;
+  }).join('');
+}
+
+function handleDeliverySearch(query) {
+  const dd = document.getElementById('del-search-dropdown');
+  if (!query.trim()) { dd.style.display = 'none'; return; }
+  const q = query.toLowerCase();
+  const matches = (inv||[]).filter(i => i.name && i.name.toLowerCase().includes(q)).slice(0, 8);
+  if (!matches.length) { dd.style.display = 'none'; return; }
+  dd.innerHTML = matches.map(i =>
+    `<div onclick="selectDeliveryItem('${esc(i.id)}','${esc(i.name)}')"
+      style="padding:10px 14px;cursor:pointer;font-size:.9em;font-weight:600;transition:background .15s;border-bottom:1px solid var(--border);"
+      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">${esc(i.name)}</div>`
+  ).join('');
+  dd.style.display = '';
+}
+
+function selectDeliveryItem(id, name) {
+  document.getElementById('del-manual-search').value = name;
+  document.getElementById('del-search-dropdown').style.display = 'none';
+  document.getElementById('del-manual-search').dataset.selectedId = id;
+}
+
+function addDeliveryManualRow() {
+  const input   = document.getElementById('del-manual-search');
+  const qtyInp  = document.getElementById('del-manual-qty');
+  const name    = input.value.trim();
+  const qty     = parseInt(qtyInp.value, 10);
+  const itemId  = input.dataset.selectedId || '';
+  if (!name) return showToast('בחר מוצר', 'warning');
+  if (!qty || qty <= 0) return showToast('הזן כמות תקינה', 'warning');
+  _deliveryRows.push({ itemId, itemName: name, qty });
+  renderDeliveryManualRows();
+  input.value = '';
+  input.dataset.selectedId = '';
+  qtyInp.value = '';
+}
+
+function removeDeliveryRow(idx) {
+  _deliveryRows.splice(idx, 1);
+  renderDeliveryManualRows();
+}
+
+function renderDeliveryManualRows() {
+  const container = document.getElementById('del-manual-rows');
+  if (!_deliveryRows.length) { container.innerHTML = ''; return; }
+  container.innerHTML = `
+    <div class="table-outer">
+      <table>
+        <thead><tr><th>שם מוצר</th><th>כמות</th><th></th></tr></thead>
+        <tbody>
+          ${_deliveryRows.map((r, i) => `
+            <tr>
+              <td>${esc(r.itemName)}</td>
+              <td>${r.qty}</td>
+              <td><button class="btn sm w-auto btn-red" onclick="removeDeliveryRow(${i})">✕</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function saveDelivery() {
+  const name = document.getElementById('del-name').value.trim();
+  const date = document.getElementById('del-date').value;
+  if (!name) return showToast('הזן שם/סיבת המשלוח', 'warning');
+  if (!date) return showToast('בחר תאריך', 'warning');
+
+  let rows = [];
+  if (_deliveryMode === 'file') {
+    rows = _deliveryFileRows;
+  } else {
+    rows = _deliveryRows;
+  }
+  if (!rows.length) return showToast('אין פריטים במשלוח', 'warning');
+
+  const results = [];
+  let successCount = 0, failCount = 0;
+  for (const row of rows) {
+    // Find item by id or name
+    let item = null;
+    if (row.itemId) item = (inv||[]).find(i => i.id === row.itemId);
+    if (!item) item = (inv||[]).find(i => i.name.trim().toLowerCase() === (row.name||row.itemName||'').trim().toLowerCase());
+    if (!item) {
+      results.push({ name: row.name||row.itemName, qty: row.qty, status: 'לא נמצא' });
+      failCount++;
+      continue;
+    }
+    try {
+      const r = await changeQuantity({ itemId: item.id, delta: row.qty, user: window.curU, reason: `משלוח: ${name}`, action: 'add' });
+      results.push({ name: item.name, qty: row.qty, status: `✅ ${r.beforeQty} → ${r.afterQty}` });
+      successCount++;
+    } catch(e) {
+      results.push({ name: item.name, qty: row.qty, status: '❌ שגיאה' });
+      failCount++;
+    }
+  }
+
+  // Save delivery record to Firebase
+  const deliveryRecord = {
+    name,
+    date,
+    user: window.curU || 'מנהל',
+    timestamp: Date.now(),
+    items: results,
+    successCount,
+    failCount,
+  };
+  await db.ref('deliveries').push(deliveryRecord);
+
+  showToast(`✅ משלוח נשמר: ${successCount} פריטים עודכנו${failCount ? ', ' + failCount + ' לא נמצאו' : ''}`, 'success', 5000);
+
+  // Reset form
+  document.getElementById('del-name').value = '';
+  document.getElementById('del-date').value = '';
+  document.getElementById('del-file-input').value = '';
+  document.getElementById('del-file-preview').style.display = 'none';
+  _deliveryRows = [];
+  _deliveryFileRows = [];
+  renderDeliveryManualRows();
+}
+
+// Load and render deliveries history from Firebase
+function loadDeliveries() {
+  db.ref('deliveries').orderByChild('timestamp').on('value', snap => {
+    const list = [];
+    snap.forEach(c => list.push({ id: c.key, ...c.val() }));
+    list.reverse();
+    renderDeliveriesList(list);
+  });
+}
+
+function renderDeliveriesList(list) {
+  const container = document.getElementById('deliveries-list');
+  if (!container) return;
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><div class="es-icon">🚚</div><p>אין משלוחים רשומים עדיין</p></div>`;
+    return;
+  }
+  container.innerHTML = list.map(d => {
+    const dateStr = d.date || new Date(d.timestamp).toLocaleDateString('he-IL');
+    const rows = (d.items || []).map(r =>
+      `<tr><td>${esc(r.name)}</td><td>${r.qty}</td><td>${r.status||''}</td></tr>`
+    ).join('');
+    return `
+      <div class="card" style="margin-bottom:10px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+          <div>
+            <div style="font-weight:800;font-size:.97em;">🚚 ${esc(d.name)}</div>
+            <div style="font-size:.78em;color:var(--text-muted);margin-top:3px;">
+              📅 ${dateStr} · 👤 ${esc(d.user||'—')} · ✅ ${d.successCount||0} פריטים
+              ${d.failCount ? ` · ⚠️ ${d.failCount} לא נמצאו` : ''}
+            </div>
+          </div>
+          <button class="btn sm w-auto btn-ghost" onclick="this.closest('.card').querySelector('.del-detail').classList.toggle('hidden')">פרטים ▾</button>
+        </div>
+        <div class="del-detail hidden">
+          <div class="table-outer">
+            <table>
+              <thead><tr><th>שם מוצר</th><th>כמות</th><th>תוצאה</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// Init delivery tab default date
+(function() {
+  const d = document.getElementById('del-date');
+  if (d) d.value = new Date().toISOString().split('T')[0];
+})();
+
 </script>
+<!-- Full Edit Item Modal -->
+<div id="editItemModal" style="position:fixed;inset:0;background:rgba(13,27,42,.75);backdrop-filter:blur(8px);z-index:9600;display:none;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border-radius:var(--r-lg);padding:26px 22px 20px;width:100%;max-width:420px;box-shadow:var(--sh-xl);animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both;max-height:90vh;overflow-y:auto;">
+    <h3 style="font-size:1.05em;font-weight:800;color:var(--c-navy);margin-bottom:18px;display:flex;align-items:center;gap:8px;">✏️ עריכת מוצר</h3>
+    <input type="hidden" id="eim-id">
+    <label style="font-size:.82em;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">שם מוצר</label>
+    <input type="text" id="eim-name" class="modal-input" style="width:100%;margin-bottom:10px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div>
+        <label style="font-size:.82em;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">קטגוריה</label>
+        <input type="text" id="eim-cat" class="modal-input" style="width:100%;" list="eim-cat-list">
+        <datalist id="eim-cat-list"></datalist>
+      </div>
+      <div>
+        <label style="font-size:.82em;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">כמות</label>
+        <input type="number" id="eim-qty" class="modal-input" style="width:100%;" min="0">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div>
+        <label style="font-size:.82em;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">סף מינימום</label>
+        <input type="number" id="eim-min" class="modal-input" style="width:100%;" min="0">
+      </div>
+      <div>
+        <label style="font-size:.82em;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">ברקוד</label>
+        <input type="text" id="eim-barcode" class="modal-input" style="width:100%;">
+      </div>
+    </div>
+    <label style="font-size:.82em;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">מזהה מד"אנט</label>
+    <input type="text" id="eim-madanet-id" class="modal-input" style="width:100%;margin-bottom:10px;">
+    <label style="font-size:.82em;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">שם מד"אנט</label>
+    <input type="text" id="eim-madanet-name" class="modal-input" style="width:100%;margin-bottom:16px;">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-blue" onclick="saveEditItem()" style="flex:1;">💾 שמור שינויים</button>
+      <button class="btn btn-ghost" onclick="closeEditItemModal()" style="flex:0 0 auto;">ביטול</button>
+    </div>
+  </div>
+</div>
+
 <!-- Dark Mode Toggle -->
 <button id="dark-toggle" onclick="toggleDarkMode()" title="מצב לילה">🌙</button>
 
