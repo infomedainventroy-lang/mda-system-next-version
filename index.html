@@ -6354,112 +6354,137 @@ document.getElementById('editItemModal').addEventListener('click', function(e) {
 });
 
 /* ================================================================
-   DELIVERY SYSTEM
+   DELIVERY SYSTEM  — v2 (fixed)
    ================================================================ */
-let _deliveryRows = []; // { itemId, itemName, qty }
-let _deliveryMode = 'file';
-let _deliveryFileRows = []; // parsed from file
+let _deliveryRows     = [];   // manual rows: { itemId, itemName, qty }
+let _deliveryMode     = 'file';
+let _deliveryFileRows = [];   // rows parsed from CSV file
 
+/* ── mode switch ── */
 function setDeliveryMode(mode) {
   _deliveryMode = mode;
   const filePanel   = document.getElementById('del-file-panel');
   const manualPanel = document.getElementById('del-manual-panel');
   const fileBtn     = document.getElementById('del-mode-file-btn');
   const manualBtn   = document.getElementById('del-mode-manual-btn');
+  if (!filePanel || !manualPanel) return;
   if (mode === 'file') {
     filePanel.style.display   = '';
     manualPanel.style.display = 'none';
-    fileBtn.className   = 'btn w-auto btn-blue';
-    manualBtn.className = 'btn w-auto btn-ghost';
+    fileBtn.style.background  = 'var(--c-blue)';
+    fileBtn.style.color       = 'white';
+    manualBtn.style.background = 'transparent';
+    manualBtn.style.color      = 'var(--text-soft)';
   } else {
     filePanel.style.display   = 'none';
     manualPanel.style.display = '';
-    fileBtn.className   = 'btn w-auto btn-ghost';
-    manualBtn.className = 'btn w-auto btn-blue';
+    manualBtn.style.background = 'var(--c-blue)';
+    manualBtn.style.color      = 'white';
+    fileBtn.style.background   = 'transparent';
+    fileBtn.style.color        = 'var(--text-soft)';
   }
 }
 
+/* ── CSV file upload ── */
 function handleDeliveryFile(input) {
   const file = input.files[0];
   if (!file) return;
   const ext = file.name.split('.').pop().toLowerCase();
+  if (ext !== 'csv') return showToast('רק קבצי CSV נתמכים', 'error');
   const reader = new FileReader();
   reader.onload = function(e) {
-    let rows = [];
-    if (ext === 'csv') {
-      rows = parseDeliveryCSV(e.target.result);
-    } else {
-      showToast('רק קבצי CSV נתמכים כרגע', 'error');
-      return;
-    }
+    const rows = parseDeliveryCSV(e.target.result);
+    if (!rows.length) { showToast('לא נמצאו שורות תקינות בקובץ', 'error'); return; }
     _deliveryFileRows = rows;
     renderDeliveryPreview(rows);
+    showToast(`📋 נטענו ${rows.length} שורות`, 'success');
   };
-  if (ext === 'csv') reader.readAsText(file, 'UTF-8');
-  else reader.readAsArrayBuffer(file);
+  reader.onerror = () => showToast('שגיאה בקריאת הקובץ', 'error');
+  reader.readAsText(file, 'UTF-8');
 }
 
 function parseDeliveryCSV(text) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim());
-  // Skip header if first col looks like header
+  // Normalize BOM + line endings
+  text = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  if (!lines.length) return [];
   const rows = [];
-  lines.forEach((line, idx) => {
-    const cols = line.split(',').map(c => c.replace(/^"|"$/g, '').trim());
-    if (cols.length < 2) return;
+  // Detect if first line is header (qty cell not a number)
+  const firstCols = lines[0].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+  const startIdx  = isNaN(parseInt(firstCols[1], 10)) ? 1 : 0;
+  for (let i = startIdx; i < lines.length; i++) {
+    const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
     const name = cols[0];
     const qty  = parseInt(cols[1], 10);
-    if (!name || idx === 0 && isNaN(qty)) return; // skip header row
-    if (!isNaN(qty) && qty > 0) rows.push({ name, qty });
-  });
+    if (!name || isNaN(qty) || qty <= 0) continue;
+    rows.push({ name, qty });
+  }
   return rows;
 }
 
 function renderDeliveryPreview(rows) {
   const preview = document.getElementById('del-file-preview');
   const tbody   = document.getElementById('del-preview-body');
-  preview.style.display = rows.length ? '' : 'none';
+  if (!preview || !tbody) return;
   tbody.innerHTML = rows.map(r => {
-    const match = (inv||[]).find(i => i.name.trim().toLowerCase() === r.name.trim().toLowerCase());
+    const match = (inv||[]).find(i => i.name && i.name.trim().toLowerCase() === r.name.trim().toLowerCase());
     const status = match
-      ? `<span style="color:var(--c-green);font-weight:700;">✅ נמצא</span>`
-      : `<span style="color:var(--c-orange);font-weight:700;">⚠️ לא נמצא</span>`;
+      ? `<span style="color:var(--c-green-light);font-weight:700;">✅ נמצא</span>`
+      : `<span style="color:var(--c-orange);font-weight:700;">⚠️ לא נמצא במלאי</span>`;
     return `<tr><td>${esc(r.name)}</td><td>${r.qty}</td><td>${status}</td></tr>`;
   }).join('');
+  preview.style.display = '';
 }
 
+/* ── manual search dropdown ── */
 function handleDeliverySearch(query) {
   const dd = document.getElementById('del-search-dropdown');
+  if (!dd) return;
   if (!query.trim()) { dd.style.display = 'none'; return; }
   const q = query.toLowerCase();
-  const matches = (inv||[]).filter(i => i.name && i.name.toLowerCase().includes(q)).slice(0, 8);
+  const matches = (inv||[]).filter(i => i.name && i.name.toLowerCase().includes(q)).slice(0, 10);
   if (!matches.length) { dd.style.display = 'none'; return; }
   dd.innerHTML = matches.map(i =>
     `<div onclick="selectDeliveryItem('${esc(i.id)}','${esc(i.name)}')"
-      style="padding:10px 14px;cursor:pointer;font-size:.9em;font-weight:600;transition:background .15s;border-bottom:1px solid var(--border);"
+      style="padding:9px 14px;cursor:pointer;font-size:.9em;font-weight:600;border-bottom:1px solid var(--border);"
       onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">${esc(i.name)}</div>`
   ).join('');
   dd.style.display = '';
 }
 
 function selectDeliveryItem(id, name) {
-  document.getElementById('del-manual-search').value = name;
-  document.getElementById('del-search-dropdown').style.display = 'none';
-  document.getElementById('del-manual-search').dataset.selectedId = id;
+  const inp = document.getElementById('del-manual-search');
+  if (!inp) return;
+  inp.value = name;
+  inp.dataset.selectedId = id;
+  const dd = document.getElementById('del-search-dropdown');
+  if (dd) dd.style.display = 'none';
+  document.getElementById('del-manual-qty')?.focus();
 }
 
+/* ── add row to manual list ── */
 function addDeliveryManualRow() {
-  const input   = document.getElementById('del-manual-search');
-  const qtyInp  = document.getElementById('del-manual-qty');
-  const name    = input.value.trim();
-  const qty     = parseInt(qtyInp.value, 10);
-  const itemId  = input.dataset.selectedId || '';
-  if (!name) return showToast('בחר מוצר', 'warning');
+  const input  = document.getElementById('del-manual-search');
+  const qtyInp = document.getElementById('del-manual-qty');
+  if (!input || !qtyInp) return;
+  const name   = input.value.trim();
+  const qty    = parseInt(qtyInp.value, 10);
+  const itemId = input.dataset.selectedId || '';
+  if (!name)           return showToast('חפש ובחר מוצר מהרשימה', 'warning');
   if (!qty || qty <= 0) return showToast('הזן כמות תקינה', 'warning');
-  _deliveryRows.push({ itemId, itemName: name, qty });
+  // Verify item exists if no id
+  if (!itemId) {
+    const found = (inv||[]).find(i => i.name && i.name.trim().toLowerCase() === name.toLowerCase());
+    if (!found) return showToast(`"${name}" לא נמצא במלאי`, 'error');
+    _deliveryRows.push({ itemId: found.id, itemName: found.name, qty });
+  } else {
+    _deliveryRows.push({ itemId, itemName: name, qty });
+  }
   renderDeliveryManualRows();
   input.value = '';
   input.dataset.selectedId = '';
   qtyInp.value = '';
+  input.focus();
 }
 
 function removeDeliveryRow(idx) {
@@ -6469,91 +6494,118 @@ function removeDeliveryRow(idx) {
 
 function renderDeliveryManualRows() {
   const container = document.getElementById('del-manual-rows');
+  if (!container) return;
   if (!_deliveryRows.length) { container.innerHTML = ''; return; }
   container.innerHTML = `
-    <div class="table-outer">
+    <div class="table-outer" style="margin-top:6px;">
       <table>
         <thead><tr><th>שם מוצר</th><th>כמות</th><th></th></tr></thead>
         <tbody>
-          ${_deliveryRows.map((r, i) => `
+          ${_deliveryRows.map((r, idx) => `
             <tr>
-              <td>${esc(r.itemName)}</td>
+              <td style="font-weight:600;">${esc(r.itemName)}</td>
               <td>${r.qty}</td>
-              <td><button class="btn sm w-auto btn-red" onclick="removeDeliveryRow(${i})">✕</button></td>
+              <td><button class="btn sm w-auto btn-red" onclick="removeDeliveryRow(${idx})">✕</button></td>
             </tr>`).join('')}
         </tbody>
       </table>
     </div>`;
 }
 
+/* ── save delivery ── */
 async function saveDelivery() {
-  const name = document.getElementById('del-name').value.trim();
-  const date = document.getElementById('del-date').value;
-  if (!name) return showToast('הזן שם/סיבת המשלוח', 'warning');
-  if (!date) return showToast('בחר תאריך', 'warning');
+  const delivName = document.getElementById('del-name').value.trim();
+  const delivDate = document.getElementById('del-date').value;
+  if (!delivName) return showToast('הזן שם/סיבת המשלוח', 'warning');
+  if (!delivDate) return showToast('בחר תאריך', 'warning');
 
-  let rows = [];
-  if (_deliveryMode === 'file') {
-    rows = _deliveryFileRows;
-  } else {
-    rows = _deliveryRows;
-  }
-  if (!rows.length) return showToast('אין פריטים במשלוח', 'warning');
+  const rows = _deliveryMode === 'file' ? _deliveryFileRows : _deliveryRows;
+  if (!rows.length) return showToast('אין פריטים במשלוח — הוסף פריטים תחילה', 'warning');
 
-  const results = [];
-  let successCount = 0, failCount = 0;
+  // Disable button during save
+  const saveBtn = document.querySelector('#tab-deliveries .btn-green');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ שומר...'; }
+
+  const resultItems = {};   // Firebase doesn't support arrays well — use object
+  let successCount = 0, failCount = 0, idx = 0;
+
   for (const row of rows) {
-    // Find item by id or name
+    const rowName = (row.name || row.itemName || '').trim();
+    // Find item
     let item = null;
     if (row.itemId) item = (inv||[]).find(i => i.id === row.itemId);
-    if (!item) item = (inv||[]).find(i => i.name.trim().toLowerCase() === (row.name||row.itemName||'').trim().toLowerCase());
+    if (!item && rowName) item = (inv||[]).find(i => i.name && i.name.trim().toLowerCase() === rowName.toLowerCase());
+
     if (!item) {
-      results.push({ name: row.name||row.itemName, qty: row.qty, status: 'לא נמצא' });
+      resultItems['r' + idx] = { name: rowName, qty: row.qty, status: '⚠️ לא נמצא במלאי' };
       failCount++;
-      continue;
+    } else {
+      try {
+        const r = await changeQuantity({
+          itemId: item.id,
+          delta:  row.qty,
+          user:   window.curU || 'מנהל',
+          reason: `משלוח: ${delivName}`,
+          action: 'add'
+        });
+        resultItems['r' + idx] = { name: item.name, qty: row.qty, status: `✅ ${r.beforeQty} ← ${r.afterQty}` };
+        successCount++;
+      } catch(e) {
+        resultItems['r' + idx] = { name: item.name, qty: row.qty, status: '❌ שגיאה בעדכון' };
+        failCount++;
+      }
     }
-    try {
-      const r = await changeQuantity({ itemId: item.id, delta: row.qty, user: window.curU, reason: `משלוח: ${name}`, action: 'add' });
-      results.push({ name: item.name, qty: row.qty, status: `✅ ${r.beforeQty} → ${r.afterQty}` });
-      successCount++;
-    } catch(e) {
-      results.push({ name: item.name, qty: row.qty, status: '❌ שגיאה' });
-      failCount++;
-    }
+    idx++;
   }
 
-  // Save delivery record to Firebase
-  const deliveryRecord = {
-    name,
-    date,
-    user: window.curU || 'מנהל',
-    timestamp: Date.now(),
-    items: results,
-    successCount,
-    failCount,
-  };
-  await db.ref('deliveries').push(deliveryRecord);
+  // Save delivery record to Firebase (items as object, not array)
+  try {
+    await db.ref('deliveries').push({
+      name:         delivName,
+      date:         delivDate,
+      user:         window.curU || 'מנהל',
+      timestamp:    Date.now(),
+      items:        resultItems,
+      successCount,
+      failCount,
+      total:        idx,
+    });
+  } catch(e) {
+    console.error('[Delivery] Firebase save error:', e);
+    showToast('שגיאה בשמירה ל-Firebase', 'error');
+  }
 
-  showToast(`✅ משלוח נשמר: ${successCount} פריטים עודכנו${failCount ? ', ' + failCount + ' לא נמצאו' : ''}`, 'success', 5000);
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 שמור משלוח'; }
+
+  showToast(
+    `✅ משלוח נשמר! ${successCount} עודכנו${failCount ? ` · ⚠️ ${failCount} לא נמצאו` : ''}`,
+    successCount > 0 ? 'success' : 'error', 5000
+  );
 
   // Reset form
   document.getElementById('del-name').value = '';
-  document.getElementById('del-date').value = '';
-  document.getElementById('del-file-input').value = '';
-  document.getElementById('del-file-preview').style.display = 'none';
-  _deliveryRows = [];
+  document.getElementById('del-date').value = new Date().toISOString().split('T')[0];
+  const fi = document.getElementById('del-file-input');
+  if (fi) fi.value = '';
+  const fp = document.getElementById('del-file-preview');
+  if (fp) fp.style.display = 'none';
+  _deliveryRows     = [];
   _deliveryFileRows = [];
   renderDeliveryManualRows();
 }
 
-// Load and render deliveries history from Firebase
+/* ── load history from Firebase ── */
 function loadDeliveries() {
+  if (!db) return;
   db.ref('deliveries').orderByChild('timestamp').on('value', snap => {
     const list = [];
-    snap.forEach(c => list.push({ id: c.key, ...c.val() }));
-    list.reverse();
+    snap.forEach(c => {
+      const val = c.val();
+      if (val) list.push(Object.assign({ _key: c.key }, val));
+    });
+    list.reverse(); // newest first
     renderDeliveriesList(list);
-  });
+  }, err => console.error('[Delivery] load error:', err));
 }
 
 function renderDeliveriesList(list) {
@@ -6563,28 +6615,39 @@ function renderDeliveriesList(list) {
     container.innerHTML = `<div class="empty-state"><div class="es-icon">🚚</div><p>אין משלוחים רשומים עדיין</p></div>`;
     return;
   }
-  container.innerHTML = list.map(d => {
+  container.innerHTML = list.map((d, di) => {
     const dateStr = d.date || new Date(d.timestamp).toLocaleDateString('he-IL');
-    const rows = (d.items || []).map(r =>
-      `<tr><td>${esc(r.name)}</td><td>${r.qty}</td><td>${r.status||''}</td></tr>`
+    // items stored as object {r0:{}, r1:{}, ...}
+    const itemsObj = d.items || {};
+    const itemRows = Object.values(itemsObj).map(r =>
+      `<tr>
+        <td style="font-weight:600;">${esc(r.name||'')}</td>
+        <td>${r.qty||0}</td>
+        <td>${esc(r.status||'')}</td>
+      </tr>`
     ).join('');
+    const detailId = `del-detail-${di}`;
     return `
-      <div class="card" style="margin-bottom:10px;padding:14px 16px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;margin-bottom:8px;box-shadow:var(--sh-xs);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
           <div>
-            <div style="font-weight:800;font-size:.97em;">🚚 ${esc(d.name)}</div>
+            <div style="font-weight:800;font-size:.97em;">🚚 ${esc(d.name||'')}</div>
             <div style="font-size:.78em;color:var(--text-muted);margin-top:3px;">
-              📅 ${dateStr} · 👤 ${esc(d.user||'—')} · ✅ ${d.successCount||0} פריטים
-              ${d.failCount ? ` · ⚠️ ${d.failCount} לא נמצאו` : ''}
+              📅 ${dateStr} &nbsp;·&nbsp; 👤 ${esc(d.user||'—')} &nbsp;·&nbsp;
+              ✅ <b>${d.successCount||0}</b> עודכנו
+              ${d.failCount ? ` &nbsp;·&nbsp; ⚠️ <b>${d.failCount}</b> לא נמצאו` : ''}
             </div>
           </div>
-          <button class="btn sm w-auto btn-ghost" onclick="this.closest('.card').querySelector('.del-detail').classList.toggle('hidden')">פרטים ▾</button>
+          <button class="btn sm w-auto btn-ghost"
+            onclick="var el=document.getElementById('${detailId}');el.style.display=el.style.display==='none'?'':'none';">
+            פרטים ▾
+          </button>
         </div>
-        <div class="del-detail hidden">
+        <div id="${detailId}" style="display:none;margin-top:10px;">
           <div class="table-outer">
             <table>
               <thead><tr><th>שם מוצר</th><th>כמות</th><th>תוצאה</th></tr></thead>
-              <tbody>${rows}</tbody>
+              <tbody>${itemRows}</tbody>
             </table>
           </div>
         </div>
@@ -6592,8 +6655,8 @@ function renderDeliveriesList(list) {
   }).join('');
 }
 
-// Init delivery tab default date
-(function() {
+/* ── Set default date on page load ── */
+(function _initDeliveryDate() {
   const d = document.getElementById('del-date');
   if (d) d.value = new Date().toISOString().split('T')[0];
 })();
