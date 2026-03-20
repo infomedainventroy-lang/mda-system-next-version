@@ -2395,48 +2395,102 @@ tr:hover td { background: var(--bg); }
 
       <!-- DELIVERIES -->
       <div id="tab-deliveries" class="tab-pane hidden">
+
+        <!-- Step 1: Details -->
         <div class="card">
           <div class="card-title">🚚 רישום משלוח חדש</div>
-          <input type="text" id="del-name" class="app-input" placeholder="שם/סיבת המשלוח (לדוגמה: חידוש ציוד חירום)">
-          <input type="date" id="del-date" class="app-input">
-          <!-- Mode selector -->
-          <div style="display:flex;gap:8px;margin:10px 0;">
-            <button class="btn w-auto btn-blue" id="del-mode-file-btn" onclick="setDeliveryMode('file')" style="flex:1;">📁 ייבוא קובץ</button>
-            <button class="btn w-auto btn-ghost" id="del-mode-manual-btn" onclick="setDeliveryMode('manual')" style="flex:1;">✍️ הוספה ידנית</button>
+
+          <!-- Step 1: Name + Date -->
+          <div style="background:var(--bg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);">
+            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">שלב 1 — פרטי המשלוח</div>
+            <input type="text" id="del-name" class="app-input" placeholder="שם / סיבת המשלוח (לדוגמה: חידוש ציוד חירום)" style="margin-bottom:8px;">
+            <input type="date" id="del-date" class="app-input" style="margin-bottom:0;">
           </div>
 
-          <!-- FILE mode -->
-          <div id="del-file-panel">
-            <div style="font-size:.8em;color:var(--text-muted);margin-bottom:8px;">
-              פורמט CSV/Excel: עמודה 1 = שם מוצר · עמודה 2 = כמות שהתקבלה
+          <!-- Step 2: Mode -->
+          <div style="background:var(--bg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);">
+            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">שלב 2 — בחר שיטת הוספה</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <button id="del-mode-file-btn" onclick="setDeliveryMode('file')"
+                style="padding:14px 8px;border:2px solid var(--c-blue);border-radius:var(--r-md);background:var(--c-blue);color:white;font-family:'Heebo',sans-serif;font-size:.88em;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;">
+                <span style="font-size:1.6em;">📁</span>העלאת קובץ CSV
+              </button>
+              <button id="del-mode-manual-btn" onclick="setDeliveryMode('manual')"
+                style="padding:14px 8px;border:2px solid var(--border);border-radius:var(--r-md);background:var(--surface);color:var(--text-soft);font-family:'Heebo',sans-serif;font-size:.88em;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;">
+                <span style="font-size:1.6em;">✍️</span>הוספה ידנית
+              </button>
             </div>
-            <input type="file" id="del-file-input" accept=".csv,.xlsx,.xls" style="display:none;" onchange="handleDeliveryFile(this)">
-            <button class="btn btn-gray" onclick="document.getElementById('del-file-input').click()">📂 בחר קובץ</button>
+          </div>
+
+          <!-- FILE panel -->
+          <div id="del-file-panel" style="background:var(--bg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);">
+            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">שלב 3 — העלה קובץ</div>
+            <div style="font-size:.8em;color:var(--text-muted);margin-bottom:10px;line-height:1.6;">
+              📋 פורמט CSV נדרש:<br>
+              <b>עמודה A</b> = שם המוצר &nbsp;·&nbsp; <b>עמודה B</b> = כמות שהתקבלה
+            </div>
+            <!-- Drop zone / upload button -->
+            <input type="file" id="del-file-input" accept=".csv" style="display:none;" onchange="handleDeliveryFile(this)">
+            <div id="del-dropzone"
+              onclick="document.getElementById('del-file-input').click()"
+              style="border:2.5px dashed var(--border-dark);border-radius:var(--r-md);padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);"
+              onmouseover="this.style.borderColor='var(--c-blue)';this.style.background='#e3f2fd';"
+              onmouseout="this.style.borderColor='var(--border-dark)';this.style.background='var(--surface)';">
+              <div id="del-dropzone-text">
+                <div style="font-size:2em;margin-bottom:6px;">📂</div>
+                <div style="font-weight:800;font-size:.9em;color:var(--text);">לחץ לבחירת קובץ CSV</div>
+                <div style="font-size:.75em;color:var(--text-muted);margin-top:4px;">קובץ .csv בלבד</div>
+              </div>
+            </div>
+            <!-- Preview table -->
             <div id="del-file-preview" style="display:none;margin-top:12px;">
-              <div class="card-title" style="font-size:.85em;margin-bottom:8px;">תצוגה מקדימה:</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <div style="font-weight:800;font-size:.88em;color:var(--text);">📋 תצוגה מקדימה</div>
+                <span id="del-preview-count" style="font-size:.78em;background:var(--c-blue);color:white;padding:2px 10px;border-radius:var(--r-full);font-weight:700;"></span>
+              </div>
               <div class="table-outer">
                 <table>
-                  <thead><tr><th>שם מוצר</th><th>כמות</th><th>מצב</th></tr></thead>
+                  <thead><tr><th>שם מוצר</th><th>כמות</th><th>סטטוס</th></tr></thead>
                   <tbody id="del-preview-body"></tbody>
                 </table>
               </div>
             </div>
           </div>
 
-          <!-- MANUAL mode -->
-          <div id="del-manual-panel" style="display:none;">
-            <div style="display:flex;gap:8px;margin-bottom:8px;">
-              <div style="flex:1;position:relative;">
-                <input type="text" id="del-manual-search" class="app-input" placeholder="🔍 חפש שם מוצר..." oninput="handleDeliverySearch(this.value)" autocomplete="off" style="margin-bottom:0;">
-                <div id="del-search-dropdown" style="display:none;position:absolute;top:100%;right:0;left:0;background:var(--surface);border:1.5px solid var(--c-blue);border-radius:var(--r-sm);box-shadow:var(--sh-md);z-index:500;max-height:200px;overflow-y:auto;"></div>
-              </div>
-              <input type="number" id="del-manual-qty" class="app-input" placeholder="כמות" min="1" style="width:100px;margin-bottom:0;">
-              <button class="btn btn-blue w-auto" onclick="addDeliveryManualRow()" style="white-space:nowrap;">➕ הוסף</button>
+          <!-- MANUAL panel -->
+          <div id="del-manual-panel" style="display:none;background:var(--bg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);">
+            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">שלב 3 — הוסף פריטים ידנית</div>
+            <!-- Search row -->
+            <div style="position:relative;margin-bottom:8px;">
+              <input type="text" id="del-manual-search" class="app-input"
+                placeholder="🔍 התחל להקליד שם מוצר..."
+                oninput="handleDeliverySearch(this.value)"
+                autocomplete="off" style="margin-bottom:0;padding-left:14px;">
+              <div id="del-search-dropdown"
+                style="display:none;position:absolute;top:100%;right:0;left:0;background:var(--surface);border:2px solid var(--c-blue);border-radius:0 0 var(--r-sm) var(--r-sm);box-shadow:var(--sh-md);z-index:500;max-height:220px;overflow-y:auto;"></div>
             </div>
-            <div id="del-manual-rows" style="margin-top:4px;"></div>
+            <!-- Selected item display -->
+            <div id="del-selected-item" style="display:none;background:#e3f2fd;border:1.5px solid var(--c-blue);border-radius:var(--r-sm);padding:8px 12px;margin-bottom:8px;font-size:.88em;font-weight:700;color:var(--c-blue);display:none;align-items:center;justify-content:space-between;">
+              <span id="del-selected-name">—</span>
+              <button onclick="clearDeliverySelection()" style="background:none;border:none;cursor:pointer;font-size:1em;color:var(--c-blue);">✕</button>
+            </div>
+            <!-- Qty + add row -->
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="number" id="del-manual-qty" class="app-input" placeholder="כמות" min="1"
+                style="width:110px;margin-bottom:0;font-size:1.1em;font-weight:800;text-align:center;"
+                onkeydown="if(event.key==='Enter') addDeliveryManualRow()">
+              <button class="btn btn-blue" onclick="addDeliveryManualRow()" style="flex:1;font-size:.95em;">
+                ➕ הוסף לרשימה
+              </button>
+            </div>
+            <!-- Rows list -->
+            <div id="del-manual-rows" style="margin-top:10px;"></div>
           </div>
 
-          <button class="btn btn-green" style="margin-top:14px;" onclick="saveDelivery()">💾 שמור משלוח</button>
+          <!-- Save button -->
+          <button class="btn btn-green" style="margin-top:4px;padding:14px;font-size:1em;" onclick="saveDelivery()">
+            💾 שמור ועדכן מלאי
+          </button>
         </div>
 
         <!-- Delivery history -->
@@ -6354,13 +6408,21 @@ document.getElementById('editItemModal').addEventListener('click', function(e) {
 });
 
 /* ================================================================
-   DELIVERY SYSTEM  — v2 (fixed)
+   DELIVERY SYSTEM  — v3 (full rewrite with visual feedback)
    ================================================================ */
-let _deliveryRows     = [];   // manual rows: { itemId, itemName, qty }
+let _deliveryRows     = [];
 let _deliveryMode     = 'file';
-let _deliveryFileRows = [];   // rows parsed from CSV file
+let _deliveryFileRows = [];
+let _deliverySelectedId   = '';
+let _deliverySelectedName = '';
 
-/* ── mode switch ── */
+/* ── Set default date ── */
+function _initDeliveryTab() {
+  const d = document.getElementById('del-date');
+  if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+}
+
+/* ── Mode switch ── */
 function setDeliveryMode(mode) {
   _deliveryMode = mode;
   const filePanel   = document.getElementById('del-file-panel');
@@ -6368,52 +6430,79 @@ function setDeliveryMode(mode) {
   const fileBtn     = document.getElementById('del-mode-file-btn');
   const manualBtn   = document.getElementById('del-mode-manual-btn');
   if (!filePanel || !manualPanel) return;
+
   if (mode === 'file') {
-    filePanel.style.display   = '';
-    manualPanel.style.display = 'none';
-    fileBtn.style.background  = 'var(--c-blue)';
-    fileBtn.style.color       = 'white';
-    manualBtn.style.background = 'transparent';
+    filePanel.style.display    = '';
+    manualPanel.style.display  = 'none';
+    fileBtn.style.background   = 'var(--c-blue)';
+    fileBtn.style.color        = 'white';
+    fileBtn.style.borderColor  = 'var(--c-blue)';
+    manualBtn.style.background = 'var(--surface)';
     manualBtn.style.color      = 'var(--text-soft)';
+    manualBtn.style.borderColor= 'var(--border)';
   } else {
-    filePanel.style.display   = 'none';
-    manualPanel.style.display = '';
+    filePanel.style.display    = 'none';
+    manualPanel.style.display  = '';
     manualBtn.style.background = 'var(--c-blue)';
     manualBtn.style.color      = 'white';
-    fileBtn.style.background   = 'transparent';
+    manualBtn.style.borderColor= 'var(--c-blue)';
+    fileBtn.style.background   = 'var(--surface)';
     fileBtn.style.color        = 'var(--text-soft)';
+    fileBtn.style.borderColor  = 'var(--border)';
   }
 }
 
-/* ── CSV file upload ── */
+/* ── FILE upload ── */
 function handleDeliveryFile(input) {
   const file = input.files[0];
   if (!file) return;
+
+  // Update dropzone to show filename
+  const dz = document.getElementById('del-dropzone-text');
+  if (dz) dz.innerHTML = `
+    <div style="font-size:2em;margin-bottom:6px;">✅</div>
+    <div style="font-weight:800;font-size:.9em;color:var(--c-green);">${file.name}</div>
+    <div style="font-size:.75em;color:var(--text-muted);margin-top:4px;">קורא קובץ...</div>`;
+
   const ext = file.name.split('.').pop().toLowerCase();
-  if (ext !== 'csv') return showToast('רק קבצי CSV נתמכים', 'error');
+  if (ext !== 'csv') {
+    showToast('רק קבצי CSV נתמכים (.csv)', 'error');
+    if (dz) dz.innerHTML = `<div style="font-size:2em;margin-bottom:6px;">❌</div><div style="font-weight:800;font-size:.9em;color:var(--c-red);">קובץ לא תקין — נדרש CSV</div>`;
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = function(e) {
     const rows = parseDeliveryCSV(e.target.result);
-    if (!rows.length) { showToast('לא נמצאו שורות תקינות בקובץ', 'error'); return; }
+    if (!rows.length) {
+      showToast('לא נמצאו שורות תקינות בקובץ', 'error');
+      if (dz) dz.innerHTML = `<div style="font-size:2em;margin-bottom:6px;">⚠️</div><div style="font-weight:800;font-size:.9em;color:var(--c-orange);">לא נמצאו נתונים בקובץ</div>`;
+      return;
+    }
     _deliveryFileRows = rows;
     renderDeliveryPreview(rows);
-    showToast(`📋 נטענו ${rows.length} שורות`, 'success');
+    if (dz) dz.innerHTML = `
+      <div style="font-size:2em;margin-bottom:6px;">✅</div>
+      <div style="font-weight:800;font-size:.9em;color:var(--c-green);">${file.name}</div>
+      <div style="font-size:.75em;color:var(--text-muted);margin-top:4px;">נטענו ${rows.length} שורות — לחץ לשינוי</div>`;
+    showToast(`✅ קובץ נטען! ${rows.length} מוצרים`, 'success');
   };
-  reader.onerror = () => showToast('שגיאה בקריאת הקובץ', 'error');
+  reader.onerror = () => {
+    showToast('שגיאה בקריאת הקובץ', 'error');
+    if (dz) dz.innerHTML = `<div style="font-size:2em;">❌</div><div style="font-weight:800;color:var(--c-red);">שגיאה בקריאת הקובץ</div>`;
+  };
   reader.readAsText(file, 'UTF-8');
 }
 
 function parseDeliveryCSV(text) {
-  // Normalize BOM + line endings
-  text = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  text = text.replace(/^\uFEFF/, '').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const lines = text.split('\n').map(l => l.trim()).filter(l => l);
   if (!lines.length) return [];
-  const rows = [];
-  // Detect if first line is header (qty cell not a number)
-  const firstCols = lines[0].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+  const firstCols = lines[0].split(',').map(c => c.replace(/^"|"$/g,'').trim());
   const startIdx  = isNaN(parseInt(firstCols[1], 10)) ? 1 : 0;
+  const rows = [];
   for (let i = startIdx; i < lines.length; i++) {
-    const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+    const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g,'').trim());
     const name = cols[0];
     const qty  = parseInt(cols[1], 10);
     if (!name || isNaN(qty) || qty <= 0) continue;
@@ -6423,68 +6512,117 @@ function parseDeliveryCSV(text) {
 }
 
 function renderDeliveryPreview(rows) {
-  const preview = document.getElementById('del-file-preview');
-  const tbody   = document.getElementById('del-preview-body');
+  const preview  = document.getElementById('del-file-preview');
+  const tbody    = document.getElementById('del-preview-body');
+  const countEl  = document.getElementById('del-preview-count');
   if (!preview || !tbody) return;
+
+  let found = 0;
   tbody.innerHTML = rows.map(r => {
     const match = (inv||[]).find(i => i.name && i.name.trim().toLowerCase() === r.name.trim().toLowerCase());
+    if (match) found++;
     const status = match
       ? `<span style="color:var(--c-green-light);font-weight:700;">✅ נמצא</span>`
-      : `<span style="color:var(--c-orange);font-weight:700;">⚠️ לא נמצא במלאי</span>`;
-    return `<tr><td>${esc(r.name)}</td><td>${r.qty}</td><td>${status}</td></tr>`;
+      : `<span style="color:var(--c-orange);font-weight:700;">⚠️ לא נמצא</span>`;
+    return `<tr><td style="font-weight:600;">${esc(r.name)}</td><td>${r.qty}</td><td>${status}</td></tr>`;
   }).join('');
+
+  if (countEl) countEl.textContent = `${found}/${rows.length} נמצאו במלאי`;
   preview.style.display = '';
 }
 
-/* ── manual search dropdown ── */
+/* ── Manual search ── */
 function handleDeliverySearch(query) {
   const dd = document.getElementById('del-search-dropdown');
   if (!dd) return;
+
+  // Clear selection if user types new text
+  if (query !== _deliverySelectedName) {
+    _deliverySelectedId   = '';
+    _deliverySelectedName = '';
+    _updateSelectedDisplay();
+  }
+
   if (!query.trim()) { dd.style.display = 'none'; return; }
   const q = query.toLowerCase();
   const matches = (inv||[]).filter(i => i.name && i.name.toLowerCase().includes(q)).slice(0, 10);
-  if (!matches.length) { dd.style.display = 'none'; return; }
-  dd.innerHTML = matches.map(i =>
-    `<div onclick="selectDeliveryItem('${esc(i.id)}','${esc(i.name)}')"
-      style="padding:9px 14px;cursor:pointer;font-size:.9em;font-weight:600;border-bottom:1px solid var(--border);"
-      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">${esc(i.name)}</div>`
-  ).join('');
+  if (!matches.length) {
+    dd.innerHTML = `<div style="padding:10px 14px;font-size:.85em;color:var(--text-muted);">לא נמצאו תוצאות</div>`;
+    dd.style.display = '';
+    return;
+  }
+  dd.innerHTML = matches.map(i => `
+    <div onclick="selectDeliveryItem('${esc(i.id)}','${esc(i.name)}')"
+      style="padding:10px 14px;cursor:pointer;font-size:.9em;font-weight:600;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;"
+      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <span>${esc(i.name)}</span>
+      <span style="font-size:.78em;color:var(--text-muted);">${esc(i.category||'')}</span>
+    </div>`).join('');
   dd.style.display = '';
 }
 
 function selectDeliveryItem(id, name) {
+  _deliverySelectedId   = id;
+  _deliverySelectedName = name;
   const inp = document.getElementById('del-manual-search');
-  if (!inp) return;
-  inp.value = name;
-  inp.dataset.selectedId = id;
+  if (inp) { inp.value = name; }
   const dd = document.getElementById('del-search-dropdown');
   if (dd) dd.style.display = 'none';
+  _updateSelectedDisplay();
   document.getElementById('del-manual-qty')?.focus();
 }
 
-/* ── add row to manual list ── */
-function addDeliveryManualRow() {
-  const input  = document.getElementById('del-manual-search');
-  const qtyInp = document.getElementById('del-manual-qty');
-  if (!input || !qtyInp) return;
-  const name   = input.value.trim();
-  const qty    = parseInt(qtyInp.value, 10);
-  const itemId = input.dataset.selectedId || '';
-  if (!name)           return showToast('חפש ובחר מוצר מהרשימה', 'warning');
-  if (!qty || qty <= 0) return showToast('הזן כמות תקינה', 'warning');
-  // Verify item exists if no id
-  if (!itemId) {
-    const found = (inv||[]).find(i => i.name && i.name.trim().toLowerCase() === name.toLowerCase());
-    if (!found) return showToast(`"${name}" לא נמצא במלאי`, 'error');
-    _deliveryRows.push({ itemId: found.id, itemName: found.name, qty });
+function _updateSelectedDisplay() {
+  const el = document.getElementById('del-selected-item');
+  const nm = document.getElementById('del-selected-name');
+  if (!el) return;
+  if (_deliverySelectedId) {
+    if (nm) nm.textContent = _deliverySelectedName;
+    el.style.display = 'flex';
   } else {
-    _deliveryRows.push({ itemId, itemName: name, qty });
+    el.style.display = 'none';
   }
+}
+
+function clearDeliverySelection() {
+  _deliverySelectedId   = '';
+  _deliverySelectedName = '';
+  const inp = document.getElementById('del-manual-search');
+  if (inp) { inp.value = ''; inp.focus(); }
+  _updateSelectedDisplay();
+}
+
+/* ── Add manual row ── */
+function addDeliveryManualRow() {
+  const qtyInp = document.getElementById('del-manual-qty');
+  const qty    = parseInt(qtyInp?.value, 10);
+
+  if (!_deliverySelectedId && !_deliverySelectedName) {
+    showToast('חפש ובחר מוצר מהרשימה תחילה', 'warning');
+    document.getElementById('del-manual-search')?.focus();
+    return;
+  }
+  if (!qty || qty <= 0) {
+    showToast('הזן כמות תקינה', 'warning');
+    qtyInp?.focus();
+    return;
+  }
+
+  // Check for duplicate
+  const exists = _deliveryRows.findIndex(r => r.itemId === _deliverySelectedId);
+  if (exists >= 0) {
+    _deliveryRows[exists].qty += qty;
+    showToast(`✏️ כמות עודכנה ל-${_deliveryRows[exists].qty}`, 'info');
+  } else {
+    _deliveryRows.push({ itemId: _deliverySelectedId, itemName: _deliverySelectedName, qty });
+    showToast(`✅ "${_deliverySelectedName}" נוסף`, 'success');
+  }
+
   renderDeliveryManualRows();
-  input.value = '';
-  input.dataset.selectedId = '';
-  qtyInp.value = '';
-  input.focus();
+  // Clear for next item
+  clearDeliverySelection();
+  if (qtyInp) qtyInp.value = '';
+  document.getElementById('del-manual-search')?.focus();
 }
 
 function removeDeliveryRow(idx) {
@@ -6495,115 +6633,110 @@ function removeDeliveryRow(idx) {
 function renderDeliveryManualRows() {
   const container = document.getElementById('del-manual-rows');
   if (!container) return;
-  if (!_deliveryRows.length) { container.innerHTML = ''; return; }
+  if (!_deliveryRows.length) {
+    container.innerHTML = `<div style="text-align:center;padding:14px;font-size:.85em;color:var(--text-muted);">עדיין לא נוספו פריטים</div>`;
+    return;
+  }
+  const total = _deliveryRows.reduce((s,r) => s + r.qty, 0);
   container.innerHTML = `
-    <div class="table-outer" style="margin-top:6px;">
+    <div style="margin-bottom:6px;font-size:.8em;font-weight:700;color:var(--text-muted);">
+      📦 ${_deliveryRows.length} מוצרים · ${total} יחידות סה"כ
+    </div>
+    <div class="table-outer">
       <table>
         <thead><tr><th>שם מוצר</th><th>כמות</th><th></th></tr></thead>
         <tbody>
           ${_deliveryRows.map((r, idx) => `
             <tr>
-              <td style="font-weight:600;">${esc(r.itemName)}</td>
-              <td>${r.qty}</td>
-              <td><button class="btn sm w-auto btn-red" onclick="removeDeliveryRow(${idx})">✕</button></td>
+              <td style="font-weight:700;">${esc(r.itemName)}</td>
+              <td><b>${r.qty}</b></td>
+              <td><button class="btn sm w-auto btn-red" onclick="removeDeliveryRow(${idx})" title="הסר">🗑️</button></td>
             </tr>`).join('')}
         </tbody>
       </table>
     </div>`;
 }
 
-/* ── save delivery ── */
+/* ── Save delivery ── */
 async function saveDelivery() {
-  const delivName = document.getElementById('del-name').value.trim();
-  const delivDate = document.getElementById('del-date').value;
-  if (!delivName) return showToast('הזן שם/סיבת המשלוח', 'warning');
-  if (!delivDate) return showToast('בחר תאריך', 'warning');
+  const delivName = document.getElementById('del-name')?.value.trim();
+  const delivDate = document.getElementById('del-date')?.value;
+
+  if (!delivName) { showToast('שלב 1: הזן שם/סיבת המשלוח', 'warning'); document.getElementById('del-name')?.focus(); return; }
+  if (!delivDate) { showToast('שלב 1: בחר תאריך', 'warning'); document.getElementById('del-date')?.focus(); return; }
 
   const rows = _deliveryMode === 'file' ? _deliveryFileRows : _deliveryRows;
-  if (!rows.length) return showToast('אין פריטים במשלוח — הוסף פריטים תחילה', 'warning');
+  if (!rows.length) {
+    showToast(_deliveryMode === 'file' ? 'שלב 3: טען קובץ CSV תחילה' : 'שלב 3: הוסף פריטים לרשימה', 'warning');
+    return;
+  }
 
-  // Disable button during save
   const saveBtn = document.querySelector('#tab-deliveries .btn-green');
-  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ שומר...'; }
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = `⏳ מעדכן ${rows.length} פריטים...`; }
 
-  const resultItems = {};   // Firebase doesn't support arrays well — use object
-  let successCount = 0, failCount = 0, idx = 0;
+  const resultItems = {};
+  let successCount = 0, failCount = 0;
 
-  for (const row of rows) {
+  for (let i = 0; i < rows.length; i++) {
+    const row     = rows[i];
     const rowName = (row.name || row.itemName || '').trim();
-    // Find item
+    if (saveBtn) saveBtn.textContent = `⏳ ${i+1}/${rows.length} — ${rowName}`;
+
     let item = null;
-    if (row.itemId) item = (inv||[]).find(i => i.id === row.itemId);
-    if (!item && rowName) item = (inv||[]).find(i => i.name && i.name.trim().toLowerCase() === rowName.toLowerCase());
+    if (row.itemId) item = (inv||[]).find(x => x.id === row.itemId);
+    if (!item && rowName) item = (inv||[]).find(x => x.name && x.name.trim().toLowerCase() === rowName.toLowerCase());
 
     if (!item) {
-      resultItems['r' + idx] = { name: rowName, qty: row.qty, status: '⚠️ לא נמצא במלאי' };
+      resultItems['r'+i] = { name: rowName, qty: row.qty, status: '⚠️ לא נמצא במלאי' };
       failCount++;
     } else {
       try {
-        const r = await changeQuantity({
-          itemId: item.id,
-          delta:  row.qty,
-          user:   window.curU || 'מנהל',
-          reason: `משלוח: ${delivName}`,
-          action: 'add'
-        });
-        resultItems['r' + idx] = { name: item.name, qty: row.qty, status: `✅ ${r.beforeQty} ← ${r.afterQty}` };
+        const r = await changeQuantity({ itemId: item.id, delta: row.qty, user: window.curU||'מנהל', reason: `משלוח: ${delivName}`, action: 'add' });
+        resultItems['r'+i] = { name: item.name, qty: row.qty, status: `✅ ${r.beforeQty} ← ${r.afterQty}` };
         successCount++;
       } catch(e) {
-        resultItems['r' + idx] = { name: item.name, qty: row.qty, status: '❌ שגיאה בעדכון' };
+        resultItems['r'+i] = { name: item.name||rowName, qty: row.qty, status: '❌ שגיאה' };
         failCount++;
       }
     }
-    idx++;
   }
 
-  // Save delivery record to Firebase (items as object, not array)
   try {
     await db.ref('deliveries').push({
-      name:         delivName,
-      date:         delivDate,
-      user:         window.curU || 'מנהל',
-      timestamp:    Date.now(),
-      items:        resultItems,
-      successCount,
-      failCount,
-      total:        idx,
+      name: delivName, date: delivDate,
+      user: window.curU || 'מנהל',
+      timestamp: Date.now(),
+      items: resultItems,
+      successCount, failCount, total: rows.length,
     });
-  } catch(e) {
-    console.error('[Delivery] Firebase save error:', e);
-    showToast('שגיאה בשמירה ל-Firebase', 'error');
-  }
+  } catch(e) { console.error('[Delivery] save error:', e); }
 
-  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 שמור משלוח'; }
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 שמור ועדכן מלאי'; }
 
   showToast(
     `✅ משלוח נשמר! ${successCount} עודכנו${failCount ? ` · ⚠️ ${failCount} לא נמצאו` : ''}`,
-    successCount > 0 ? 'success' : 'error', 5000
+    successCount > 0 ? 'success' : 'error', 6000
   );
 
-  // Reset form
+  // Reset
   document.getElementById('del-name').value = '';
-  document.getElementById('del-date').value = new Date().toISOString().split('T')[0];
-  const fi = document.getElementById('del-file-input');
-  if (fi) fi.value = '';
-  const fp = document.getElementById('del-file-preview');
-  if (fp) fp.style.display = 'none';
-  _deliveryRows     = [];
-  _deliveryFileRows = [];
+  document.getElementById('del-date').value  = new Date().toISOString().split('T')[0];
+  const fi = document.getElementById('del-file-input'); if (fi) fi.value = '';
+  const fp = document.getElementById('del-file-preview'); if (fp) fp.style.display = 'none';
+  const dz = document.getElementById('del-dropzone-text');
+  if (dz) dz.innerHTML = `<div style="font-size:2em;margin-bottom:6px;">📂</div><div style="font-weight:800;font-size:.9em;color:var(--text);">לחץ לבחירת קובץ CSV</div><div style="font-size:.75em;color:var(--text-muted);margin-top:4px;">קובץ .csv בלבד</div>`;
+  _deliveryRows = []; _deliveryFileRows = [];
+  clearDeliverySelection();
   renderDeliveryManualRows();
 }
 
-/* ── load history from Firebase ── */
+/* ── Load history ── */
 function loadDeliveries() {
   if (!db) return;
   db.ref('deliveries').orderByChild('timestamp').on('value', snap => {
     const list = [];
-    snap.forEach(c => {
-      const val = c.val();
-      if (val) list.push(Object.assign({ _key: c.key }, val));
-    });
-    list.reverse(); // newest first
+    snap.forEach(c => { const v = c.val(); if (v) list.push(Object.assign({ _key: c.key }, v)); });
+    list.reverse();
     renderDeliveriesList(list);
   }, err => console.error('[Delivery] load error:', err));
 }
@@ -6616,19 +6749,15 @@ function renderDeliveriesList(list) {
     return;
   }
   container.innerHTML = list.map((d, di) => {
-    const dateStr = d.date || new Date(d.timestamp).toLocaleDateString('he-IL');
-    // items stored as object {r0:{}, r1:{}, ...}
+    const dateStr  = d.date || new Date(d.timestamp).toLocaleDateString('he-IL');
     const itemsObj = d.items || {};
     const itemRows = Object.values(itemsObj).map(r =>
-      `<tr>
-        <td style="font-weight:600;">${esc(r.name||'')}</td>
-        <td>${r.qty||0}</td>
-        <td>${esc(r.status||'')}</td>
-      </tr>`
+      `<tr><td style="font-weight:600;">${esc(r.name||'')}</td><td>${r.qty||0}</td><td>${esc(r.status||'')}</td></tr>`
     ).join('');
     const detailId = `del-detail-${di}`;
+    const hasWarnings = Object.values(itemsObj).some(r => (r.status||'').includes('⚠️') || (r.status||'').includes('❌'));
     return `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;margin-bottom:8px;box-shadow:var(--sh-xs);">
+      <div style="background:var(--surface);border:1px solid var(--border);border-right:4px solid ${hasWarnings?'var(--c-orange)':'var(--c-green-light)'};border-radius:var(--r-md);padding:14px 16px;margin-bottom:8px;box-shadow:var(--sh-xs);">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
           <div>
             <div style="font-weight:800;font-size:.97em;">🚚 ${esc(d.name||'')}</div>
@@ -6636,10 +6765,11 @@ function renderDeliveriesList(list) {
               📅 ${dateStr} &nbsp;·&nbsp; 👤 ${esc(d.user||'—')} &nbsp;·&nbsp;
               ✅ <b>${d.successCount||0}</b> עודכנו
               ${d.failCount ? ` &nbsp;·&nbsp; ⚠️ <b>${d.failCount}</b> לא נמצאו` : ''}
+              &nbsp;·&nbsp; סה"כ <b>${d.total||0}</b>
             </div>
           </div>
           <button class="btn sm w-auto btn-ghost"
-            onclick="var el=document.getElementById('${detailId}');el.style.display=el.style.display==='none'?'':'none';">
+            onclick="var el=document.getElementById('${detailId}');el.style.display=el.style.display==='none'||el.style.display===''?'block':'none';">
             פרטים ▾
           </button>
         </div>
@@ -6655,11 +6785,14 @@ function renderDeliveriesList(list) {
   }).join('');
 }
 
-/* ── Set default date on page load ── */
-(function _initDeliveryDate() {
-  const d = document.getElementById('del-date');
-  if (d) d.value = new Date().toISOString().split('T')[0];
-})();
+/* ── showTab hook — init date when switching to deliveries ── */
+const _origShowTab = window.showTab;
+if (typeof _origShowTab === 'function') {
+  window.showTab = function(id, btn) {
+    _origShowTab(id, btn);
+    if (id === 'tab-deliveries') _initDeliveryTab();
+  };
+}
 
 </script>
 <!-- Full Edit Item Modal -->
