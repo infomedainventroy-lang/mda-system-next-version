@@ -15,7 +15,7 @@ const _pwaManifest = {
   name: 'מערכת מלאי מד"א',
   short_name: 'מלאי מד"א',
   description: 'מערכת ניהול מלאי מגן דוד אדום',
-  start_url: './',
+  start_url: '/',  // valid absolute path
   display: 'standalone',
   background_color: '#0d1b2a',
   theme_color: '#0d1b2a',
@@ -7202,32 +7202,39 @@ function loadSupportTickets() {
   if (!fdb) return;
   const el = document.getElementById('support-tickets-list');
   if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">⏳ טוען...</div>';
-  
-  // Use real-time listener so new tickets appear instantly
-  if (window._supportListener) {
-    try { fdb.ref('tickets').off('value', window._supportListener); } catch(e){}
+
+  // Detach previous listener
+  if (window._supportRef && window._supportListener) {
+    try { window._supportRef.off('value', window._supportListener); } catch(e){}
   }
-  const _onFn = snap => {
+
+  window._supportRef = fdb.ref('tickets').orderByChild('timestamp');
+  window._supportListener = window._supportRef.on('value', function(snap) {
     _supportAllTickets = [];
-    snap.forEach(c => {
-      const v = c.val();
-      if (v) _supportAllTickets.push({ _key: c.key, ...v });
+    snap.forEach(function(c) {
+      var v = c.val();
+      if (v) _supportAllTickets.push(Object.assign({ _key: c.key }, v));
     });
     _supportAllTickets.reverse();
     console.log('[Support] Tickets loaded:', _supportAllTickets.length);
     _renderSupportTickets();
-    
-    // Update badge
-    const newCount = _supportAllTickets.filter(t => t.status === 'חדש').length;
-    const btn = document.getElementById('tab-support-btn');
-    if (btn) {
-      btn.querySelector('.tab-badge')?.remove();
+
+    // Update badge on admin nav
+    var newCount = _supportAllTickets.filter(function(t){ return t.status === 'חדש'; }).length;
+    var tabBtn = document.getElementById('tab-support-btn');
+    if (tabBtn) {
+      var old = tabBtn.querySelector('.tab-badge');
+      if (old) old.remove();
       if (newCount) {
-        const b = document.createElement('span');
+        var b = document.createElement('span');
         b.className = 'tab-badge'; b.textContent = newCount;
-        btn.prepend(b);
+        tabBtn.prepend(b);
       }
     }
+  }, function(err) {
+    console.error('[Support] Firebase error:', err.code, err.message);
+    var el2 = document.getElementById('support-tickets-list');
+    if (el2) el2.innerHTML = '<div style="background:#ffebee;border:1.5px solid #ef5350;border-radius:10px;padding:14px 16px;font-size:.83em;"><b>⚠️ שגיאת הרשאות Firebase</b><br>עדכן Rules: tickets → .read: auth != null</div>';
   });
 }
 
