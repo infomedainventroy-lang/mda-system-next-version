@@ -2897,6 +2897,16 @@ if (sessionStorage.getItem('mda_station')) {
             Firebase DB: <b id="info-db">—</b><br>
             סה"כ לוגים: <b id="info-logs">0</b>
           </p>
+          <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+          <div style="background:#fff3e0;border:1.5px solid var(--c-orange);border-radius:var(--r-sm);padding:14px 16px;font-size:.82em;line-height:1.9;">
+            <b>🔐 Firebase Rules נדרשים לצ'אט תמיכה</b><br>
+            הוסף את השורות הבאות ב-Firebase Console → Realtime Database → Rules:
+            <pre style="background:#f5f5f5;border-radius:6px;padding:10px;margin-top:8px;font-size:.85em;overflow-x:auto;color:#333;direction:ltr;text-align:left;">"tickets": {
+  ".read": "auth != null",
+  ".write": true
+}</pre>
+            <b style="color:var(--c-orange);">⚠️ .write: true</b> מאפשר שליחה ללא לוגין (נדרש לפניות מצ'אט).
+          </div>
         </div>
 
         <div class="card">
@@ -7193,13 +7203,18 @@ function loadSupportTickets() {
   const el = document.getElementById('support-tickets-list');
   if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">⏳ טוען...</div>';
   
-  fdb.ref('tickets').orderByChild('timestamp').once('value', snap => {
+  // Use real-time listener so new tickets appear instantly
+  if (window._supportListener) {
+    try { fdb.ref('tickets').off('value', window._supportListener); } catch(e){}
+  }
+  const _onFn = snap => {
     _supportAllTickets = [];
     snap.forEach(c => {
       const v = c.val();
       if (v) _supportAllTickets.push({ _key: c.key, ...v });
     });
     _supportAllTickets.reverse();
+    console.log('[Support] Tickets loaded:', _supportAllTickets.length);
     _renderSupportTickets();
     
     // Update badge
@@ -7693,32 +7708,59 @@ const EMAILJS_SERVICE_ID  = 'service_esngdqp';
 const EMAILJS_TEMPLATE_ID = 'template_uqi3c29';
 const ADMIN_NOTIFY_EMAIL  = 'infomedainventroy@gmail.com';
 
-(function initEmailJS() {
+// EmailJS init — runs after page load to ensure library is loaded
+function _initEmailJS() {
   if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== '') {
-    emailjs.init(EMAILJS_PUBLIC_KEY);
+    try {
+      emailjs.init(EMAILJS_PUBLIC_KEY);
+      console.log('[EmailJS] ✅ Initialized');
+    } catch(e) { console.error('[EmailJS] init error:', e); }
+  } else {
+    console.warn('[EmailJS] library not loaded or key missing');
   }
-})();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _initEmailJS);
+} else {
+  _initEmailJS();
+}
 
 function _cwNotifyAdmin(ticket) {
-  if (typeof emailjs === 'undefined' || EMAILJS_PUBLIC_KEY === '') return;
-  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+  console.log('[EmailJS] Attempting to notify admin...', { EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, ADMIN_NOTIFY_EMAIL });
+  if (typeof emailjs === 'undefined') { console.error('[EmailJS] Library not loaded!'); return; }
+  if (!EMAILJS_PUBLIC_KEY) { console.error('[EmailJS] No public key!'); return; }
+  
+  const params = {
     to_email:  ADMIN_NOTIFY_EMAIL,
     from_name: ticket.email || 'משתמש',
-    subject:   '🆕 פנייה חדשה: ' + (ticket.category || ''),
+    subject:   'פנייה חדשה: ' + (ticket.category || ''),
     message:   'קטגוריה: ' + (ticket.category||'') + '\nפרטים: ' + (ticket.details||ticket.rating||'—') + '\nמייל: ' + (ticket.email||'') + '\nתחנה: ' + (ticket.station||''),
-    reply_to:  ticket.email || ''
-  }).catch(e => console.warn('[EmailJS]', e));
+    reply_to:  ticket.email || '',
+    ticket_id: (_cwCurrentId||'').slice(-6).toUpperCase(),
+    status:    'חדש'
+  };
+  console.log('[EmailJS] Sending with params:', params);
+  
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
+    .then(res => console.log('[EmailJS] ✅ Admin notified:', res.status, res.text))
+    .catch(e => console.error('[EmailJS] ❌ Send failed:', e));
 }
 
 function _cwSendReplyEmail(toEmail, message, subject) {
-  if (!toEmail || typeof emailjs === 'undefined' || EMAILJS_PUBLIC_KEY === '') return;
-  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+  if (!toEmail) { console.warn('[EmailJS reply] No email address'); return; }
+  if (typeof emailjs === 'undefined') { console.error('[EmailJS reply] Library not loaded'); return; }
+  if (!EMAILJS_PUBLIC_KEY) { console.error('[EmailJS reply] No key'); return; }
+  
+  const params = {
     to_email:  toEmail,
     from_name: 'מוקד לוגיסטיקה מד"א',
     subject:   'עדכון פנייה: ' + (subject || 'לוגיסטיקה'),
     message:   message,
     reply_to:  ADMIN_NOTIFY_EMAIL
-  }).catch(e => console.warn('[EmailJS reply]', e));
+  };
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
+    .then(res => console.log('[EmailJS reply] ✅ Sent to', toEmail, res.status))
+    .catch(e => console.error('[EmailJS reply] ❌ Failed:', e));
 }
 
 
@@ -7814,16 +7856,33 @@ function _cwRunStep(val) {
       _cwTempTicket.station = _cwStationKey || 'unknown';
       
       const fdb = _cwGetDb();
-      if (fdb) {
-        const ref = fdb.ref('tickets').push();
-        _cwCurrentId = ref.key;
-        ref.set(_cwTempTicket).then(() => {
+      if (!fdb) {
+        console.error('[Chat] Firebase not initialized!');
+        _cwSayBot('⚠️ שגיאה: Firebase לא מחובר. רענן את הדף ונסה שוב.');
+        return;
+      }
+      
+      const ref = fdb.ref('tickets').push();
+      _cwCurrentId = ref.key;
+      console.log('[Chat] Saving ticket to Firebase:', _cwCurrentId, _cwTempTicket);
+      
+      ref.set(_cwTempTicket)
+        .then(() => {
+          console.log('[Chat] ✅ Ticket saved to Firebase:', _cwCurrentId);
           _cwNotifyAdmin(_cwTempTicket);
           const msgsRef = fdb.ref(`tickets/${_cwCurrentId}/messages`);
           msgsRef.push({ role:'system', text:'פנייה נפתחה', timestamp:Date.now() });
           msgsRef.push({ role:'user', text:_cwTempTicket.details||_cwTempTicket.rating||'', timestamp:Date.now() });
+        })
+        .catch(err => {
+          console.error('[Chat] ❌ Firebase save failed:', err.code, err.message);
+          if (err.message && err.message.includes('permission_denied')) {
+            _cwSayBot('⚠️ שגיאת הרשאות Firebase. עדכן את Rules: tickets → .write: true');
+            if (typeof showToast === 'function') showToast('⚠️ עדכן Firebase Rules לתיקייה tickets', 'error', 8000);
+          } else {
+            _cwSayBot('⚠️ שגיאה בשמירה — ' + err.message);
+          }
         });
-      }
       
       _cwSayBot(`✅ הפנייה נפתחה!\n\nמספר: <b style="color:#00e5ff">${(_cwCurrentId||'').slice(-6).toUpperCase()}</b>\n\nנחזור אליך ל-${val} בהקדם.`);
       _cwAppendMsg('ממתין לתגובת מנהל...','system');
