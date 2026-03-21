@@ -21,8 +21,8 @@ const _pwaManifest = {
   theme_color: '#0d1b2a',
   orientation: 'portrait-primary',
   icons: [
-    { src: 'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system@main/Hod_Hasharon_photo.png', sizes: '192x192', type: 'image/png' },
-    { src: 'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system@main/Hod_Hasharon_photo.png', sizes: '512x512', type: 'image/png' }
+    { src: 'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system-next-version@main/main_logo.png', sizes: '192x192', type: 'image/png' },
+    { src: 'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system-next-version@main/main_logo.png', sizes: '512x512', type: 'image/png' }
   ]
 };
 const _blob = new Blob([JSON.stringify(_pwaManifest)], {type:'application/json'});
@@ -46,6 +46,8 @@ document.getElementById('pwa-manifest').href = URL.createObjectURL(_blob);
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- Barcode Scanner -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
 <style>
 /* ================================================================
@@ -1735,6 +1737,275 @@ tr:hover td { background: var(--bg); }
   height: 18px;
   fill: currentColor;
 }
+
+/* ================================================================
+   STATION PICKER SCREEN
+   ================================================================ */
+#scr-station {
+  position: fixed; inset: 0; z-index: 99998;
+  background: radial-gradient(ellipse at 15% 90%, rgba(211,47,47,.18) 0%, transparent 55%),
+              radial-gradient(ellipse at 85% 10%, rgba(26,110,181,.22) 0%, transparent 55%),
+              linear-gradient(160deg, #0d1b2a 0%, #0a2744 60%, #091e35 100%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px 16px 40px;
+  overflow: hidden;
+  animation: stationFadeIn .5s ease both;
+}
+@keyframes stationFadeIn { from { opacity:0; } to { opacity:1; } }
+#scr-station::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,.012) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+.sp-logo-area {
+  z-index: 2; text-align: center; margin-bottom: 34px;
+  animation: fadeDown .6s var(--ease) .1s both;
+}
+.sp-logo-area img { max-width: 120px; filter: drop-shadow(0 4px 20px rgba(0,0,0,.5)); }
+.sp-logo-area .sp-tagline {
+  color: rgba(255,255,255,.4); font-size: .75em;
+  margin-top: 10px; letter-spacing: .12em; text-transform: uppercase;
+}
+.sp-heading {
+  z-index: 2; color: white; font-size: 1.05em; font-weight: 800;
+  margin-bottom: 22px; letter-spacing: .02em;
+  animation: fadeDown .5s var(--ease) .2s both;
+}
+.stations-grid {
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px; width: 100%; max-width: 680px;
+  animation: fadeUp .5s var(--ease) .3s both;
+}
+.station-card {
+  background: rgba(255,255,255,.08);
+  border: 1.5px solid rgba(255,255,255,.14);
+  border-radius: var(--r-xl);
+  padding: 28px 20px 22px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .3s var(--ease);
+  backdrop-filter: blur(20px);
+  position: relative; overflow: hidden;
+}
+.station-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(211,47,47,.7), transparent);
+  opacity: 0; transition: opacity .3s;
+}
+.station-card:hover {
+  background: rgba(255,255,255,.14);
+  border-color: rgba(211,47,47,.5);
+  transform: translateY(-5px);
+  box-shadow: 0 16px 40px rgba(0,0,0,.35), 0 0 30px rgba(211,47,47,.15);
+}
+.station-card:hover::before { opacity: 1; }
+.station-card:active { transform: translateY(-2px); }
+.station-card img {
+  width: 70px; height: 70px; object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,.4));
+  margin-bottom: 14px; border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  padding: 6px;
+}
+.station-card .sc-name {
+  color: white; font-size: .97em; font-weight: 800;
+  display: block; margin-bottom: 4px;
+}
+.station-card .sc-sub {
+  color: rgba(255,255,255,.38); font-size: .72em; font-weight: 600;
+  letter-spacing: .05em; text-transform: uppercase;
+}
+.station-card .sc-arrow {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(211,47,47,.3); border: 1px solid rgba(211,47,47,.4);
+  color: rgba(255,255,255,.7); font-size: .85em; margin-top: 14px;
+  transition: all .3s;
+}
+.station-card:hover .sc-arrow {
+  background: rgba(211,47,47,.6); transform: translateX(-4px);
+}
+/* ================================================================
+   CHAT SUPPORT WIDGET
+   ================================================================ */
+#chat-fab {
+  position: fixed; bottom: 130px; left: 16px; z-index: 8000;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, #003366, #1e4d8c);
+  border: 2px solid rgba(0,229,255,.3);
+  box-shadow: 0 4px 20px rgba(0,30,80,.5), 0 0 20px rgba(0,229,255,.15);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 1.4em; transition: all .3s var(--ease);
+  animation: fabPop .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes fabPop { from { transform:scale(0); opacity:0; } to { transform:scale(1); opacity:1; } }
+#chat-fab:hover { transform: scale(1.12) translateY(-2px); box-shadow: 0 8px 28px rgba(0,30,80,.6), 0 0 30px rgba(0,229,255,.25); }
+#chat-fab .fab-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: #e8192c; color: white;
+  width: 18px; height: 18px; border-radius: 50%;
+  font-size: .62em; font-weight: 900; display: none;
+  align-items: center; justify-content: center;
+  border: 2px solid white;
+}
+#chat-fab .fab-badge.show { display: flex; animation: badgePop .3s cubic-bezier(.34,1.56,.64,1); }
+@keyframes badgePop { from{transform:scale(0)} to{transform:scale(1)} }
+
+/* CHAT MODAL */
+#chat-modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,3,12,.88); z-index: 9900;
+  align-items: flex-end; justify-content: flex-start;
+  padding: 0 0 90px 14px;
+  backdrop-filter: blur(6px);
+}
+#chat-modal-overlay.open { display: flex; }
+.chat-modal-box {
+  width: 100%; max-width: 360px; height: 520px;
+  background: #0d1d35; border-radius: 24px;
+  overflow: hidden; display: flex; flex-direction: column;
+  border: 1px solid rgba(0,229,255,.15);
+  box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 40px rgba(0,229,255,.08);
+  animation: chatSlideUp .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes chatSlideUp {
+  from { opacity:0; transform:translateY(30px) scale(.95); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.chat-hd {
+  background: linear-gradient(135deg, #021530, #02243d);
+  padding: 14px 16px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0,229,255,.1); flex-shrink: 0;
+}
+.chat-hd-left { display: flex; align-items: center; gap: 10px; }
+.chat-hd-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(0,229,255,.1); border: 1px solid rgba(0,229,255,.2);
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.chat-hd-title { font-size: .9em; font-weight: 800; color: #f0f6ff; }
+.chat-hd-sub {
+  font-size: .65em; color: #4a6a8a; margin-top: 1px;
+  display: flex; align-items: center; gap: 5px;
+}
+.chat-online-dot {
+  width: 5px; height: 5px; border-radius: 50%; background: #00e676;
+  animation: blink2 2s infinite;
+}
+@keyframes blink2 { 0%,100%{opacity:1} 50%{opacity:.3} }
+.chat-close {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; font-size: 14px; color: #94b8d8;
+  transition: all .2s;
+}
+.chat-close:hover { background: rgba(232,25,44,.2); border-color: #e8192c; color: white; }
+.chat-msgs {
+  flex: 1; padding: 16px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 10px;
+  background: #07111f;
+}
+.chat-msgs::-webkit-scrollbar { width: 3px; }
+.chat-msgs::-webkit-scrollbar-thumb { background: rgba(0,229,255,.2); border-radius: 2px; }
+.cbubble {
+  padding: 10px 14px; border-radius: 16px;
+  max-width: 85%; font-size: .84em; line-height: 1.5;
+  word-break: break-word;
+  animation: bubbleIn2 .25s ease both;
+}
+@keyframes bubbleIn2 { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.cbubble-user {
+  background: rgba(0,40,100,.8); color: #c8e0ff;
+  border: 1px solid rgba(0,100,200,.3);
+  align-self: flex-end; border-bottom-right-radius: 3px;
+}
+.cbubble-bot {
+  background: rgba(0,20,45,.9); color: #94b8d8;
+  border: 1px solid rgba(0,229,255,.12);
+  align-self: flex-start; border-bottom-left-radius: 3px;
+}
+.cbubble-admin {
+  background: linear-gradient(135deg,rgba(0,51,102,.9),rgba(0,80,160,.8));
+  color: #e0f0ff; border: 1px solid rgba(0,150,255,.3);
+  align-self: flex-end; border-bottom-right-radius: 3px;
+}
+.cbubble-system {
+  align-self: center; background: rgba(0,229,255,.05);
+  color: #4a6a8a; font-size: .68em; border-radius: 10px;
+  padding: 4px 12px; text-align: center; max-width: 100%;
+}
+.cbubble-sender { font-size: .62em; font-weight: 700; color: #00e5ff; margin-bottom: 3px; opacity: .65; }
+.chat-typing {
+  padding: 8px 16px; display: flex; align-items: center; gap: 7px;
+  font-size: .74em; color: #4a6a8a;
+  background: rgba(0,10,25,.6); border-top: 1px solid rgba(0,229,255,.06);
+  flex-shrink: 0;
+}
+.chat-typing-dots { display: flex; gap: 3px; }
+.chat-typing-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #00e5ff; opacity: .4;
+  animation: typingB 1.2s infinite;
+}
+.chat-typing-dot:nth-child(2){animation-delay:.2s}
+.chat-typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes typingB {
+  0%,60%,100%{transform:translateY(0);opacity:.4}
+  30%{transform:translateY(-4px);opacity:1}
+}
+.chat-choices { display: flex; flex-wrap: wrap; gap: 6px; align-self: flex-start; max-width: 95%; }
+.chat-choice-btn {
+  padding: 7px 13px; border-radius: 12px;
+  border: 1px solid rgba(0,229,255,.22);
+  background: rgba(0,40,90,.7); color: #f0f6ff;
+  font-size: .78em; cursor: pointer; transition: all .2s;
+}
+.chat-choice-btn:hover {
+  background: rgba(0,60,130,.9); border-color: #00e5ff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(0,229,255,.25);
+}
+.chat-input-area {
+  padding: 12px; background: rgba(0,10,25,.95);
+  border-top: 1px solid rgba(0,229,255,.08);
+  flex-shrink: 0;
+}
+.chat-quick-replies { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
+.chat-quick-btn {
+  padding: 4px 10px; border-radius: 40px;
+  border: 1px solid rgba(0,229,255,.18);
+  background: rgba(0,229,255,.06); color: #00e5ff;
+  font-size: .7em; cursor: pointer; transition: all .2s;
+}
+.chat-quick-btn:hover { background: rgba(0,229,255,.14); }
+.chat-input-row { display: flex; gap: 8px; align-items: center; }
+.chat-text-input {
+  flex: 1; padding: 10px 14px;
+  background: rgba(0,229,255,.05);
+  border: 1px solid rgba(0,229,255,.18);
+  border-radius: 40px; color: #f0f6ff;
+  font-size: .85em; outline: none;
+  transition: all .25s; direction: rtl;
+}
+.chat-text-input:focus { border-color: #00e5ff; box-shadow: 0 0 0 2px rgba(0,229,255,.1); }
+.chat-text-input::placeholder { color: #4a6a8a; }
+.chat-send-btn {
+  flex-shrink: 0; padding: 10px 16px; border-radius: 12px;
+  border: none; background: linear-gradient(135deg, #003366, #1e4d8c);
+  color: white; font-size: .85em; font-weight: 700;
+  cursor: pointer; transition: all .25s;
+}
+.chat-send-btn:hover { transform: scale(1.05); }
+
 </style>
 </head>
 <body>
@@ -1749,7 +2020,7 @@ tr:hover td { background: var(--bg); }
   <canvas id="splash-c"></canvas>
   <div id="sp-logo">
     <img id="sp-logo-img" src="" alt="לוגו">
-    <div class="sp-t1" id="splash-title">מערכת ניהול מלאי - הוד השרון</div>
+    <div class="sp-t1" id="splash-title">מערכת ניהול מלאי מד"א</div>
     <div class="sp-t2">מגן דוד אדום</div>
   </div>
   <div id="sp-wipe-t"></div>
@@ -1759,17 +2030,66 @@ tr:hover td { background: var(--bg); }
 <!-- ================================================================
      LOGIN PAGE
      ================================================================ -->
-<div id="scr-login" class="login-page">
+<!-- ================================================================
+     STATION PICKER
+     ================================================================ -->
+<script>
+// Immediately hide station picker if station already saved — prevents any flash
+if (sessionStorage.getItem('mda_station')) {
+  document.write('<style>#scr-station{display:none!important}</style>');
+}
+</script>
+<div id="scr-station">
+  <div class="sp-logo-area">
+    <img src="https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system-next-version@main/main_logo.png" 
+         id="mda-main-logo" alt="מד&quot;א" 
+         style="width:110px;filter:drop-shadow(0 4px 24px rgba(211,47,47,.5));">
+    <p class="sp-tagline">מגן דוד אדום · מערכת מלאי</p>
+  </div>
+  <div class="sp-heading">🏥 בחר את התחנה שלך</div>
+  <div class="stations-grid">
+    <div class="station-card" onclick="selectStation('hodhasharon')">
+      <img src="https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system@main/Hod_Hasharon_photo.png" alt="הוד השרון">
+      <span class="sc-name">הוד השרון</span>
+      <span class="sc-sub">מד"א הוד השרון</span>
+      <div class="sc-arrow">←</div>
+    </div>
+    <div class="station-card" onclick="selectStation('nave')">
+      <img src="https://cdn.jsdelivr.net/gh/infomedainventroy-lang/Nave_Yamin@main/Neve-Yamin.png" alt="נווה ימין">
+      <span class="sc-name">נווה ימין</span>
+      <span class="sc-sub">מד"א נווה ימין</span>
+      <div class="sc-arrow">←</div>
+    </div>
+    <div class="station-card" onclick="selectStation('karnei')">
+      <img src="https://cdn.jsdelivr.net/gh/infomedainventroy-lang/Karnei_Shomron-@main/קרני%20שומרון.png" alt="קרני שומרון">
+      <span class="sc-name">קרני שומרון</span>
+      <span class="sc-sub">מד"א קרני שומרון</span>
+      <div class="sc-arrow">←</div>
+    </div>
+  </div>
+</div>
+
+<div id="scr-login" class="login-page" style="display:none;">
 
   <div class="login-logo-wrap">
     <img id="site-logo" src="" alt="לוגו">
     <p class="login-tagline">מערכת ניהול מלאי</p>
     <span class="login-version-badge">v<script>document.write(APP_VERSION)</script></span>
+    <div id="login-station-badge" style="margin-top:14px;display:inline-flex;align-items:center;gap:8px;
+      background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
+      border-radius:40px;padding:6px 16px 6px 10px;">
+      <span id="login-station-name" style="color:rgba(255,255,255,.7);font-size:.78em;font-weight:700;">...</span>
+      <button onclick="changeStation()" 
+        style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.55);
+        border-radius:20px;padding:3px 10px;font-family:'Heebo',sans-serif;font-size:.7em;font-weight:700;
+        cursor:pointer;transition:all .2s;" 
+        onmouseover="this.style.background='rgba(255,255,255,.2)'"
+        onmouseout="this.style.background='rgba(255,255,255,.12)'">
+        ⇄ שנה תחנה
+      </button>
+    </div>
   </div>
-  <a href="https://sites.google.com/view/landing-pagemm/%D7%93%D7%A3-%D7%A0%D7%97%D7%99%D7%AA%D7%94" class="station-switch-btn">
-  <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-  <span>מעבר לתחנה אחרת</span>
-</a>
+
   <!-- Biometric quick-login (shown only when device has registered credential) -->
   <div id="bio-quick-login" class="login-card hidden">
     <h3>🔐 כניסה מהירה</h3>
@@ -1891,6 +2211,7 @@ tr:hover td { background: var(--bg); }
       <button id="tab-alerts-btn" class="tab-btn" onclick="showTab('tab-alerts',this)">🚨 התראות</button>
       <button class="tab-btn" onclick="showTab('tab-deliveries',this)">🚚 משלוחים</button>
       <button class="tab-btn" onclick="showTab('tab-settings',this)">⚙️ הגדרות</button>
+      <button class="tab-btn" id="tab-support-btn" onclick="showTab('tab-support',this)">💬 תמיכה</button>
       <button class="tab-btn tab-logout" onclick="logout()">↩ יציאה</button>
     </nav>
 
@@ -2706,6 +3027,32 @@ tr:hover td { background: var(--bg); }
         </div><!-- /dc-card -->
       </div>
 
+
+      <!-- SUPPORT / CRM TICKETS TAB -->
+      <div id="tab-support" class="tab-pane hidden">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+            <div class="card-title" style="margin-bottom:0;">💬 פניות תמיכה</div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-teal w-auto sm" onclick="loadSupportTickets();markAllTicketsRead()">✓ סמן הכל כנקרא</button>
+              <button class="btn btn-blue w-auto sm" onclick="loadSupportTickets()">🔄 רענן</button>
+            </div>
+          </div>
+          <div style="background:var(--c-green-pale);border:1px solid var(--c-green-light);border-radius:var(--r-sm);padding:9px 12px;margin-bottom:12px;font-size:.78em;color:var(--c-green);font-weight:700;">
+            ℹ️ הפניות נשמרות ב-Firebase תחת <code>tickets/</code> — וודא ש-Rules מאפשרים גישה.
+          </div>
+          <div id="support-filter-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <button class="chip active-chip" onclick="filterSupportTickets('all',this)">הכל</button>
+            <button class="chip" onclick="filterSupportTickets('חדש',this)">🟠 חדש</button>
+            <button class="chip" onclick="filterSupportTickets('בטיפול',this)">🔵 בטיפול</button>
+            <button class="chip" onclick="filterSupportTickets('הסתיים',this)">🟢 הסתיים</button>
+          </div>
+          <div id="support-tickets-list">
+            <div class="empty-state"><div class="es-icon">💬</div><p>לחץ "רענן" לטעינת פניות</p></div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content admin -->
   </div><!-- /scr-admin -->
 
@@ -2867,7 +3214,14 @@ tr:hover td { background: var(--bg); }
 /* ================================================================
    SITE CONFIGURATION
    ================================================================ */
-const CURRENT_SITE = 'hodhasharon';
+// Dynamic station selection — reads from sessionStorage (set by station picker)
+const _savedStation = sessionStorage.getItem('mda_station');
+const CURRENT_SITE = (_savedStation && (function(){
+  const valid = ['hodhasharon','nave','karnei'];
+  return valid.includes(_savedStation) ? _savedStation : null;
+})()) || 'hodhasharon';
+// Mark which Firebase we inited for (for consistency check)
+sessionStorage.setItem('mda_firebase_for', CURRENT_SITE);
 
 const SITE_CONFIG = {
   karnei: {
@@ -2945,10 +3299,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Apply site config
   document.getElementById('page-title').textContent  = CFG.title;
-  document.getElementById('splash-title').textContent = CFG.title;
+  document.getElementById('splash-title').textContent = 'מערכת ניהול מלאי מד"א';
   document.getElementById('site-logo').src            = CFG.logoUrl;
   document.getElementById('header-logo').src          = CFG.logoUrl;
   document.getElementById('site-header').textContent  = CFG.headerText;
+  // Update login station badge
+  const stNameEl = document.getElementById('login-station-name');
+  if (stNameEl) stNameEl.textContent = '🏥 ' + CFG.headerText;
 
   // Tech info
   const infoSite = document.getElementById('info-site');
@@ -2962,7 +3319,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas  = document.getElementById('splash-c');
     const logoWrap= document.getElementById('sp-logo');
     const logoImg = document.getElementById('sp-logo-img');
-    if (logoImg) logoImg.src = CFG.logoUrl;
+    if (logoImg) logoImg.src = "https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system-next-version@main/main_logo.png";
 
     let W = canvas.width  = window.innerWidth;
     let H = canvas.height = window.innerHeight;
@@ -3796,8 +4153,11 @@ async function logout() {
   _aSearch = ''; _aFilter = 'all';
 
   document.getElementById('app-main').classList.add('hidden');
-  document.getElementById('scr-login').classList.remove('hidden');
-  ['scr-admin','scr-user'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  // Show station picker on logout
+  sessionStorage.removeItem('mda_station');
+  sessionStorage.removeItem('mda_firebase_for');
+  location.reload();
+  return; // page reloads, rest won't run
   ['u-phone','u-pass','a-email','a-pass'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -6806,6 +7166,160 @@ function renderDeliveriesList(list) {
   }
 })();
 
+
+/* ================================================================
+   SUPPORT TICKETS ADMIN PANEL
+   ================================================================ */
+let _supportAllTickets = [];
+let _supportFilter = 'all';
+
+
+function markAllTicketsRead() {
+  const fdb = typeof db !== 'undefined' ? db : null;
+  if (!fdb) return;
+  const newTickets = _supportAllTickets.filter(t => t.status === 'חדש');
+  if (!newTickets.length) { showToast('אין פניות חדשות לסמן', 'info', 2500); return; }
+  const updates = {};
+  newTickets.forEach(t => { updates[`tickets/${t._key}/status`] = 'בטיפול'; });
+  fdb.ref().update(updates).then(() => {
+    showToast(`✅ ${newTickets.length} פניות סומנו כ"בטיפול"`, 'success');
+    loadSupportTickets();
+  }).catch(e => showToast('שגיאה: ' + e.message, 'error'));
+}
+
+function loadSupportTickets() {
+  const fdb = typeof db !== 'undefined' ? db : null;
+  if (!fdb) return;
+  const el = document.getElementById('support-tickets-list');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">⏳ טוען...</div>';
+  
+  fdb.ref('tickets').orderByChild('timestamp').once('value', snap => {
+    _supportAllTickets = [];
+    snap.forEach(c => {
+      const v = c.val();
+      if (v) _supportAllTickets.push({ _key: c.key, ...v });
+    });
+    _supportAllTickets.reverse();
+    _renderSupportTickets();
+    
+    // Update badge
+    const newCount = _supportAllTickets.filter(t => t.status === 'חדש').length;
+    const btn = document.getElementById('tab-support-btn');
+    if (btn) {
+      btn.querySelector('.tab-badge')?.remove();
+      if (newCount) {
+        const b = document.createElement('span');
+        b.className = 'tab-badge'; b.textContent = newCount;
+        btn.prepend(b);
+      }
+    }
+  });
+}
+
+function filterSupportTickets(filter, btn) {
+  _supportFilter = filter;
+  // Update chip UI
+  document.querySelectorAll('#support-filter-row .chip').forEach(c => c.classList.remove('active-chip'));
+  if (btn) btn.classList.add('active-chip');
+  _renderSupportTickets();
+}
+
+function _renderSupportTickets() {
+  const el = document.getElementById('support-tickets-list');
+  if (!el) return;
+  
+  const filtered = _supportFilter === 'all' 
+    ? _supportAllTickets 
+    : _supportAllTickets.filter(t => t.status === _supportFilter);
+  
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">💬</div><p>אין פניות</p></div>';
+    return;
+  }
+  
+  const statusEmoji = { 'חדש':'🟠', 'בטיפול':'🔵', 'הסתיים':'🟢' };
+  
+  el.innerHTML = filtered.map(t => {
+    const emoji = statusEmoji[t.status] || '⚪';
+    const timeStr = t.timestamp ? new Date(t.timestamp).toLocaleString('he-IL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+    return `
+      <div style="background:var(--surface);border:1px solid var(--border);border-right:4px solid ${t.status==='חדש'?'var(--c-orange)':t.status==='הסתיים'?'var(--c-green-light)':'var(--c-blue)'};border-radius:var(--r-md);padding:14px 16px;margin-bottom:8px;box-shadow:var(--sh-xs);">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:800;font-size:.93em;margin-bottom:3px;">${emoji} ${esc(t.category||'פנייה')}</div>
+            <div style="font-size:.78em;color:var(--text-muted);">
+              📧 ${esc(t.email||'—')} &nbsp;·&nbsp; 📅 ${timeStr}
+              ${t.station ? ' &nbsp;·&nbsp; 🏥 ' + esc(t.station) : ''}
+            </div>
+            ${t.details ? `<div style="font-size:.82em;color:var(--text-soft);margin-top:5px;font-style:italic;">"${esc(t.details.slice(0,80))}${t.details.length>80?'...':''}"</div>` : ''}
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;">
+            <select onchange="updateTicketStatus('${t._key}',this.value)" 
+              style="padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'Heebo',sans-serif;font-size:.78em;background:var(--surface);color:var(--text);cursor:pointer;">
+              <option value="חדש" ${t.status==='חדש'?'selected':''}>🟠 חדש</option>
+              <option value="בטיפול" ${t.status==='בטיפול'?'selected':''}>🔵 בטיפול</option>
+              <option value="הסתיים" ${t.status==='הסתיים'?'selected':''}>🟢 הסתיים</option>
+            </select>
+            <button class="btn sm w-auto btn-blue" onclick="openSupportChat('${t._key}','${esc(t.email||'')}')">💬 צ'אט</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function updateTicketStatus(ticketId, newStatus) {
+  const fdb = typeof db !== 'undefined' ? db : null;
+  if (!fdb) return;
+  fdb.ref(`tickets/${ticketId}/status`).set(newStatus)
+    .then(() => {
+      showToast('סטטוס עודכן ל-' + newStatus, 'success', 3000);
+      loadSupportTickets();
+    })
+    .catch(e => showToast('שגיאה: ' + e.message, 'error'));
+}
+
+function openSupportChat(ticketId, email) {
+  if (typeof cwEnterLiveChat === 'function') {
+    cwEnterLiveChat(ticketId, email);
+  }
+}
+
+
+// Auto-refresh support tickets every 60s when support tab is active
+setInterval(() => {
+  const supportPane = document.getElementById('tab-support');
+  if (supportPane && !supportPane.classList.contains('hidden')) {
+    loadSupportTickets();
+  }
+}, 60000);
+
+// Load tickets count on admin login to show badge
+(function() {
+  const origShowApp2 = window.showApp;
+  if (typeof origShowApp2 === 'function') {
+    window.showApp = function(screenId) {
+      origShowApp2(screenId);
+      if (screenId === 'scr-admin') {
+        // Delayed load to show new ticket badge
+        setTimeout(loadSupportTickets, 1500);
+      }
+    };
+  }
+})();
+
+// Auto-load tickets when support tab is opened
+(function() {
+  const origShowTab = window.showTab;
+  if (typeof origShowTab === 'function') {
+    window.showTab = function(id, btn) {
+      origShowTab(id, btn);
+      if (id === 'tab-support') loadSupportTickets();
+    };
+  }
+})();
+
+
+
 </script>
 <!-- Full Edit Item Modal -->
 <div id="editItemModal" style="position:fixed;inset:0;background:rgba(13,27,42,.75);backdrop-filter:blur(8px);z-index:9600;display:none;align-items:center;justify-content:center;padding:16px;">
@@ -6862,6 +7376,538 @@ function renderDeliveriesList(list) {
   <button onclick="pwaDismiss()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:white;padding:6px 12px;border-radius:20px;font-family:'Heebo',sans-serif;font-size:.8em;font-weight:700;cursor:pointer;margin-left:6px;">אחר כך</button>
   <button onclick="pwaInstall()" style="background:var(--c-blue);border:none;color:white;padding:8px 16px;border-radius:20px;font-family:'Heebo',sans-serif;font-size:.85em;font-weight:800;cursor:pointer;">התקן</button>
 </div>
+
+<!-- ================================================================
+     CHAT SUPPORT FAB + MODAL
+     ================================================================ -->
+<button id="chat-fab" onclick="openChatWidget()" title="תמיכה" style="display:none;">
+  💬
+  <span class="fab-badge" id="chat-fab-badge">1</span>
+</button>
+
+<div id="chat-modal-overlay">
+  <div class="chat-modal-box">
+    <div class="chat-hd">
+      <div class="chat-hd-left">
+        <div class="chat-hd-icon">💬</div>
+        <div>
+          <div class="chat-hd-title" id="chatWidgetTitle">מוקד תמיכה לוגיסטית</div>
+          <div class="chat-hd-sub" id="chatWidgetSub">
+            <div class="chat-online-dot"></div>
+            <span id="chatWidgetSubText">בוט חכם · 24/7</span>
+          </div>
+        </div>
+      </div>
+      <div class="chat-close" onclick="closeChatWidget()">✕</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;background:#07111f;overflow:hidden;">
+      <div id="chatWidgetMsgs" class="chat-msgs"></div>
+      <div id="chatWidgetTyping" class="chat-typing" style="display:none;">
+        <div class="chat-typing-dots">
+          <div class="chat-typing-dot"></div>
+          <div class="chat-typing-dot"></div>
+          <div class="chat-typing-dot"></div>
+        </div>
+        <span>מעבד...</span>
+      </div>
+      <div class="chat-input-area">
+        <div id="chatWidgetQuickReplies" class="chat-quick-replies" style="display:none;">
+          <button class="chat-quick-btn" onclick="setChatQuick('שלום, פנייתך התקבלה במוקד.')">✅ התקבל</button>
+          <button class="chat-quick-btn" onclick="setChatQuick('הנושא הועבר לטיפול מול התחנה.')">🔄 בטיפול</button>
+          <button class="chat-quick-btn" onclick="setChatQuick('התקלה טופלה, תודה על הדיווח.')">✔️ טופל</button>
+          <button class="chat-quick-btn" onclick="setChatQuick('נחזור אליך בהקדם האפשרי.')">📞 בהקדם</button>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chatWidgetInput" class="chat-text-input" placeholder="הקלד הודעה..."
+            onkeypress="if(event.key==='Enter') sendChatWidgetMsg()" autocomplete="off">
+          <button class="chat-send-btn" onclick="sendChatWidgetMsg()">שלח ➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   STATION PICKER LOGIC
+   ================================================================ */
+let _selectedStation = null;
+let _chatWidgetDb = null; // separate Firebase app for chat (same project)
+
+function selectStation(stationKey) {
+  _selectedStation = stationKey;
+  sessionStorage.setItem('mda_station', stationKey);
+  
+  // If the page was already loaded with a different Firebase config, reload.
+  // CURRENT_SITE was set at top of JS from sessionStorage — if it differs, reload.
+  if (typeof CURRENT_SITE !== 'undefined' && CURRENT_SITE !== stationKey) {
+    // Animate out then reload so Firebase re-inits with the correct project
+    const stEl = document.getElementById('scr-station');
+    stEl.style.transition = 'opacity .35s ease';
+    stEl.style.opacity = '0';
+    setTimeout(() => { location.reload(); }, 380);
+    return;
+  }
+  
+  // Same config — just fade to login
+  const stEl = document.getElementById('scr-station');
+  stEl.style.transition = 'opacity .4s ease';
+  stEl.style.opacity = '0';
+  setTimeout(() => {
+    stEl.style.display = 'none';
+    const loginEl = document.getElementById('scr-login');
+    loginEl.style.display = '';
+    loginEl.style.opacity = '0';
+    loginEl.style.transition = 'opacity .4s ease';
+    requestAnimationFrame(() => { loginEl.style.opacity = '1'; });
+  }, 400);
+}
+
+// On load: check session — if station is saved, skip picker
+(function() {
+  const saved = sessionStorage.getItem('mda_station');
+  if (saved) {
+    _selectedStation = saved;
+    const stEl = document.getElementById('scr-station');
+    if (stEl) stEl.style.display = 'none';
+    const loginEl = document.getElementById('scr-login');
+    if (loginEl) loginEl.style.display = '';
+  }
+})();
+
+function changeStation() {
+  sessionStorage.removeItem('mda_station');
+  sessionStorage.removeItem('mda_firebase_for');
+  location.reload();
+}
+
+/* ================================================================
+   PATCH: Make Firebase use the SELECTED station config
+   We re-init after station is chosen. Since Firebase is already
+   inited by the main script with CURRENT_SITE, we override by
+   using the session-saved station to change CURRENT_SITE behavior.
+   ================================================================ */
+// Firebase is already inited with the correct config via CURRENT_SITE (reads sessionStorage at top of main JS)
+
+/* ================================================================
+   CHAT WIDGET — STATE
+   ================================================================ */
+let _cwCurrentId  = null;
+let _cwIsAdmin    = false;
+let _cwBotStep    = 'idle';
+let _cwTempTicket = {};
+let _cwListener   = null;
+let _cwRenderedKeys = new Set();
+let _cwUnread = 0;
+let _cwOpen = false;
+let _cwStationKey = null; // current station key for Firebase path
+
+function _cwEsc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').trim().slice(0,2000);
+}
+function _cwValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.length < 254; }
+function _cwTimeAgo(ts) {
+  if (!ts) return '';
+  const d = Date.now()-ts;
+  if (d<60000) return 'עכשיו';
+  if (d<3600000) return `לפני ${Math.floor(d/60000)} דק'`;
+  return `לפני ${Math.floor(d/86400000)||Math.floor(d/3600000)} ${d<86400000?"שע'":'ימים'}`;
+}
+
+/* Show the FAB after login */
+function showChatFab() {
+  document.getElementById('chat-fab').style.display = 'flex';
+}
+function hideChatFab() {
+  document.getElementById('chat-fab').style.display = 'none';
+  closeChatWidget();
+}
+
+/* Open / close */
+function openChatWidget() {
+  _cwOpen = true;
+  _cwUnread = 0;
+  const badge = document.getElementById('chat-fab-badge');
+  badge.classList.remove('show');
+  badge.textContent = '0';
+  document.getElementById('chat-modal-overlay').classList.add('open');
+  
+  if (_cwBotStep === 'idle') _cwStartBot();
+}
+
+function closeChatWidget() {
+  _cwOpen = false;
+  document.getElementById('chat-modal-overlay').classList.remove('open');
+}
+document.getElementById('chat-modal-overlay')?.addEventListener('click', function(e){
+  if (e.target === this) closeChatWidget();
+});
+
+/* BOT START */
+function _cwStartBot() {
+  _cwIsAdmin = false;
+  _cwCurrentId = null;
+  _cwBotStep = 'start';
+  _cwTempTicket = {};
+  _cwRenderedKeys = new Set();
+  
+  const stationName = (window.SITE_CONFIG && _cwStationKey) ? (window.SITE_CONFIG[_cwStationKey]?.headerText || 'מד"א') : 'מד"א';
+  document.getElementById('chatWidgetTitle').textContent = 'מוקד תמיכה לוגיסטית';
+  const subTextEl = document.getElementById('chatWidgetSubText');
+  if (subTextEl) subTextEl.textContent = stationName + ' · בוט חכם';
+  document.getElementById('chatWidgetMsgs').innerHTML = '';
+  document.getElementById('chatWidgetQuickReplies').style.display = 'none';
+  
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'בוקר טוב ☀️' : (h < 18 ? 'צהריים טובים 🌤' : 'ערב טוב 🌙');
+  
+  setTimeout(() => _cwSayBot(`${greet}! אני בוט התמיכה הלוגיסטית של ${stationName}.`), 300);
+  setTimeout(() => {
+    _cwSayBot('כיצד אוכל לסייע לך?');
+    _cwShowChoices([
+      { label: '📦 דיווח על חוסר',      val: 'דיווח על חוסר' },
+      { label: '🔧 תקלה במערכת',         val: 'תקלה במערכת' },
+      { label: '🔍 בדיקת סטטוס פנייה',  val: 'בדיקת סטטוס פנייה' },
+      { label: '⭐ דירוג שירות',          val: 'דירוג שירות' },
+    ]);
+  }, 1000);
+}
+
+/* ADMIN ENTER LIVE CHAT */
+function cwEnterLiveChat(id, email) {
+  _cwIsAdmin = true;
+  _cwCurrentId = id;
+  _cwBotStep = 'connected';
+  _cwRenderedKeys = new Set();
+  
+  document.getElementById('chatWidgetTitle').textContent = 'שיחה פעילה 💬';
+  const _adminSubEl = document.getElementById('chatWidgetSubText');
+  if (_adminSubEl) _adminSubEl.textContent = email;
+  document.getElementById('chatWidgetMsgs').innerHTML = '';
+  document.getElementById('chatWidgetQuickReplies').style.display = 'flex';
+  document.getElementById('chat-modal-overlay').classList.add('open');
+  
+  _cwSyncListener(id);
+}
+
+/* MESSAGES */
+function _cwSayBot(text) { _cwAppendMsg(_cwEsc(text), 'bot'); }
+function _cwSayUser(text) { _cwAppendMsg(_cwEsc(text), 'user'); }
+
+function _cwAppendMsg(text, role) {
+  const area = document.getElementById('chatWidgetMsgs');
+  if (!area) return;
+  const wrap = document.createElement('div');
+  const labels = { bot:'בוט לוגיסטיקה', user:'אתה', admin:'מנהל', system:'מערכת' };
+  if (role === 'system') {
+    wrap.className = 'cbubble cbubble-system';
+    wrap.textContent = text;
+  } else {
+    wrap.className = `cbubble cbubble-${role}`;
+    const sender = document.createElement('div');
+    sender.className = 'cbubble-sender';
+    sender.textContent = labels[role] || role;
+    wrap.appendChild(sender);
+    const content = document.createElement('div');
+    content.innerHTML = text.replace(/\n/g,'<br>');
+    wrap.appendChild(content);
+  }
+  area.appendChild(wrap);
+  area.scrollTop = area.scrollHeight;
+  
+  // If chat is closed and new admin msg arrives — show badge
+  if (!_cwOpen && (role === 'admin' || role === 'bot')) {
+    _cwUnread++;
+    const badge = document.getElementById('chat-fab-badge');
+    badge.textContent = _cwUnread;
+    badge.classList.add('show');
+  }
+}
+
+function _cwShowChoices(options) {
+  const area = document.getElementById('chatWidgetMsgs');
+  document.getElementById('cwChoices')?.remove();
+  const row = document.createElement('div');
+  row.className = 'chat-choices'; row.id = 'cwChoices';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'chat-choice-btn';
+    btn.textContent = opt.label;
+    btn.onclick = () => _cwHandleChoice(opt.val, opt.label);
+    row.appendChild(btn);
+  });
+  area.appendChild(row);
+  area.scrollTop = area.scrollHeight;
+}
+function _cwRemoveChoices() { document.getElementById('cwChoices')?.remove(); }
+
+function _cwShowTyping() { document.getElementById('chatWidgetTyping').style.display = 'flex'; }
+function _cwHideTyping()  { document.getElementById('chatWidgetTyping').style.display = 'none'; }
+
+/* SEND */
+function sendChatWidgetMsg() {
+  const inp = document.getElementById('chatWidgetInput');
+  const raw = inp.value.trim();
+  if (!raw) return;
+  const val = _cwEsc(raw);
+  inp.value = '';
+  
+  if (_cwCurrentId) {
+    _cwIsAdmin ? _cwAppendMsg(val,'admin') : _cwAppendMsg(val,'user');
+    _cwSendToFirebase(val);
+  } else {
+    _cwSayUser(val);
+    _cwProcessBotInput(val);
+  }
+}
+
+function setChatQuick(text) {
+  document.getElementById('chatWidgetInput').value = text;
+  document.getElementById('chatWidgetInput').focus();
+}
+
+/* FIREBASE */
+function _cwGetDb() {
+  // Use the main db (already inited for the selected station)
+  return typeof db !== 'undefined' ? db : null;
+}
+
+/* ================================================================
+   EMAILJS — מייל התראות לתמיכה
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🔧 הגדרות: מלא את הערכים הבאים:
+   1. EMAILJS_PUBLIC_KEY  — Public Key מ-EmailJS Dashboard → Account
+   2. EMAILJS_SERVICE_ID  — Service ID מ-EmailJS Dashboard → Email Services
+   3. EMAILJS_TEMPLATE_ID — Template ID מ-EmailJS Dashboard → Email Templates
+   4. ADMIN_NOTIFY_EMAIL  — המייל של המנהל לקבלת התראות על פניות חדשות
+   
+   📧 Template שדות נדרשים ב-EmailJS:
+      {{to_email}} — מייל הנמען
+      {{from_name}} — שם השולח
+      {{subject}}   — נושא ההודעה
+      {{message}}   — גוף ההודעה
+      {{reply_to}}  — כתובת reply-to
+   ================================================================ */
+const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY_HERE';   // 🔧 החלף!
+const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID_HERE';   // 🔧 החלף!
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID_HERE';  // 🔧 החלף!
+const ADMIN_NOTIFY_EMAIL  = 'YOUR_ADMIN_EMAIL_HERE';  // 🔧 החלף!
+
+(function initEmailJS() {
+  if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY_HERE') {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+  }
+})();
+
+function _cwNotifyAdmin(ticket) {
+  if (typeof emailjs === 'undefined' || EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY_HERE') return;
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    to_email:  ADMIN_NOTIFY_EMAIL,
+    from_name: ticket.email || 'משתמש',
+    subject:   '🆕 פנייה חדשה: ' + (ticket.category || ''),
+    message:   'קטגוריה: ' + (ticket.category||'') + '\nפרטים: ' + (ticket.details||ticket.rating||'—') + '\nמייל: ' + (ticket.email||'') + '\nתחנה: ' + (ticket.station||''),
+    reply_to:  ticket.email || ''
+  }).catch(e => console.warn('[EmailJS]', e));
+}
+
+function _cwSendReplyEmail(toEmail, message, subject) {
+  if (!toEmail || typeof emailjs === 'undefined' || EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY_HERE') return;
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    to_email:  toEmail,
+    from_name: 'מוקד לוגיסטיקה מד"א',
+    subject:   'עדכון פנייה: ' + (subject || 'לוגיסטיקה'),
+    message:   message,
+    reply_to:  ADMIN_NOTIFY_EMAIL
+  }).catch(e => console.warn('[EmailJS reply]', e));
+}
+
+
+
+function _cwSendToFirebase(text) {
+  const fdb = _cwGetDb();
+  if (!fdb || !_cwCurrentId) return;
+  const msg = { role: _cwIsAdmin ? 'admin' : 'user', text, timestamp: Date.now() };
+  fdb.ref(`tickets/${_cwCurrentId}/messages`).push(msg)
+    .then(() => {
+      if (_cwIsAdmin) {
+        fdb.ref(`tickets/${_cwCurrentId}`).once('value', snap => {
+          const t = snap.val();
+          if (t && t.email) _cwSendReplyEmail(t.email, text, t.category);
+        });
+      }
+    })
+    .catch(err => console.warn('[chat] send err:', err));
+}
+
+function _cwSyncListener(id) {
+  const fdb = _cwGetDb();
+  if (!fdb) return;
+  if (_cwListener) {
+    try { fdb.ref(_cwListener._path).off('child_added', _cwListener._fn); } catch(e){}
+  }
+  _cwRenderedKeys = new Set();
+  const path = `tickets/${id}/messages`;
+  const fn = snap => {
+    const key = snap.key;
+    if (_cwRenderedKeys.has(key)) return;
+    _cwRenderedKeys.add(key);
+    const m = snap.val();
+    if (!m || !m.text) return;
+    const myRole = _cwIsAdmin ? 'admin' : 'user';
+    if (m.role === myRole) return;
+    _cwAppendMsg(_cwEsc(m.text), m.role === 'admin' ? 'admin' : (m.role === 'system' ? 'system' : 'user'));
+  };
+  fdb.ref(path).on('child_added', fn);
+  _cwListener = { _path: path, _fn: fn };
+}
+
+/* BOT FLOW */
+function _cwHandleChoice(val, label) {
+  _cwRemoveChoices();
+  _cwSayUser(label || val);
+  _cwShowTyping();
+  setTimeout(() => {
+    _cwHideTyping();
+    switch(val) {
+      case 'בדיקת סטטוס פנייה':
+        _cwBotStep = 'check_status';
+        _cwSayBot('שלח/י את כתובת המייל איתה נרשמת/ה ואמצא את הפנייה שלך:');
+        break;
+      case 'דירוג שירות':
+        _cwBotStep = 'get_rating';
+        _cwTempTicket.category = 'דירוג שירות';
+        _cwSayBot('כמה תדרג/י אותנו? (ספרה מ-1 עד 10)');
+        break;
+      default:
+        _cwTempTicket.category = val;
+        _cwBotStep = 'get_details';
+        _cwSayBot(`הבנתי — בחרת "<b>${_cwEsc(val)}</b>".\nאנא פרט/י בקצרה מה קרה:`);
+    }
+  }, 600);
+}
+
+function _cwProcessBotInput(val) {
+  _cwShowTyping();
+  setTimeout(() => { _cwHideTyping(); _cwRunStep(val); }, 750);
+}
+
+function _cwRunStep(val) {
+  switch(_cwBotStep) {
+    case 'get_rating': {
+      const n = parseInt(val);
+      if (isNaN(n)||n<1||n>10) { _cwSayBot('אנא הכנס/י ספרה בין 1 ל-10:'); return; }
+      _cwTempTicket.rating = val;
+      _cwBotStep = 'get_details';
+      _cwSayBot('תודה! 😊 תוכל/י לפרט קצת מדוע?');
+      break;
+    }
+    case 'get_details':
+      _cwTempTicket.details = val;
+      _cwBotStep = 'get_email';
+      _cwSayBot('כמעט סיימנו! מה כתובת המייל שלך כדי שנוכל לחזור אליך?');
+      break;
+    case 'get_email': {
+      if (!_cwValidEmail(val)) { _cwSayBot('⚠️ הכתובת לא תקינה. נסה/י שנית (לדוגמה: name@example.com):'); return; }
+      _cwTempTicket.email = val;
+      _cwTempTicket.status = 'חדש';
+      _cwTempTicket.timestamp = Date.now();
+      _cwTempTicket.station = _cwStationKey || 'unknown';
+      
+      const fdb = _cwGetDb();
+      if (fdb) {
+        const ref = fdb.ref('tickets').push();
+        _cwCurrentId = ref.key;
+        ref.set(_cwTempTicket).then(() => {
+          _cwNotifyAdmin(_cwTempTicket);
+          const msgsRef = fdb.ref(`tickets/${_cwCurrentId}/messages`);
+          msgsRef.push({ role:'system', text:'פנייה נפתחה', timestamp:Date.now() });
+          msgsRef.push({ role:'user', text:_cwTempTicket.details||_cwTempTicket.rating||'', timestamp:Date.now() });
+        });
+      }
+      
+      _cwSayBot(`✅ הפנייה נפתחה!\n\nמספר: <b style="color:#00e5ff">${(_cwCurrentId||'').slice(-6).toUpperCase()}</b>\n\nנחזור אליך ל-${val} בהקדם.`);
+      _cwAppendMsg('ממתין לתגובת מנהל...','system');
+      _cwBotStep = 'connected';
+      _cwSyncListener(_cwCurrentId);
+      break;
+    }
+    case 'check_status': {
+      if (!_cwValidEmail(val)) { _cwSayBot('⚠️ כתובת מייל לא תקינה. נסה שנית:'); return; }
+      const fdb = _cwGetDb();
+      if (!fdb) { _cwSayBot('⚠️ שגיאת חיבור'); return; }
+      fdb.ref('tickets').orderByChild('email').equalTo(val).once('value', snap => {
+        const found = snap.val();
+        if (found) {
+          const entries = Object.entries(found);
+          _cwSayBot(`מצאתי <b>${entries.length}</b> פנייה/ות עבור ${val}:`);
+          entries.forEach(([,t]) => {
+            const emoji = {'חדש':'🟠','בטיפול':'🔵','הסתיים':'🟢'}[t.status]||'⚪';
+            _cwSayBot(`${emoji} <b>${_cwEsc(t.category)}</b> · ${t.status} · ${_cwTimeAgo(t.timestamp)}`);
+          });
+        } else {
+          _cwSayBot(`😔 לא נמצאו פניות עבור ${val}.`);
+        }
+        _cwBotStep = 'start';
+        setTimeout(() => {
+          _cwSayBot('האם תרצה/י לפתוח פנייה חדשה?');
+          _cwShowChoices([
+            {label:'📦 פנייה חדשה',val:'דיווח על חוסר'},
+            {label:'🔧 תקלה',val:'תקלה במערכת'},
+            {label:'⭐ דירוג',val:'דירוג שירות'},
+          ]);
+        }, 800);
+      });
+      break;
+    }
+    case 'connected': break;
+    default:
+      _cwSayBot('לא הבנתי. אנא בחר/י אפשרות:');
+      _cwShowChoices([
+        {label:'📦 דיווח על חוסר',val:'דיווח על חוסר'},
+        {label:'🔧 תקלה',val:'תקלה במערכת'},
+        {label:'⭐ דירוג שירות',val:'דירוג שירות'},
+      ]);
+  }
+}
+
+/* ================================================================
+   HOOK INTO showApp/logout to show/hide FAB
+   ================================================================ */
+(function() {
+  const origShowApp = window.showApp;
+  if (typeof origShowApp === 'function') {
+    window.showApp = function(screenId) {
+      origShowApp(screenId);
+      showChatFab();
+      // Set station key for chat
+      _cwStationKey = (typeof CURRENT_SITE !== 'undefined' ? CURRENT_SITE : null) 
+                   || sessionStorage.getItem('mda_station') 
+                   || 'hodhasharon';
+    };
+  }
+  // Note: logout() now does location.reload() — no need to wrap it further
+  // Just make sure FAB is hidden before reload triggers
+  const origLogout = window.logout;
+  if (typeof origLogout === 'function') {
+    window.logout = async function() {
+      hideChatFab();
+      _cwBotStep = 'idle';
+      _cwCurrentId = null;
+      if (_cwListener) {
+        try { 
+          const fdb = _cwGetDb();
+          if (fdb) fdb.ref(_cwListener._path).off('child_added', _cwListener._fn);
+        } catch(e){}
+        _cwListener = null;
+      }
+      await origLogout();
+    };
+  }
+})();
+
+// Station/Firebase init handled by CURRENT_SITE at top of main JS + reload on station change
+
+</script>
 
 </body>
 </html>
