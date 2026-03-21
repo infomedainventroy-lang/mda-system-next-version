@@ -7751,7 +7751,7 @@ function _cwNotifyAdmin(ticket) {
     STATUS_TYPE:   'info',
     MESSAGE:       'פרטים: ' + (ticket.details || ticket.rating || '—') + '\nמייל פונה: ' + (ticket.email || '—'),
     DATE:          new Date().toLocaleString('he-IL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
-    REPLY_URL:     window.location.href,
+    REPLY_URL:     window.location.origin + window.location.pathname + '?chat=open',
     to_email:      ADMIN_NOTIFY_EMAIL,
     reply_to:      ticket.email || ADMIN_NOTIFY_EMAIL
   };
@@ -7781,7 +7781,7 @@ function _cwSendReplyEmail(toEmail, message, subject) {
     STATUS_TYPE:   'info',
     MESSAGE:       message,
     DATE:          new Date().toLocaleString('he-IL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
-    REPLY_URL:     window.location.href,
+    REPLY_URL:     window.location.origin + window.location.pathname + '?chat=open',
     to_email:      toEmail,
     reply_to:      ADMIN_NOTIFY_EMAIL
   };
@@ -7969,6 +7969,14 @@ function _cwRunStep(val) {
       _cwStationKey = (typeof CURRENT_SITE !== 'undefined' ? CURRENT_SITE : null) 
                    || sessionStorage.getItem('mda_station') 
                    || 'hodhasharon';
+      // Auto-open chat if arriving from email link (?chat=open)
+      if (new URLSearchParams(window.location.search).get('chat') === 'open') {
+        setTimeout(function() {
+          openChatWidget();
+          // Clean URL without reload
+          history.replaceState(null, '', window.location.pathname);
+        }, 800);
+      }
     };
   }
   // Note: logout() now does location.reload() — no need to wrap it further
