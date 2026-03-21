@@ -1704,7 +1704,37 @@ tr:hover td { background: var(--bg); }
 }
 .alert-sort-btn.active { background: var(--c-navy); color: white; border-color: var(--c-navy); }
 .alert-sort-btn:hover:not(.active) { border-color: var(--c-navy); color: var(--c-navy); }
+/* כפתור מעבר לתחנה אחרת */
+.station-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, var(--c-blue) 0%, #1557a0 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: var(--r-sm);
+  font-weight: 800;
+  font-size: 0.85em;
+  transition: var(--tr);
+  box-shadow: var(--sh-sm);
+  border: none;
+  cursor: pointer;
+  margin: 10px 0;
+}
 
+.station-switch-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: var(--sh-md);
+  color: white;
+}
+
+.station-switch-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
 </style>
 </head>
 <body>
@@ -1736,7 +1766,10 @@ tr:hover td { background: var(--bg); }
     <p class="login-tagline">מערכת ניהול מלאי</p>
     <span class="login-version-badge">v<script>document.write(APP_VERSION)</script></span>
   </div>
-
+  <a href="https://sites.google.com/view/landing-pagemm/%D7%93%D7%A3-%D7%A0%D7%97%D7%99%D7%AA%D7%94" class="station-switch-btn">
+  <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+  <span>מעבר לתחנה אחרת</span>
+</a>
   <!-- Biometric quick-login (shown only when device has registered credential) -->
   <div id="bio-quick-login" class="login-card hidden">
     <h3>🔐 כניסה מהירה</h3>
