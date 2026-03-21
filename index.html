@@ -7413,7 +7413,7 @@ setInterval(() => {
       <div class="chat-hd-left">
         <div class="chat-hd-icon">💬</div>
         <div>
-          <div class="chat-hd-title" id="chatWidgetTitle">מוקד תמיכה </div>
+          <div class="chat-hd-title" id="chatWidgetTitle">מוקד תמיכה מד"א</div>
           <div class="chat-hd-sub" id="chatWidgetSub">
             <div class="chat-online-dot"></div>
             <span id="chatWidgetSubText">בוט חכם · 24/7</span>
@@ -7574,16 +7574,16 @@ function _cwStartBot() {
   _cwRenderedKeys = new Set();
   
   const stationName = (window.SITE_CONFIG && _cwStationKey) ? (window.SITE_CONFIG[_cwStationKey]?.headerText || 'מד"א') : 'מד"א';
-  document.getElementById('chatWidgetTitle').textContent = 'מוקד תמיכה ';
+  document.getElementById('chatWidgetTitle').textContent = 'מוקד תמיכה מד"א';
   const subTextEl = document.getElementById('chatWidgetSubText');
-  if (subTextEl) subTextEl.textContent = stationName + ' · בוט חכם';
+  if (subTextEl) subTextEl.textContent = stationName + ' · תמיכה 24/7';
   document.getElementById('chatWidgetMsgs').innerHTML = '';
   document.getElementById('chatWidgetQuickReplies').style.display = 'none';
   
   const h = new Date().getHours();
   const greet = h < 12 ? 'בוקר טוב ☀️' : (h < 18 ? 'צהריים טובים 🌤' : 'ערב טוב 🌙');
   
-  setTimeout(() => _cwSayBot(`${greet}! אני בוט התמיכה  של ${stationName}.`), 300);
+  setTimeout(() => _cwSayBot(`${greet}! אני בוט התמיכה של ${stationName}.`), 300);
   setTimeout(() => {
     _cwSayBot('כיצד אוכל לסייע לך?');
     _cwShowChoices([
@@ -7620,7 +7620,7 @@ function _cwAppendMsg(text, role) {
   const area = document.getElementById('chatWidgetMsgs');
   if (!area) return;
   const wrap = document.createElement('div');
-  const labels = { bot:'בוט לוגיסטיקה', user:'אתה', admin:'מנהל', system:'מערכת' };
+  const labels = { bot:'בוט תמיכה', user:'אתה', admin:'מנהל', system:'מערכת' };
   if (role === 'system') {
     wrap.className = 'cbubble cbubble-system';
     wrap.textContent = text;
@@ -7733,37 +7733,57 @@ if (document.readyState === 'loading') {
 }
 
 function _cwNotifyAdmin(ticket) {
-  console.log('[EmailJS] Attempting to notify admin...', { EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, ADMIN_NOTIFY_EMAIL });
   if (typeof emailjs === 'undefined') { console.error('[EmailJS] Library not loaded!'); return; }
   if (!EMAILJS_PUBLIC_KEY) { console.error('[EmailJS] No public key!'); return; }
   
+  const ticketId = (_cwCurrentId||'').slice(-6).toUpperCase();
+  const stationName = (window.SITE_CONFIG && ticket.station && window.SITE_CONFIG[ticket.station])
+    ? window.SITE_CONFIG[ticket.station].headerText
+    : (ticket.station || 'מד"א מרחב');
+
   const params = {
-    to_email:  ADMIN_NOTIFY_EMAIL,
-    from_name: ticket.email || 'משתמש',
-    subject:   'פנייה חדשה: ' + (ticket.category || ''),
-    message:   'קטגוריה: ' + (ticket.category||'') + '\nפרטים: ' + (ticket.details||ticket.rating||'—') + '\nמייל: ' + (ticket.email||'') + '\nתחנה: ' + (ticket.station||''),
-    reply_to:  ticket.email || '',
-    ticket_id: (_cwCurrentId||'').slice(-6).toUpperCase(),
-    status:    'חדש'
+    TO_NAME:       'מנהל מוקד',
+    SUBJECT:       'פנייה חדשה: ' + (ticket.category || ''),
+    FROM_STATION:  stationName,
+    TICKET_ID:     ticketId,
+    CATEGORY:      ticket.category || '',
+    STATUS:        'חדש',
+    STATUS_TYPE:   'info',
+    MESSAGE:       'פרטים: ' + (ticket.details || ticket.rating || '—') + '\nמייל פונה: ' + (ticket.email || '—'),
+    DATE:          new Date().toLocaleString('he-IL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
+    REPLY_URL:     window.location.href,
+    to_email:      ADMIN_NOTIFY_EMAIL,
+    reply_to:      ticket.email || ADMIN_NOTIFY_EMAIL
   };
-  console.log('[EmailJS] Sending with params:', params);
+  console.log('[EmailJS] Notifying admin:', params);
   
   emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
-    .then(res => console.log('[EmailJS] ✅ Admin notified:', res.status, res.text))
-    .catch(e => console.error('[EmailJS] ❌ Send failed:', e));
+    .then(res => console.log('[EmailJS] ✅ Admin notified:', res.status))
+    .catch(e => console.error('[EmailJS] ❌ Failed:', e));
 }
 
 function _cwSendReplyEmail(toEmail, message, subject) {
-  if (!toEmail) { console.warn('[EmailJS reply] No email address'); return; }
+  if (!toEmail) { console.warn('[EmailJS reply] No email'); return; }
   if (typeof emailjs === 'undefined') { console.error('[EmailJS reply] Library not loaded'); return; }
-  if (!EMAILJS_PUBLIC_KEY) { console.error('[EmailJS reply] No key'); return; }
-  
+  if (!EMAILJS_PUBLIC_KEY) return;
+
+  const stationName = (window.SITE_CONFIG && _cwStationKey && window.SITE_CONFIG[_cwStationKey])
+    ? window.SITE_CONFIG[_cwStationKey].headerText
+    : 'מד"א מרחב';
+
   const params = {
-    to_email:  toEmail,
-    from_name: 'מוקד לוגיסטיקה מד"א',
-    subject:   'עדכון פנייה: ' + (subject || 'לוגיסטיקה'),
-    message:   message,
-    reply_to:  ADMIN_NOTIFY_EMAIL
+    TO_NAME:       toEmail,
+    SUBJECT:       'עדכון פנייה: ' + (subject || 'תמיכה'),
+    FROM_STATION:  stationName,
+    TICKET_ID:     (_cwCurrentId||'').slice(-6).toUpperCase(),
+    CATEGORY:      subject || 'תמיכה',
+    STATUS:        'בטיפול',
+    STATUS_TYPE:   'info',
+    MESSAGE:       message,
+    DATE:          new Date().toLocaleString('he-IL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
+    REPLY_URL:     window.location.href,
+    to_email:      toEmail,
+    reply_to:      ADMIN_NOTIFY_EMAIL
   };
   emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
     .then(res => console.log('[EmailJS reply] ✅ Sent to', toEmail, res.status))
