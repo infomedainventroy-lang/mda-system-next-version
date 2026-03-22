@@ -1960,8 +1960,19 @@ tr:hover td { background: var(--bg); }
 <div id="ticker-login" class="ticker-bar"></div>
 
 <!-- ================================================================
-     INTRO SPLASH
+     INTRO SPLASH — runs ONLY after station selection (flag: mda_from_station)
      ================================================================ -->
+<div id="intro-splash" style="display:none;position:fixed;inset:0;z-index:99999;background:#000;overflow:hidden;">
+  <canvas id="splash-c" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+  <div id="intro-splash::before" style="content:'';position:absolute;inset:0;pointer-events:none;z-index:8;
+    background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.12) 3px,rgba(0,0,0,.12) 4px);"></div>
+  <div id="sp-logo" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:10;display:flex;flex-direction:column;align-items:center;pointer-events:none;opacity:0;">
+    <img id="sp-logo-img" src="" alt="לוגו" style="width:140px;height:auto;filter:drop-shadow(0 0 40px #fff) drop-shadow(0 0 80px #d32f2f);">
+    <div id="splash-title" style="font-family:'Heebo',sans-serif;font-size:1.35em;font-weight:900;color:#fff;letter-spacing:.1em;margin-top:16px;text-shadow:0 0 25px rgba(255,255,255,.6);opacity:0;transform:translateY(12px);transition:opacity .4s ease,transform .4s ease;">מערכת ניהול מלאי מד"א</div>
+    <div style="font-family:'Heebo',sans-serif;font-size:.75em;font-weight:700;color:#d32f2f;letter-spacing:.35em;text-transform:uppercase;text-shadow:0 0 18px rgba(211,47,47,.8);margin-top:6px;opacity:0;transform:translateY(8px);transition:opacity .4s ease .12s,transform .4s ease .12s;" id="sp-t2">מגן דוד אדום</div>
+  </div>
+  <div id="sp-wipe-t" style="position:absolute;left:0;right:0;height:50%;background:#000;top:0;transform-origin:top;transform:scaleY(0);z-index:20;pointer-events:none;"></div>
+  <div id="sp-wipe-b" style="position:absolute;left:0;right:0;height:50%;background:#000;bottom:0;transform-origin:bottom;transform:scaleY(0);z-index:20;pointer-events:none;"></div>
 </div>
 
 <!-- ================================================================
@@ -3259,7 +3270,116 @@ document.addEventListener('DOMContentLoaded', () => {
   if (infoSite) infoSite.textContent = CURRENT_SITE;
   if (infoDB)   infoDB.textContent   = CFG.firebase.databaseURL.replace('https://','').split('.')[0];
 
-  // ── DEFCON SIREN INTRO ───────────────────────────────────────
+  // ── DEFCON SIREN INTRO — only after station selection ──────────
+  if (sessionStorage.getItem('mda_from_station')) {
+    sessionStorage.removeItem('mda_from_station'); // consume flag — runs once
+    (function runSplash() {
+    const splash  = document.getElementById('intro-splash');
+    const canvas  = document.getElementById('splash-c');
+    const logoWrap= document.getElementById('sp-logo');
+    const logoImg = document.getElementById('sp-logo-img');
+    if (!splash || !canvas) return;
+    splash.style.display = 'block';
+    if (logoImg) logoImg.src = CFG.logoUrl || "https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system-next-version@main/main_logo.png";
+    const splashTitle = document.getElementById('splash-title');
+    if (splashTitle) splashTitle.textContent = CFG.headerText || 'מערכת ניהול מלאי מד"א';
+
+    let W = canvas.width  = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
+    const g = canvas.getContext('2d');
+
+    let AC = null;
+    function getAC() { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); return AC; }
+    function unlockAudio() { try { getAC(); } catch(e){} }
+    document.addEventListener('touchstart', unlockAudio, {once:true, passive:true});
+    document.addEventListener('mousedown',  unlockAudio, {once:true, passive:true});
+    function mkNoise(c, sec) { const b = c.createBuffer(1, c.sampleRate*sec, c.sampleRate); const d = b.getChannelData(0); for (let i=0;i<d.length;i++) d[i]=Math.random()*2-1; return b; }
+    function tone(freq, type, start, dur, vol, dest, c) { const o=c.createOscillator(), gn=c.createGain(); o.type=type; o.frequency.value=freq; gn.gain.setValueAtTime(vol, start); gn.gain.exponentialRampToValueAtTime(0.0001, start+dur); o.connect(gn); gn.connect(dest); o.start(start); o.stop(start+dur+.05); }
+    function toneSlide(f0, f1, type, start, dur, vol, dest, c) { const o=c.createOscillator(), gn=c.createGain(); o.type=type; o.frequency.setValueAtTime(f0, start); o.frequency.exponentialRampToValueAtTime(f1, start+dur); gn.gain.setValueAtTime(vol, start); gn.gain.exponentialRampToValueAtTime(0.0001, start+dur); o.connect(gn); gn.connect(dest); o.start(start); o.stop(start+dur+.05); }
+
+    const SFX = {
+      heartbeat(t) { try { const c=getAC(), now=c.currentTime+t; const m=c.createGain(); m.gain.value=.7; m.connect(c.destination); toneSlide(180,30,'sine',now,.18,.9,m,c); toneSlide(200,35,'sine',now+.2,.16,.7,m,c); } catch(e){} },
+      ekgBeep(t)   { try { const c=getAC(), now=c.currentTime+t; const m=c.createGain(); m.gain.value=.5; m.connect(c.destination); tone(1200,'sine',now,.06,.6,m,c); tone(1800,'sine',now+.02,.04,.3,m,c); } catch(e){} },
+      powerUp()    { try { const c=getAC(), m=c.createGain(); m.gain.value=.4; m.connect(c.destination); const now=c.currentTime; toneSlide(60,2400,'sawtooth',now,.7,.35,m,c); toneSlide(90,1200,'sine',now+.1,.65,.2,m,c); [120,240,480].forEach((f,i)=>tone(f,'sine',now+i*.05,.5,.06,m,c)); } catch(e){} },
+      boom()       { try { const c=getAC(), m=c.createGain(); m.gain.value=.9; m.connect(c.destination); const now=c.currentTime; const k=c.createOscillator(), kg=c.createGain(); k.type='sine'; k.frequency.setValueAtTime(200,now); k.frequency.exponentialRampToValueAtTime(20,now+.6); kg.gain.setValueAtTime(1,now); kg.gain.exponentialRampToValueAtTime(.0001,now+.65); k.connect(kg); kg.connect(m); k.start(now); k.stop(now+.7); } catch(e){} },
+      whoosh()     { try { const c=getAC(), m=c.createGain(); m.gain.value=.5; m.connect(c.destination); const now=c.currentTime; const n=c.createBufferSource(); n.buffer=mkNoise(c,.7); const nf=c.createBiquadFilter(); nf.type='bandpass'; nf.frequency.setValueAtTime(5000,now); nf.frequency.exponentialRampToValueAtTime(80,now+.6); nf.Q.value=1.5; const ng=c.createGain(); ng.gain.setValueAtTime(.0001,now); ng.gain.linearRampToValueAtTime(.6,now+.06); ng.gain.exponentialRampToValueAtTime(.0001,now+.65); n.connect(nf); nf.connect(ng); ng.connect(m); n.start(now); tone(45,'sine',now+.3,.4,.5,m,c); } catch(e){} },
+    };
+
+    let t = 0, shakeAmt = 0, particles = [], rings = [];
+    let bgAlpha = 0;
+    const STAR_VERTS = (() => { const pts = [], R=1, r=R*.57; for(let i=0;i<3;i++) { const a=-Math.PI/2+i*Math.PI*2/3; pts.push([Math.cos(a)*R,Math.sin(a)*R]); } pts.push(pts[0]); for(let i=0;i<3;i++) { const a=Math.PI/2+i*Math.PI*2/3; pts.push([Math.cos(a)*R,Math.sin(a)*R]); } pts.push(pts[4]); return pts; })();
+    let starProgress = 0, starActive = false, starAlpha = 0;
+    let exiting = false, raf;
+
+    function spawnBurst(x, y, n, big) { for(let i=0;i<n;i++) { const a=Math.random()*Math.PI*2, sp=(big?6:3)+Math.random()*(big?14:8); particles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, sz:(big?3:1.5)+Math.random()*(big?5:3), life:1, decay:.012+Math.random()*.02, col:['#fff','#d32f2f','#1a6eb5','#f9a825'][Math.floor(Math.random()*4)] }); } }
+    function addRing(x,y,col) { rings.push({x,y,r:10,col,life:1}); }
+    function addShake(a) { shakeAmt=Math.max(shakeAmt,a); }
+
+    function getPolyPoint(pts, progress) { let total=0; for(let i=1;i<pts.length;i++){const dx=pts[i][0]-pts[i-1][0], dy=pts[i][1]-pts[i-1][1]; total+=Math.sqrt(dx*dx+dy*dy);} let target=total*progress, acc=0; for(let i=1;i<pts.length;i++){const dx=pts[i][0]-pts[i-1][0], dy=pts[i][1]-pts[i-1][1]; const seg=Math.sqrt(dx*dx+dy*dy); if(acc+seg>=target){const frac=(target-acc)/seg; return [pts[i-1][0]+dx*frac, pts[i-1][1]+dy*frac];} acc+=seg;} return pts[pts.length-1]; }
+
+    function draw() {
+      raf = requestAnimationFrame(draw);
+      const sx = shakeAmt>0 ? (Math.random()-.5)*shakeAmt*2 : 0;
+      const sy = shakeAmt>0 ? (Math.random()-.5)*shakeAmt*2 : 0;
+      if (shakeAmt > 0) shakeAmt *= .82;
+      g.save(); g.translate(sx, sy);
+      g.fillStyle = `rgba(0,0,0,${bgAlpha})`; g.fillRect(0,0,W,H);
+      // star
+      if (starActive && starAlpha > 0) {
+        const cx=W/2, cy=H/2, sr=Math.min(W,H)*.22;
+        g.save(); g.globalAlpha=starAlpha*.9; g.strokeStyle='#d32f2f'; g.lineWidth=3; g.shadowColor='#d32f2f'; g.shadowBlur=28;
+        g.beginPath();
+        for(let i=0;i<=starProgress*STAR_VERTS.length;i++) {
+          const prog = Math.min(1, (starProgress*STAR_VERTS.length - i + 1));
+          if (i===0) { g.moveTo(cx+STAR_VERTS[0][0]*sr, cy+STAR_VERTS[0][1]*sr); continue; }
+          const pi = Math.min(i, STAR_VERTS.length-1);
+          const pp = Math.min(i-1, STAR_VERTS.length-1);
+          const px = cx + (STAR_VERTS[pp][0] + (STAR_VERTS[pi][0]-STAR_VERTS[pp][0])*prog)*sr;
+          const py = cy + (STAR_VERTS[pp][1] + (STAR_VERTS[pi][1]-STAR_VERTS[pp][1])*prog)*sr;
+          g.lineTo(px, py);
+        }
+        g.stroke(); g.restore();
+        if (!exiting) starProgress = Math.min(1, starProgress + .025);
+      }
+      particles=particles.filter(p=>p.life>0); particles.forEach(p=>{g.globalAlpha=p.life*.9; g.beginPath(); g.arc(p.x,p.y,p.sz,0,Math.PI*2); g.fillStyle=p.col; g.shadowColor=p.col; g.shadowBlur=8; g.fill(); p.x+=p.vx; p.y+=p.vy; p.vy+=.1; p.vx*=.97; p.life-=p.decay;});
+      rings=rings.filter(r=>r.life>0); rings.forEach(r=>{g.globalAlpha=r.life*.8; g.strokeStyle=r.col; g.lineWidth=3*(1-r.life*.5); g.shadowColor=r.col; g.shadowBlur=20; g.beginPath(); g.arc(r.x,r.y,r.r,0,Math.PI*2); g.stroke(); r.r+=Math.min(W,H)*.025; r.life-=.032;});
+      g.shadowBlur=0; g.globalAlpha=1; g.restore();
+    }
+
+    draw();
+    setTimeout(()=>{ bgAlpha=.001; (function fadeBg(){bgAlpha=Math.min(1,bgAlpha+.04); if(bgAlpha<1)setTimeout(fadeBg,20);})(); },50);
+    setTimeout(()=>{ let hb=0, hbInt; hbInt=setInterval(()=>{ SFX.heartbeat(0); hb++; if(hb>=3)clearInterval(hbInt); },700); },300);
+    setTimeout(()=>{ starActive=true; starAlpha=0; (function fadeStar(){starAlpha=Math.min(1,starAlpha+.08); if(starAlpha<1)setTimeout(fadeStar,20);})(); },600);
+    // Logo appears
+    setTimeout(()=>{
+      logoWrap.style.transition='transform .5s cubic-bezier(.12,1.6,.5,1), opacity .4s ease';
+      logoWrap.style.transform='translate(-50%,-50%) scale(1)';
+      logoWrap.style.opacity='1';
+      const t1=logoWrap.querySelector('#splash-title'), t2=document.getElementById('sp-t2');
+      if(t1){t1.style.opacity='1';t1.style.transform='translateY(0)';}
+      if(t2){t2.style.opacity='1';t2.style.transform='translateY(0)';}
+    }, 1200);
+    setTimeout(()=>{ SFX.powerUp(); }, 1800);
+    setTimeout(()=>{
+      SFX.boom(); addShake(28);
+      const fl=document.createElement('div'); fl.style.cssText='position:absolute;inset:0;background:#fff;z-index:9;pointer-events:none;'; splash.appendChild(fl);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{ fl.style.transition='opacity .4s ease'; fl.style.opacity='0'; setTimeout(()=>fl.remove(),450); }));
+      spawnBurst(W/2,H/2,180,true);
+      setTimeout(()=>addRing(W/2,H/2,'rgba(211,47,47,.9)'),0);
+      setTimeout(()=>addRing(W/2,H/2,'rgba(26,110,181,.8)'),130);
+      setTimeout(()=>addRing(W/2,H/2,'rgba(255,255,255,.6)'),260);
+    }, 2400);
+    setTimeout(()=>{
+      SFX.whoosh(); exiting=true;
+      // Wipe out
+      const wt=document.getElementById('sp-wipe-t'), wb=document.getElementById('sp-wipe-b');
+      if(wt){wt.style.transition='transform .5s cubic-bezier(.7,0,1,.7)'; wt.style.transform='scaleY(1)';}
+      if(wb){wb.style.transition='transform .5s cubic-bezier(.7,0,1,.7) .06s'; wb.style.transform='scaleY(1)';}
+      setTimeout(()=>{ cancelAnimationFrame(raf); splash.style.transition='opacity .1s ease'; splash.style.opacity='0'; setTimeout(()=>{ splash.style.display='none'; },150); }, 560);
+    }, 3800);
+  })(); // end runSplash
+  }
 
   // Clock
   updateClock();
@@ -7188,30 +7308,21 @@ let _chatWidgetDb = null; // separate Firebase app for chat (same project)
 function selectStation(stationKey) {
   _selectedStation = stationKey;
   sessionStorage.setItem('mda_station', stationKey);
-  
-  // If the page was already loaded with a different Firebase config, reload.
-  // CURRENT_SITE was set at top of JS from sessionStorage — if it differs, reload.
+  sessionStorage.setItem('mda_from_station', '1'); // flag: run splash after load
+
+  // Animate station picker out
+  const stEl = document.getElementById('scr-station');
+  stEl.style.transition = 'opacity .35s ease';
+  stEl.style.opacity = '0';
+
+  // If different Firebase config — need full reload
   if (typeof CURRENT_SITE !== 'undefined' && CURRENT_SITE !== stationKey) {
-    // Animate out then reload so Firebase re-inits with the correct project
-    const stEl = document.getElementById('scr-station');
-    stEl.style.transition = 'opacity .35s ease';
-    stEl.style.opacity = '0';
     setTimeout(() => { location.reload(); }, 380);
     return;
   }
-  
-  // Same config — just fade to login
-  const stEl = document.getElementById('scr-station');
-  stEl.style.transition = 'opacity .4s ease';
-  stEl.style.opacity = '0';
-  setTimeout(() => {
-    stEl.style.display = 'none';
-    const loginEl = document.getElementById('scr-login');
-    loginEl.style.display = '';
-    loginEl.style.opacity = '0';
-    loginEl.style.transition = 'opacity .4s ease';
-    requestAnimationFrame(() => { loginEl.style.opacity = '1'; });
-  }, 400);
+
+  // Same config — reload so splash runs cleanly from DOMContentLoaded
+  setTimeout(() => { location.reload(); }, 380);
 }
 
 // On load: check session — if station is saved, skip picker
