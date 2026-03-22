@@ -3615,11 +3615,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     draw();
     setTimeout(()=>{ bgAlpha=.001; (function fadeBg(){bgAlpha=Math.min(1,bgAlpha+.04); if(bgAlpha<1)setTimeout(fadeBg,20);})(); },50);
-    // ── שדרוג: סירנה + לב מיידי ──
-    SFX.siren(2.2);
-    setTimeout(()=>{
-      sirenAlpha=0.001; (function fadeSiren(){sirenAlpha=Math.min(1,sirenAlpha+.06); if(sirenAlpha<1)setTimeout(fadeSiren,20);})();
-    },50);
+    // לב מיידי (ללא סירנה)
     setTimeout(()=>{
       let hb=0, heartbeatInterval;
       heartbeatInterval=setInterval(()=>{ SFX.heartbeat(0); hb++; if(hb>=3)clearInterval(heartbeatInterval); },700);
