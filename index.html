@@ -30,7 +30,7 @@ document.getElementById('pwa-manifest').href = URL.createObjectURL(_blob);
 </script>
 <script>
   const APP_VERSION = "1.19";
-  const APP_BUILD_TS = 1774187119194;
+  const APP_BUILD_TS = 1774188234869;
 </script>
 <title id="page-title">מערכת מלאי מד"א</title>
 
@@ -1750,7 +1750,9 @@ tr:hover td { background: var(--bg); }
   align-items: center; justify-content: center;
   padding: 24px 16px 40px;
   overflow: hidden;
+  animation: stationFadeIn .5s ease both;
 }
+@keyframes stationFadeIn { from { opacity:0; } to { opacity:1; } }
 #scr-station::before {
   content: '';
   position: absolute; inset: 0;
@@ -2920,23 +2922,17 @@ if (sessionStorage.getItem('mda_station')) {
 
           <!-- Header -->
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;position:relative;z-index:1;">
-            <div style="width:44px;height:44px;background:linear-gradient(135deg,#5865f2,#7289da);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.25em;box-shadow:0 6px 18px rgba(88,101,242,.5);flex-shrink:0;">💬</div>
-            <div style="flex:1;">
-              <div style="font-size:1em;font-weight:900;color:white;line-height:1.2;">Discord Webhook v5.2</div>
-              <div style="font-size:.72em;color:rgba(255,255,255,.4);margin-top:2px;">התראות אוטומטיות · <span style="color:#00e676;font-weight:700;">הודעה אחת לכל העדכונים</span></div>
+            <div style="width:40px;height:40px;background:#5865f2;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1em;box-shadow:0 4px 14px rgba(88,101,242,.4);flex-shrink:0;">💬</div>
+            <div>
+              <div style="font-size:1em;font-weight:900;color:white;line-height:1.2;">Discord Webhook — התראות מלאי</div>
+              <div style="font-size:.72em;color:rgba(255,255,255,.4);margin-top:2px;">התראות אוטומטיות בזמן אמת לכל הצוות</div>
             </div>
-            <div style="background:rgba(88,101,242,.25);border:1px solid rgba(88,101,242,.4);border-radius:8px;padding:4px 10px;font-size:.65em;color:#a5b4fc;font-weight:800;white-space:nowrap;">v5.2</div>
           </div>
 
           <!-- Status indicator -->
           <div class="dc-status-row">
             <div class="dc-dot" id="dc-dot"></div>
             <span id="dc-status-text">טוען הגדרות מ-Firebase...</span>
-          </div>
-
-          <!-- Batch info note -->
-          <div style="background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.2);border-radius:10px;padding:9px 13px;margin-bottom:14px;font-size:.73em;color:rgba(255,255,255,.55);position:relative;z-index:1;line-height:1.7;">
-            <span style="color:#00e676;font-weight:800;">✦ מערכת Batch חכמה</span> — כל ההתראות שנוצרות בתוך 8 שניות יאוחדו <b style="color:rgba(255,255,255,.7);">להודעה אחת בלבד</b> עם embed מפורט לכל פריט.
           </div>
 
           <!-- How-to steps -->
@@ -3876,6 +3872,7 @@ function loadData() {
         ${gmailTd}
         <td style="color:${active?'var(--c-green-light)':'var(--c-red)'};font-weight:800;">${active?'פעיל':'לא פעיל'}</td>
         <td>
+          <button class="btn sm w-auto btn-blue" style="margin:2px;" onclick="openEditTeamModal('${t.id}')">✏️ עריכה</button>
           <button class="btn sm w-auto btn-gold" style="margin:2px;" onclick="toggleTeamStatus('${t.id}',${!active})">${active?'השבת':'הפעל'}</button>
           <button class="btn sm w-auto btn-red" style="margin:2px;" onclick="deleteTeamMember('${t.id}','${esc(t.name)}')">מחק</button>
         </td>
@@ -3897,6 +3894,7 @@ function loadData() {
         <td>${esc(a.email)}</td><td>${esc(a.displayName)}</td>
         <td style="color:${active?'var(--c-green-light)':'var(--c-red)'};font-weight:800;">${active?'פעיל':'לא פעיל'}</td>
         <td>
+          <button class="btn sm w-auto btn-blue" style="margin:2px;" onclick="openEditAdminModal('${id}')">✏️ עריכה</button>
           <button class="btn sm w-auto btn-gold" style="margin:2px;" onclick="toggleAdminStatus('${id}',${!active})">${active?'השבת':'הפעל'}</button>
           <button class="btn sm w-auto btn-red" style="margin:2px;" onclick="deleteAdmin('${id}','${esc(a.email)}')">מחק</button>
         </td>
@@ -5203,7 +5201,7 @@ function downloadReportPDF() {
    LOGS
    ================================================================ */
 function buildLogCache() {
-  _logRows = [...logs].map(l => {  // logs already sorted newest-first from Firebase listener
+  _logRows = [...logs].reverse().map(l => {
     const itemName = l.item || l.itemName || '';
     const action   = l.action || 'take';
     const amount   = Number.isFinite(l.amount) ? l.amount : Math.abs(l.delta || 0);
@@ -5316,6 +5314,126 @@ async function deleteAdmin(id, email) {
   db.ref('admins/' + id).remove();
   showToast('✓ נמחק');
 }
+/* ================================================================
+   EDIT TEAM MEMBER
+   ================================================================ */
+function openEditTeamModal(id) {
+  const member = team.find(t => t.id === id);
+  if (!member) return showToast('איש צוות לא נמצא', 'error');
+  document.getElementById('etm-id').value    = id;
+  document.getElementById('etm-name').value  = member.name  || '';
+  document.getElementById('etm-phone').value = member.phone || '';
+  document.getElementById('etm-pin').value   = member.pin   || '';
+  document.getElementById('etm-email').value = member.email || '';
+  // Reset password visibility
+  const pinEl = document.getElementById('etm-pin');
+  if (pinEl) pinEl.type = 'password';
+  document.getElementById('editTeamModal').style.display = 'flex';
+}
+
+function closeEditTeamModal() {
+  document.getElementById('editTeamModal').style.display = 'none';
+}
+
+async function saveEditTeamMember() {
+  const id    = document.getElementById('etm-id').value;
+  const name  = document.getElementById('etm-name').value.trim();
+  const phone = document.getElementById('etm-phone').value.trim();
+  const pin   = document.getElementById('etm-pin').value.trim();
+  const email = document.getElementById('etm-email').value.trim().toLowerCase();
+
+  if (!name)  return showToast('שם הוא שדה חובה', 'error');
+  if (!phone) return showToast('מספר טלפון הוא שדה חובה', 'error');
+  if (!pin)   return showToast('קוד אישי הוא שדה חובה', 'error');
+
+  // Check phone uniqueness (exclude current member)
+  if (team.some(t => t.id !== id && String(t.phone).trim() === phone)) {
+    return showToast('מספר טלפון כבר קיים לאיש צוות אחר', 'error');
+  }
+  // Validate email if provided
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return showToast('כתובת Gmail לא תקינה', 'error');
+  }
+  // Check email uniqueness (exclude current member)
+  if (email && team.some(t => t.id !== id && (t.email||'').toLowerCase() === email)) {
+    return showToast('Gmail זה כבר רשום לאיש צוות אחר', 'error');
+  }
+
+  const updates = { name, phone, pin };
+  if (email) {
+    updates.email = email;
+  } else {
+    // Remove email field if cleared
+    updates.email = null;
+  }
+
+  try {
+    await db.ref('team/' + id).update(updates);
+    // If email was removed, delete the field explicitly
+    if (!email) await db.ref('team/' + id + '/email').remove();
+    showToast('✅ פרטי איש הצוות עודכנו');
+    closeEditTeamModal();
+  } catch(e) {
+    showToast('שגיאה בשמירה: ' + (e.message || e), 'error');
+  }
+}
+
+/* ================================================================
+   EDIT ADMIN
+   ================================================================ */
+function openEditAdminModal(id) {
+  // Find admin by id in Firebase data — scan admins object
+  let found = null;
+  // admins object is keyed by email, need to find by id
+  db.ref('admins/' + id).once('value', snap => {
+    const a = snap.val();
+    if (!a) return showToast('מנהל לא נמצא', 'error');
+    document.getElementById('eam-id').value    = id;
+    document.getElementById('eam-name').value  = a.displayName || '';
+    document.getElementById('eam-email').value = a.email       || '';
+    document.getElementById('eam-pass').value  = '';
+    // Reset password visibility
+    const passEl = document.getElementById('eam-pass');
+    if (passEl) passEl.type = 'password';
+    document.getElementById('editAdminModal').style.display = 'flex';
+  });
+}
+
+function closeEditAdminModal() {
+  document.getElementById('editAdminModal').style.display = 'none';
+}
+
+async function saveEditAdmin() {
+  const id    = document.getElementById('eam-id').value;
+  const name  = document.getElementById('eam-name').value.trim();
+  const email = document.getElementById('eam-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('eam-pass').value.trim();
+
+  if (!name)  return showToast('שם תצוגה הוא שדה חובה', 'error');
+  if (!email) return showToast('אימייל הוא שדה חובה', 'error');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showToast('אימייל לא תקין', 'error');
+
+  const updates = { displayName: name, email };
+  if (pass) updates.password = pass;
+
+  try {
+    await db.ref('admins/' + id).update(updates);
+    showToast('✅ פרטי המנהל עודכנו' + (pass ? ' (סיסמה שונתה)' : ''));
+    closeEditAdminModal();
+  } catch(e) {
+    showToast('שגיאה בשמירה: ' + (e.message || e), 'error');
+  }
+}
+
+/* ── Toggle password visibility helper ── */
+function togglePinVisibility(inputId, btnId) {
+  const inp = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  if (btn) btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
 
 /* ================================================================
    SETTINGS ACTIONS
@@ -5527,6 +5645,8 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (document.getElementById('scan-modal').classList.contains('open')) closeScanner();
     if (document.getElementById('customModal').style.display==='flex') document.getElementById('customModal').style.display='none';
+    if (document.getElementById('editTeamModal')?.style.display==='flex') closeEditTeamModal();
+    if (document.getElementById('editAdminModal')?.style.display==='flex') closeEditAdminModal();
   }
 });
 document.getElementById('scan-manual-input')?.addEventListener('keydown', e => { if(e.key==='Enter') submitManualBarcode(); });
@@ -6166,7 +6286,7 @@ let   _dcSentTotal = 0;    // session counter
 /* ── Batching queue (replaces sending N separate messages) ── */
 let _dcBatchQueue  = [];   // pending alerts [{type, item, extra}]
 let _dcBatchTimer  = null; // debounce timer
-const DC_BATCH_MS  = 8000; // collect for 8s then send as one message
+const DC_BATCH_MS  = 3000; // collect for 3s then send as one embed
 
 /* ── Load from Firebase ── */
 async function loadDiscordSettings() {
@@ -6431,34 +6551,19 @@ async function _dcFlushBatch() {
       embeds.push(embed);
 
     } else {
-      // Multiple alerts of same type → one enriched combined embed
-      const barLen = 8;
+      // Multiple alerts of same type → one combined embed
       const lines = group.map(function(a) {
-        const qty  = Number.isFinite(a.item && a.item.qty) ? a.item.qty : 0;
-        const thr  = (a.item && a.item.minQty != null) ? a.item.minQty : (LOW_STOCK_THRESHOLD || 3);
-        const pct  = thr > 0 ? Math.round(qty / thr * 100) : (qty > 0 ? 999 : 0);
-        const fill = pct > 900 ? barLen : Math.min(barLen, Math.round(pct / 100 * barLen));
-        const bar  = '█'.repeat(fill) + '░'.repeat(barLen - fill);
-        const cat  = (a.item && a.item.category) ? ' `' + a.item.category + '`' : '';
-        const usr  = (a.extra && a.extra.user)   ? ' · 👤 ' + a.extra.user : '';
-        return m.emoji + ' **' + (a.item ? a.item.name : '?') + '**' + cat + '\n' +
-               '  `' + bar + '` ' + qty + ' יח\'\' | סף: ' + thr + usr;
+        const qty = Number.isFinite(a.item && a.item.qty) ? a.item.qty : 0;
+        return m.emoji + ' **' + (a.item ? a.item.name : '?') + '** — כמות: ' + qty;
       }).join('\n');
 
-      const combinedEmbed = {
-        title:       m.emoji + ' ' + m.title + ' — ' + group.length + ' פריטים',
-        description: lines.slice(0, 4000),
+      embeds.push({
+        title:       m.emoji + ' ' + m.title + ' (' + group.length + ' פריטים)',
+        description: lines,
         color:       m.color,
-        fields: [
-          { name: '🏥 תחנה',   value: siteTitle, inline: true },
-          { name: '📦 כמות פריטים', value: '**' + group.length + '**', inline: true },
-          { name: '⏰ זמן',    value: new Date().toLocaleString('he-IL'), inline: true },
-        ],
-        footer:    { text: siteTitle + ' · Discord v5.2' },
-        timestamp: new Date().toISOString(),
-      };
-      if (CFG && CFG.logoUrl) combinedEmbed.thumbnail = { url: CFG.logoUrl };
-      embeds.push(combinedEmbed);
+        footer:      { text: siteTitle + ' · ' + new Date().toLocaleString('he-IL') },
+        timestamp:   new Date().toISOString(),
+      });
       // Mention role for all alert types
       const MENTION_TAG2 = '<@&1483893017529024662>';
       const MENTION_LABELS2 = { out: '🚨 דרוש מילוי!', low: '⚠️ מלאי נמוך!', add: '✅ מלאי עודכן', take: '📤 ציוד יצא', order: '🛒 הזמנה חדשה' };
@@ -6466,46 +6571,32 @@ async function _dcFlushBatch() {
     }
   });
 
-  // Send all embeds in ONE message (Discord allows up to 10 embeds per message)
-  // If somehow more than 10 embeds, we cap at 10 and add a note
-  if (embeds.length > 10) {
-    const extra = embeds.length - 9;
-    embeds = embeds.slice(0, 9);
-    embeds.push({
-      title: '📦 ועוד ' + extra + ' עדכונים נוספים',
-      description: 'ישנם עוד ' + extra + ' עדכוני מלאי שלא הוצגו כאן.',
-      color: 0x607D8B,
-      footer: { text: siteTitle + ' · Discord v5.2' },
-    });
-  }
-  try {
-    const body = { embeds: embeds, username: siteTitle + ' · מלאי' };
-    if (content) body.content = content;
-    if (CFG && CFG.logoUrl) body.avatar_url = CFG.logoUrl;
+  // Discord allows max 10 embeds per message
+  while (embeds.length > 0) {
+    const batch = embeds.splice(0, 10);
+    try {
+      const body = { embeds: batch, username: siteTitle + ' · מלאי' };
+      if (content) { body.content = content; content = undefined; }
+      if (CFG && CFG.logoUrl) body.avatar_url = CFG.logoUrl;
 
-    const res = await fetch(_dc.webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    const ok = res.ok || res.status === 204;
-    if (ok) {
-      _dcSentTotal++;
-      const el   = document.getElementById('dc-sent-total');
-      const info = document.getElementById('dc-sent-info');
-      if (el)   el.textContent   = _dcSentTotal;
-      if (info) info.style.display = 'block';
-      const totalItems = items.length;
-      console.log('[Discord] ✅ הודעה אחת נשלחה עם ' + embeds.length + ' embeds (' + totalItems + ' עדכונים)');
-      if (typeof showToast === 'function' && totalItems > 1) {
-        showToast('📨 Discord: הודעה אחת נשלחה עם ' + totalItems + ' עדכוני מלאי', 'success', 4000);
+      const res = await fetch(_dc.webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const ok = res.ok || res.status === 204;
+      if (ok) {
+        _dcSentTotal++;
+        const el   = document.getElementById('dc-sent-total');
+        const info = document.getElementById('dc-sent-info');
+        if (el)   el.textContent   = _dcSentTotal;
+        if (info) info.style.display = 'block';
+      } else {
+        console.error('[Discord] ❌ batch ' + res.status);
       }
-    } else {
-      const errBody = await res.text().catch(() => '');
-      console.error('[Discord] ❌ ' + res.status + ': ' + errBody.slice(0, 100));
+    } catch(e) {
+      console.error('[Discord] batch fetch error:', e);
     }
-  } catch(e) {
-    console.error('[Discord] batch fetch error:', e);
   }
 }
 
@@ -6842,6 +6933,12 @@ async function saveEditItem() {
 window.addEventListener('DOMContentLoaded', function() {
   var em = document.getElementById('editItemModal');
   if (em) em.addEventListener('click', function(e) { if (e.target === this) closeEditItemModal(); });
+
+  var etm = document.getElementById('editTeamModal');
+  if (etm) etm.addEventListener('click', function(e) { if (e.target === this) closeEditTeamModal(); });
+
+  var eam = document.getElementById('editAdminModal');
+  if (eam) eam.addEventListener('click', function(e) { if (e.target === this) closeEditAdminModal(); });
 });
 
 /* ================================================================
@@ -7492,51 +7589,30 @@ let _chatWidgetDb = null; // separate Firebase app for chat (same project)
 function selectStation(stationKey) {
   _selectedStation = stationKey;
   sessionStorage.setItem('mda_station', stationKey);
-
-  // Highlight selected card, dim others
-  document.querySelectorAll('.station-card').forEach(function(c) {
-    if (c.getAttribute('onclick') && c.getAttribute('onclick').includes(stationKey)) {
-      c.style.transition = 'all .3s cubic-bezier(.34,1.26,.64,1)';
-      c.style.transform = 'translateY(-10px) scale(1.06)';
-      c.style.boxShadow = '0 24px 56px rgba(211,47,47,.5), 0 0 50px rgba(211,47,47,.3)';
-      c.style.borderColor = 'rgba(211,47,47,.9)';
-    } else {
-      c.style.transition = 'opacity .25s ease, transform .25s ease';
-      c.style.opacity = '0.25';
-      c.style.transform = 'scale(0.93)';
-    }
-  });
-
-  const stEl = document.getElementById('scr-station');
-
-  // After brief highlight pause, animate screen out
-  setTimeout(function() {
-    stEl.style.transition = 'opacity .4s ease, transform .4s ease';
-    stEl.style.transform = 'scale(1.05)';
-    stEl.style.opacity = '0';
-  }, 260);
-
-  // If different Firebase config — reload after animation
+  
+  // If the page was already loaded with a different Firebase config, reload.
+  // CURRENT_SITE was set at top of JS from sessionStorage — if it differs, reload.
   if (typeof CURRENT_SITE !== 'undefined' && CURRENT_SITE !== stationKey) {
-    setTimeout(function() { location.reload(); }, 700);
+    // Animate out then reload so Firebase re-inits with the correct project
+    const stEl = document.getElementById('scr-station');
+    stEl.style.transition = 'opacity .35s ease';
+    stEl.style.opacity = '0';
+    setTimeout(() => { location.reload(); }, 380);
     return;
   }
-
-  // Same config — slide to login
-  setTimeout(function() {
+  
+  // Same config — just fade to login
+  const stEl = document.getElementById('scr-station');
+  stEl.style.transition = 'opacity .4s ease';
+  stEl.style.opacity = '0';
+  setTimeout(() => {
     stEl.style.display = 'none';
     const loginEl = document.getElementById('scr-login');
     loginEl.style.display = '';
     loginEl.style.opacity = '0';
-    loginEl.style.transform = 'translateY(20px)';
-    loginEl.style.transition = 'opacity .45s ease, transform .45s cubic-bezier(.34,1.26,.64,1)';
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() {
-        loginEl.style.opacity = '1';
-        loginEl.style.transform = 'translateY(0)';
-      });
-    });
-  }, 680);
+    loginEl.style.transition = 'opacity .4s ease';
+    requestAnimationFrame(() => { loginEl.style.opacity = '1'; });
+  }, 400);
 }
 
 // On load: check session — if station is saved, skip picker
@@ -8056,6 +8132,65 @@ function _cwRunStep(val) {
 // Station/Firebase init handled by CURRENT_SITE at top of main JS + reload on station change
 
 </script>
+
+
+<!-- ================================================================
+     EDIT TEAM MEMBER MODAL
+     ================================================================ -->
+<div id="editTeamModal" style="position:fixed;inset:0;background:rgba(13,27,42,.75);backdrop-filter:blur(8px);z-index:9700;display:none;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border-radius:var(--r-lg);padding:26px 22px 20px;width:100%;max-width:420px;box-shadow:var(--sh-xl);animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both;max-height:90vh;overflow-y:auto;">
+    <h3 style="font-size:1.05em;font-weight:800;color:var(--c-navy);margin-bottom:18px;display:flex;align-items:center;gap:8px;">✏️ עריכת איש צוות</h3>
+    <input type="hidden" id="etm-id">
+
+    <label style="font-size:.8em;font-weight:700;color:var(--text-soft);display:block;margin-bottom:4px;">👤 שם מלא</label>
+    <input type="text" id="etm-name" class="modal-input" style="width:100%;margin-bottom:12px;" placeholder="שם מלא">
+
+    <label style="font-size:.8em;font-weight:700;color:var(--text-soft);display:block;margin-bottom:4px;">📱 מספר טלפון</label>
+    <input type="number" id="etm-phone" class="modal-input" style="width:100%;margin-bottom:12px;" placeholder="מספר טלפון">
+
+    <label style="font-size:.8em;font-weight:700;color:var(--text-soft);display:block;margin-bottom:4px;">🔒 קוד אישי</label>
+    <div style="position:relative;margin-bottom:12px;">
+      <input type="password" id="etm-pin" class="modal-input" style="width:100%;padding-left:44px;" placeholder="קוד אישי">
+      <button onclick="togglePinVisibility('etm-pin','etm-pin-eye')" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1em;opacity:.6;" id="etm-pin-eye">👁</button>
+    </div>
+
+    <label style="font-size:.8em;font-weight:700;color:var(--text-soft);display:block;margin-bottom:4px;">📧 Gmail (Google Login)</label>
+    <input type="email" id="etm-email" class="modal-input" style="width:100%;margin-bottom:6px;" placeholder="name@gmail.com (אופציונלי)">
+    <div style="font-size:.72em;color:var(--text-muted);margin-bottom:16px;">השאר ריק להסרת Google Login</div>
+
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-blue" style="flex:1;" onclick="saveEditTeamMember()">💾 שמור שינויים</button>
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeEditTeamModal()">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     EDIT ADMIN MODAL
+     ================================================================ -->
+<div id="editAdminModal" style="position:fixed;inset:0;background:rgba(13,27,42,.75);backdrop-filter:blur(8px);z-index:9700;display:none;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border-radius:var(--r-lg);padding:26px 22px 20px;width:100%;max-width:420px;box-shadow:var(--sh-xl);animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both;max-height:90vh;overflow-y:auto;">
+    <h3 style="font-size:1.05em;font-weight:800;color:var(--c-navy);margin-bottom:18px;display:flex;align-items:center;gap:8px;">✏️ עריכת מנהל</h3>
+    <input type="hidden" id="eam-id">
+
+    <label style="font-size:.8em;font-weight:700;color:var(--text-soft);display:block;margin-bottom:4px;">👤 שם תצוגה</label>
+    <input type="text" id="eam-name" class="modal-input" style="width:100%;margin-bottom:12px;" placeholder="שם תצוגה">
+
+    <label style="font-size:.8em;font-weight:700;color:var(--text-soft);display:block;margin-bottom:4px;">📧 אימייל</label>
+    <input type="email" id="eam-email" class="modal-input" style="width:100%;margin-bottom:12px;" placeholder="admin@example.com">
+
+    <label style="font-size:.8em;font-weight:700;color:var(--text-soft);display:block;margin-bottom:4px;">🔑 סיסמה חדשה <span style="color:var(--text-muted);font-weight:500;">(השאר ריק לא לשנות)</span></label>
+    <div style="position:relative;margin-bottom:16px;">
+      <input type="password" id="eam-pass" class="modal-input" style="width:100%;padding-left:44px;" placeholder="••••••••">
+      <button onclick="togglePinVisibility('eam-pass','eam-pass-eye')" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1em;opacity:.6;" id="eam-pass-eye">👁</button>
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-blue" style="flex:1;" onclick="saveEditAdmin()">💾 שמור שינויים</button>
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeEditAdminModal()">ביטול</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
