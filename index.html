@@ -29,8 +29,8 @@ const _blob = new Blob([JSON.stringify(_pwaManifest)], {type:'application/json'}
 document.getElementById('pwa-manifest').href = URL.createObjectURL(_blob);
 </script>
 <script>
-  const APP_VERSION = "1.18";
-  const APP_BUILD_TS = 1773773371653;
+  const APP_VERSION = "1.19";
+  const APP_BUILD_TS = 1774187119194;
 </script>
 <title id="page-title">מערכת מלאי מד"א</title>
 
@@ -1750,9 +1750,7 @@ tr:hover td { background: var(--bg); }
   align-items: center; justify-content: center;
   padding: 24px 16px 40px;
   overflow: hidden;
-  animation: stationFadeIn .5s ease both;
 }
-@keyframes stationFadeIn { from { opacity:0; } to { opacity:1; } }
 #scr-station::before {
   content: '';
   position: absolute; inset: 0;
@@ -2922,17 +2920,23 @@ if (sessionStorage.getItem('mda_station')) {
 
           <!-- Header -->
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;position:relative;z-index:1;">
-            <div style="width:40px;height:40px;background:#5865f2;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1em;box-shadow:0 4px 14px rgba(88,101,242,.4);flex-shrink:0;">💬</div>
-            <div>
-              <div style="font-size:1em;font-weight:900;color:white;line-height:1.2;">Discord Webhook — התראות מלאי</div>
-              <div style="font-size:.72em;color:rgba(255,255,255,.4);margin-top:2px;">התראות אוטומטיות בזמן אמת לכל הצוות</div>
+            <div style="width:44px;height:44px;background:linear-gradient(135deg,#5865f2,#7289da);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.25em;box-shadow:0 6px 18px rgba(88,101,242,.5);flex-shrink:0;">💬</div>
+            <div style="flex:1;">
+              <div style="font-size:1em;font-weight:900;color:white;line-height:1.2;">Discord Webhook v5.2</div>
+              <div style="font-size:.72em;color:rgba(255,255,255,.4);margin-top:2px;">התראות אוטומטיות · <span style="color:#00e676;font-weight:700;">הודעה אחת לכל העדכונים</span></div>
             </div>
+            <div style="background:rgba(88,101,242,.25);border:1px solid rgba(88,101,242,.4);border-radius:8px;padding:4px 10px;font-size:.65em;color:#a5b4fc;font-weight:800;white-space:nowrap;">v5.2</div>
           </div>
 
           <!-- Status indicator -->
           <div class="dc-status-row">
             <div class="dc-dot" id="dc-dot"></div>
             <span id="dc-status-text">טוען הגדרות מ-Firebase...</span>
+          </div>
+
+          <!-- Batch info note -->
+          <div style="background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.2);border-radius:10px;padding:9px 13px;margin-bottom:14px;font-size:.73em;color:rgba(255,255,255,.55);position:relative;z-index:1;line-height:1.7;">
+            <span style="color:#00e676;font-weight:800;">✦ מערכת Batch חכמה</span> — כל ההתראות שנוצרות בתוך 8 שניות יאוחדו <b style="color:rgba(255,255,255,.7);">להודעה אחת בלבד</b> עם embed מפורט לכל פריט.
           </div>
 
           <!-- How-to steps -->
@@ -5199,7 +5203,7 @@ function downloadReportPDF() {
    LOGS
    ================================================================ */
 function buildLogCache() {
-  _logRows = [...logs].reverse().map(l => {
+  _logRows = [...logs].map(l => {  // logs already sorted newest-first from Firebase listener
     const itemName = l.item || l.itemName || '';
     const action   = l.action || 'take';
     const amount   = Number.isFinite(l.amount) ? l.amount : Math.abs(l.delta || 0);
@@ -6162,7 +6166,7 @@ let   _dcSentTotal = 0;    // session counter
 /* ── Batching queue (replaces sending N separate messages) ── */
 let _dcBatchQueue  = [];   // pending alerts [{type, item, extra}]
 let _dcBatchTimer  = null; // debounce timer
-const DC_BATCH_MS  = 3000; // collect for 3s then send as one embed
+const DC_BATCH_MS  = 8000; // collect for 8s then send as one message
 
 /* ── Load from Firebase ── */
 async function loadDiscordSettings() {
@@ -6427,19 +6431,34 @@ async function _dcFlushBatch() {
       embeds.push(embed);
 
     } else {
-      // Multiple alerts of same type → one combined embed
+      // Multiple alerts of same type → one enriched combined embed
+      const barLen = 8;
       const lines = group.map(function(a) {
-        const qty = Number.isFinite(a.item && a.item.qty) ? a.item.qty : 0;
-        return m.emoji + ' **' + (a.item ? a.item.name : '?') + '** — כמות: ' + qty;
+        const qty  = Number.isFinite(a.item && a.item.qty) ? a.item.qty : 0;
+        const thr  = (a.item && a.item.minQty != null) ? a.item.minQty : (LOW_STOCK_THRESHOLD || 3);
+        const pct  = thr > 0 ? Math.round(qty / thr * 100) : (qty > 0 ? 999 : 0);
+        const fill = pct > 900 ? barLen : Math.min(barLen, Math.round(pct / 100 * barLen));
+        const bar  = '█'.repeat(fill) + '░'.repeat(barLen - fill);
+        const cat  = (a.item && a.item.category) ? ' `' + a.item.category + '`' : '';
+        const usr  = (a.extra && a.extra.user)   ? ' · 👤 ' + a.extra.user : '';
+        return m.emoji + ' **' + (a.item ? a.item.name : '?') + '**' + cat + '\n' +
+               '  `' + bar + '` ' + qty + ' יח\'\' | סף: ' + thr + usr;
       }).join('\n');
 
-      embeds.push({
-        title:       m.emoji + ' ' + m.title + ' (' + group.length + ' פריטים)',
-        description: lines,
+      const combinedEmbed = {
+        title:       m.emoji + ' ' + m.title + ' — ' + group.length + ' פריטים',
+        description: lines.slice(0, 4000),
         color:       m.color,
-        footer:      { text: siteTitle + ' · ' + new Date().toLocaleString('he-IL') },
-        timestamp:   new Date().toISOString(),
-      });
+        fields: [
+          { name: '🏥 תחנה',   value: siteTitle, inline: true },
+          { name: '📦 כמות פריטים', value: '**' + group.length + '**', inline: true },
+          { name: '⏰ זמן',    value: new Date().toLocaleString('he-IL'), inline: true },
+        ],
+        footer:    { text: siteTitle + ' · Discord v5.2' },
+        timestamp: new Date().toISOString(),
+      };
+      if (CFG && CFG.logoUrl) combinedEmbed.thumbnail = { url: CFG.logoUrl };
+      embeds.push(combinedEmbed);
       // Mention role for all alert types
       const MENTION_TAG2 = '<@&1483893017529024662>';
       const MENTION_LABELS2 = { out: '🚨 דרוש מילוי!', low: '⚠️ מלאי נמוך!', add: '✅ מלאי עודכן', take: '📤 ציוד יצא', order: '🛒 הזמנה חדשה' };
@@ -6447,32 +6466,46 @@ async function _dcFlushBatch() {
     }
   });
 
-  // Discord allows max 10 embeds per message
-  while (embeds.length > 0) {
-    const batch = embeds.splice(0, 10);
-    try {
-      const body = { embeds: batch, username: siteTitle + ' · מלאי' };
-      if (content) { body.content = content; content = undefined; }
-      if (CFG && CFG.logoUrl) body.avatar_url = CFG.logoUrl;
+  // Send all embeds in ONE message (Discord allows up to 10 embeds per message)
+  // If somehow more than 10 embeds, we cap at 10 and add a note
+  if (embeds.length > 10) {
+    const extra = embeds.length - 9;
+    embeds = embeds.slice(0, 9);
+    embeds.push({
+      title: '📦 ועוד ' + extra + ' עדכונים נוספים',
+      description: 'ישנם עוד ' + extra + ' עדכוני מלאי שלא הוצגו כאן.',
+      color: 0x607D8B,
+      footer: { text: siteTitle + ' · Discord v5.2' },
+    });
+  }
+  try {
+    const body = { embeds: embeds, username: siteTitle + ' · מלאי' };
+    if (content) body.content = content;
+    if (CFG && CFG.logoUrl) body.avatar_url = CFG.logoUrl;
 
-      const res = await fetch(_dc.webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const ok = res.ok || res.status === 204;
-      if (ok) {
-        _dcSentTotal++;
-        const el   = document.getElementById('dc-sent-total');
-        const info = document.getElementById('dc-sent-info');
-        if (el)   el.textContent   = _dcSentTotal;
-        if (info) info.style.display = 'block';
-      } else {
-        console.error('[Discord] ❌ batch ' + res.status);
+    const res = await fetch(_dc.webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const ok = res.ok || res.status === 204;
+    if (ok) {
+      _dcSentTotal++;
+      const el   = document.getElementById('dc-sent-total');
+      const info = document.getElementById('dc-sent-info');
+      if (el)   el.textContent   = _dcSentTotal;
+      if (info) info.style.display = 'block';
+      const totalItems = items.length;
+      console.log('[Discord] ✅ הודעה אחת נשלחה עם ' + embeds.length + ' embeds (' + totalItems + ' עדכונים)');
+      if (typeof showToast === 'function' && totalItems > 1) {
+        showToast('📨 Discord: הודעה אחת נשלחה עם ' + totalItems + ' עדכוני מלאי', 'success', 4000);
       }
-    } catch(e) {
-      console.error('[Discord] batch fetch error:', e);
+    } else {
+      const errBody = await res.text().catch(() => '');
+      console.error('[Discord] ❌ ' + res.status + ': ' + errBody.slice(0, 100));
     }
+  } catch(e) {
+    console.error('[Discord] batch fetch error:', e);
   }
 }
 
@@ -7459,30 +7492,51 @@ let _chatWidgetDb = null; // separate Firebase app for chat (same project)
 function selectStation(stationKey) {
   _selectedStation = stationKey;
   sessionStorage.setItem('mda_station', stationKey);
-  
-  // If the page was already loaded with a different Firebase config, reload.
-  // CURRENT_SITE was set at top of JS from sessionStorage — if it differs, reload.
-  if (typeof CURRENT_SITE !== 'undefined' && CURRENT_SITE !== stationKey) {
-    // Animate out then reload so Firebase re-inits with the correct project
-    const stEl = document.getElementById('scr-station');
-    stEl.style.transition = 'opacity .35s ease';
+
+  // Highlight selected card, dim others
+  document.querySelectorAll('.station-card').forEach(function(c) {
+    if (c.getAttribute('onclick') && c.getAttribute('onclick').includes(stationKey)) {
+      c.style.transition = 'all .3s cubic-bezier(.34,1.26,.64,1)';
+      c.style.transform = 'translateY(-10px) scale(1.06)';
+      c.style.boxShadow = '0 24px 56px rgba(211,47,47,.5), 0 0 50px rgba(211,47,47,.3)';
+      c.style.borderColor = 'rgba(211,47,47,.9)';
+    } else {
+      c.style.transition = 'opacity .25s ease, transform .25s ease';
+      c.style.opacity = '0.25';
+      c.style.transform = 'scale(0.93)';
+    }
+  });
+
+  const stEl = document.getElementById('scr-station');
+
+  // After brief highlight pause, animate screen out
+  setTimeout(function() {
+    stEl.style.transition = 'opacity .4s ease, transform .4s ease';
+    stEl.style.transform = 'scale(1.05)';
     stEl.style.opacity = '0';
-    setTimeout(() => { location.reload(); }, 380);
+  }, 260);
+
+  // If different Firebase config — reload after animation
+  if (typeof CURRENT_SITE !== 'undefined' && CURRENT_SITE !== stationKey) {
+    setTimeout(function() { location.reload(); }, 700);
     return;
   }
-  
-  // Same config — just fade to login
-  const stEl = document.getElementById('scr-station');
-  stEl.style.transition = 'opacity .4s ease';
-  stEl.style.opacity = '0';
-  setTimeout(() => {
+
+  // Same config — slide to login
+  setTimeout(function() {
     stEl.style.display = 'none';
     const loginEl = document.getElementById('scr-login');
     loginEl.style.display = '';
     loginEl.style.opacity = '0';
-    loginEl.style.transition = 'opacity .4s ease';
-    requestAnimationFrame(() => { loginEl.style.opacity = '1'; });
-  }, 400);
+    loginEl.style.transform = 'translateY(20px)';
+    loginEl.style.transition = 'opacity .45s ease, transform .45s cubic-bezier(.34,1.26,.64,1)';
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        loginEl.style.opacity = '1';
+        loginEl.style.transform = 'translateY(0)';
+      });
+    });
+  }, 680);
 }
 
 // On load: check session — if station is saved, skip picker
