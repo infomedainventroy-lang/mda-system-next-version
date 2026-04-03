@@ -8510,7 +8510,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        // שימוש ב-SDK הגלובלי שכבר קיים אצלך באתר (גרסה 8)
+        // שימוש ב-SDK הגלובלי שכבר קיים אצלך באתר
         if (typeof firebase !== 'undefined') {
           const db = firebase.firestore();
           
@@ -8524,7 +8524,7 @@ document.addEventListener('DOMContentLoaded', () => {
           })
           .catch((error) => {
             console.error("שגיאה בעדכון Firebase:", error);
-            alert("אירעה שגיאה בשמירה.");
+            alert("אירעה שגיאה בשמירה בבסיס הנתונים.");
           });
           
         } else {
