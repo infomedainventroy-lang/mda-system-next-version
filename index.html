@@ -29,8 +29,8 @@ const _blob = new Blob([JSON.stringify(_pwaManifest)], {type:'application/json'}
 document.getElementById('pwa-manifest').href = URL.createObjectURL(_blob);
 </script>
 <script>
-  const APP_VERSION = "1.19";
-  const APP_BUILD_TS = 1774188234869;
+  const APP_VERSION = "1.20";
+  const APP_BUILD_TS = 1774618219022;
 </script>
 <title id="page-title">מערכת מלאי מד"א</title>
 
@@ -2745,16 +2745,31 @@ if (sessionStorage.getItem('mda_station')) {
         <div class="card">
           <div class="card-title">🚚 רישום משלוח חדש</div>
 
-          <!-- Step 1: Name + Date -->
+          <!-- Step 1: Delivery Type Selection -->
           <div style="background:var(--bg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);">
-            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">שלב 1 — פרטי המשלוח</div>
+            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">שלב 1 — סוג המשלוח</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+              <button id="del-type-incoming-btn" onclick="setDeliveryType('incoming')"
+                style="padding:14px 8px;border:2px solid var(--c-green);border-radius:var(--r-md);background:var(--c-green);color:white;font-family:'Heebo',sans-serif;font-size:.88em;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;">
+                <span style="font-size:1.6em;">📦</span>משלוח נכנס
+              </button>
+              <button id="del-type-outgoing-btn" onclick="setDeliveryType('outgoing')"
+                style="padding:14px 8px;border:2px solid var(--border);border-radius:var(--r-md);background:var(--surface);color:var(--text-soft);font-family:'Heebo',sans-serif;font-size:.88em;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;">
+                <span style="font-size:1.6em;">📤</span>משלוח יוצא
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 2: Details -->
+          <div style="background:var(--bg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);">
+            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">שלב 2 — פרטי המשלוח</div>
             <input type="text" id="del-name" class="app-input" placeholder="שם / סיבת המשלוח (לדוגמה: חידוש ציוד חירום)" style="margin-bottom:8px;">
             <input type="date" id="del-date" class="app-input" style="margin-bottom:0;">
           </div>
 
-          <!-- Step 2: Mode -->
+          <!-- Step 3: Mode -->
           <div style="background:var(--bg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);">
-            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">שלב 2 — בחר שיטת הוספה</div>
+            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">שלב 3 — בחר שיטת עיבוד</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
               <button id="del-mode-file-btn" onclick="setDeliveryMode('file')"
                 style="padding:14px 8px;border:2px solid var(--c-blue);border-radius:var(--r-md);background:var(--c-blue);color:white;font-family:'Heebo',sans-serif;font-size:.88em;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;">
@@ -2769,8 +2784,8 @@ if (sessionStorage.getItem('mda_station')) {
 
           <!-- FILE panel -->
           <div id="del-file-panel" style="background:var(--bg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);">
-            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">שלב 3 — העלה קובץ</div>
-            <div style="font-size:.8em;color:var(--text-muted);margin-bottom:10px;line-height:1.6;">
+            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">שלב 4 — העלה קובץ</div>
+            <div id="del-csv-description" style="font-size:.8em;color:var(--text-muted);margin-bottom:10px;line-height:1.6;">
               📋 פורמט CSV נדרש:<br>
               <b>עמודה A</b> = שם המוצר &nbsp;·&nbsp; <b>עמודה B</b> = כמות שהתקבלה
             </div>
@@ -2804,7 +2819,7 @@ if (sessionStorage.getItem('mda_station')) {
 
           <!-- MANUAL panel -->
           <div id="del-manual-panel" style="display:none;background:var(--bg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);">
-            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">שלב 3 — הוסף פריטים ידנית</div>
+            <div style="font-size:.78em;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">שלב 4 — הוסף פריטים ידנית</div>
             <!-- Search row -->
             <div style="position:relative;margin-bottom:8px;">
               <input type="text" id="del-manual-search" class="app-input"
@@ -2833,7 +2848,7 @@ if (sessionStorage.getItem('mda_station')) {
           </div>
 
           <!-- Save button -->
-          <button class="btn btn-green" style="margin-top:4px;padding:14px;font-size:1em;" onclick="saveDelivery()">
+          <button id="del-save-btn" class="btn btn-green" style="margin-top:4px;padding:14px;font-size:1em;" onclick="saveDelivery()">
             💾 שמור ועדכן מלאי
           </button>
         </div>
@@ -3220,7 +3235,7 @@ const _savedStation = sessionStorage.getItem('mda_station');
 const CURRENT_SITE = (_savedStation && (function(){
   const valid = ['hodhasharon','nave','karnei'];
   return valid.includes(_savedStation) ? _savedStation : null;
-})()) || 'hodhasharon';
+})()) || 'test';
 // Mark which Firebase we inited for (for consistency check)
 sessionStorage.setItem('mda_firebase_for', CURRENT_SITE);
 
@@ -3237,6 +3252,20 @@ const SITE_CONFIG = {
       storageBucket: "meda-inventory-karnei-shomron.firebasestorage.app",
       messagingSenderId: "695234364436",
       appId: "1:1081567938760:web:6093630be0672fdc01bdfd"
+    }
+  },
+  test: {
+    title:      'מערכת מלאי מד"א test ',
+    logoUrl:    'https://github.com/infomedainventroy-lang/mda-system-next-version/blob/main/main_logo.png?raw=true',
+    headerText: 'מד"א test',
+    firebase: {
+      apiKey: "AIzaSyD9JAMl1_bjL-DeX_ql3e8URQAFRhc-anA",
+      authDomain:  "test-7c7c0.firebaseapp.com",
+      databaseURL: "https://test-7c7c0-default-rtdb.firebaseio.com",
+      projectId: "test-7c7c0",
+  storageBucket: "test-7c7c0.firebasestorage.app",
+  messagingSenderId: "465210569707",
+  appId: "1:465210569707:web:a43079b35bdb502de65fae"    
     }
   },
   nave: {
@@ -6543,7 +6572,7 @@ async function _dcFlushBatch() {
         embed.thumbnail = { url: CFG.logoUrl };
       }
       // Mention role for all alert types
-      const MENTION_TAG = '<@&1483893017529024662>';
+      const MENTION_TAG = '<@&1483800391660339303>';
       const MENTION_LABELS = { out: '🚨 דרוש מילוי!', low: '⚠️ מלאי נמוך!', add: '✅ מלאי עודכן', take: '📤 ציוד יצא', order: '🛒 הזמנה חדשה' };
       if (!content) content = MENTION_TAG + ' ' + (MENTION_LABELS[type] || '');
       embeds.push(embed);
@@ -6563,7 +6592,7 @@ async function _dcFlushBatch() {
         timestamp:   new Date().toISOString(),
       });
       // Mention role for all alert types
-      const MENTION_TAG2 = '<@&1483893017529024662>';
+      const MENTION_TAG2 = '<@&1483800391660339303>';
       const MENTION_LABELS2 = { out: '🚨 דרוש מילוי!', low: '⚠️ מלאי נמוך!', add: '✅ מלאי עודכן', take: '📤 ציוד יצא', order: '🛒 הזמנה חדשה' };
       if (!content) content = MENTION_TAG2 + ' ' + (MENTION_LABELS2[type] || '');
     }
@@ -6798,7 +6827,7 @@ async function sendScheduledReport(period) {
   try {
     const body = { embeds: [embed], username: siteTitle + ' · דוחות אוטומטיים' };
     if (CFG && CFG.logoUrl) body.avatar_url = CFG.logoUrl;
-    body.content = '<@&1483893017529024662> 📊 ' + label;
+    body.content = '<@&1483800391660339303> 📊 ' + label;
     const res = await fetch(_dc.webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -6866,7 +6895,7 @@ async function notifyDiscordOrder(orderItems, user) {
 /* ── Init ── */
 async function initDiscordSystem() {
   await loadDiscordSettings();
-  console.log('[Discord] ✅ מערכת Discord אותחלה v5.2 | mention role: 1483893017529024662');
+  console.log('[Discord] ✅ מערכת Discord אותחלה v5.2 | mention role: 1483800391660339303');
 }
 
 console.log('[Discord] מודול Discord v5.2 נטען ✅ | תיוג role פעיל לכל ההתראות');
@@ -6944,6 +6973,7 @@ window.addEventListener('DOMContentLoaded', function() {
    ================================================================ */
 let _deliveryRows     = [];   // [{itemId, itemName, qty}]
 let _deliveryMode     = 'file';
+let _deliveryType     = 'incoming'; // 'incoming' or 'outgoing'
 let _deliveryFileRows = [];   // [{name, qty}] from CSV
 let _deliverySelId    = '';   // currently selected item id
 let _deliverySelName  = '';   // currently selected item name
@@ -6952,6 +6982,55 @@ let _deliverySelName  = '';   // currently selected item name
 function _initDeliveryTab() {
   const d = document.getElementById('del-date');
   if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+}
+
+/* ── Delivery type switch ── */
+function setDeliveryType(type) {
+  _deliveryType = type;
+  
+  // Update button styles
+  const incomingBtn = document.getElementById('del-type-incoming-btn');
+  const outgoingBtn = document.getElementById('del-type-outgoing-btn');
+  const csvDescription = document.getElementById('del-csv-description');
+  const saveBtn = document.getElementById('del-save-btn');
+  
+  if (type === 'incoming') {
+    // Incoming delivery - items being added to inventory
+    incomingBtn.style.borderColor = 'var(--c-green)';
+    incomingBtn.style.background = 'var(--c-green)';
+    incomingBtn.style.color = 'white';
+    
+    outgoingBtn.style.borderColor = 'var(--border)';
+    outgoingBtn.style.background = 'var(--surface)';
+    outgoingBtn.style.color = 'var(--text-soft)';
+    
+    // Update CSV description for incoming
+    csvDescription.innerHTML = `
+      📋 פורמט CSV נדרש:<br>
+      <b>עמודה A</b> = שם המוצר &nbsp;·&nbsp; <b>עמודה B</b> = כמות שהתקבלה
+    `;
+    
+    // Update save button for incoming
+    if (saveBtn) saveBtn.innerHTML = '💾 שמור והוסף למלאי';
+  } else {
+    // Outgoing delivery - items being taken from inventory
+    outgoingBtn.style.borderColor = 'var(--c-red)';
+    outgoingBtn.style.background = 'var(--c-red)';
+    outgoingBtn.style.color = 'white';
+    
+    incomingBtn.style.borderColor = 'var(--border)';
+    incomingBtn.style.background = 'var(--surface)';
+    incomingBtn.style.color = 'var(--text-soft)';
+    
+    // Update CSV description for outgoing
+    csvDescription.innerHTML = `
+      📋 פורמט CSV נדרש:<br>
+      <b>עמודה A</b> = שם המוצר &nbsp;·&nbsp; <b>עמודה B</b> = כמות שיוצאת מהמלאי
+    `;
+    
+    // Update save button for outgoing
+    if (saveBtn) saveBtn.innerHTML = '📤 שמור והוצא מהמלאי';
+  }
 }
 
 /* ── Mode switch ── */
@@ -7199,8 +7278,32 @@ async function saveDelivery() {
       fail++;
     } else {
       try {
-        const r = await changeQuantity({ itemId: item.id, delta: row.qty, user: window.curU||'מנהל', reason: `משלוח: ${delivName}`, action: 'add' });
-        resultItems['r'+i] = { name: item.name, qty: row.qty, status: `✅ ${r.beforeQty}→${r.afterQty}` };
+        // Determine delta and action based on delivery type
+        const isOutgoing = _deliveryType === 'outgoing';
+        const delta = isOutgoing ? -row.qty : row.qty;
+        const action = isOutgoing ? 'take' : 'add';
+        const deliveryTypeText = isOutgoing ? 'משלוח יוצא' : 'משלוח נכנס';
+        
+        // For outgoing deliveries, check if there's sufficient stock
+        if (isOutgoing && item.quantity < row.qty) {
+          resultItems['r'+i] = {
+            name: item.name,
+            qty: row.qty,
+            status: `❌ אין מספיק במלאי (יש: ${item.quantity}, נדרש: ${row.qty})`
+          };
+          continue;
+        }
+        
+        const r = await changeQuantity({
+          itemId: item.id,
+          delta: delta,
+          user: window.curU||'מנהל',
+          reason: `${deliveryTypeText}: ${delivName}`,
+          action: action
+        });
+        
+        const statusIcon = isOutgoing ? '📤' : '✅';
+        resultItems['r'+i] = { name: item.name, qty: row.qty, status: `${statusIcon} ${r.beforeQty}→${r.afterQty}` };
         ok++;
       } catch(e) {
         resultItems['r'+i] = { name: item.name||rowName, qty: row.qty, status: '❌ שגיאה' };
@@ -7220,8 +7323,16 @@ async function saveDelivery() {
     }
   }
 
-  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 שמור ועדכן מלאי'; }
-  showToast(`✅ משלוח נשמר! ${ok} עודכנו${fail ? ` · ⚠️ ${fail} לא נמצאו` : ''}`, ok>0?'success':'error', 6000);
+  // Update save button text based on delivery type
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = _deliveryType === 'incoming' ? '💾 שמור והוסף למלאי' : '📤 שמור והוצא מהמלאי';
+  }
+  
+  // Show success message based on delivery type
+  const deliveryTypeText = _deliveryType === 'incoming' ? 'משלוח נכנס' : 'משלוח יוצא';
+  const actionText = _deliveryType === 'incoming' ? 'נוספו למלאי' : 'הוצאו מהמלאי';
+  showToast(`✅ ${deliveryTypeText} נשמר! ${ok} פריטים ${actionText}${fail ? ` · ⚠️ ${fail} לא נמצאו/אין מספיק במלאי` : ''}`, ok>0?'success':'error', 6000);
 
   // Reset
   document.getElementById('del-name').value = '';
