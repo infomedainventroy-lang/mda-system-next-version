@@ -7475,7 +7475,7 @@ function renderDeliveriesList(list) {
 (function() {
   var _orig = window.showTab;
   if (typeof _orig === 'function') {
-    window.showTab = function(id, btn) { _orig(id, btn); if (id === 'tab-deliveries') _initDeliveryTab(); };
+    window.showTab = function(id, btn) { _orig(id, btn); if (id === 'tab-deliveries') _initDeliveryTab(); if (id === 'tab-expiry') window.renderExpiryTab && window.renderExpiryTab(); };
   }
 })();
 
@@ -7872,6 +7872,168 @@ window.addEventListener('click', function(event) {
     modal.style.display = 'none';
   }
 });
+/* ================================================================
+   EXPIRY TAB — renderExpiryTab / exportExpiryCsv / sendExpiryReportToDiscord
+   ================================================================ */
+
+function _expiryStatus(expiryStr) {
+  if (!expiryStr) return 'none';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const exp   = new Date(expiryStr);
+  if (isNaN(exp)) return 'none';
+  const diffDays = Math.floor((exp - today) / 86400000);
+  if (diffDays < 0)  return 'expired';
+  if (diffDays <= 30) return 'warn';
+  return 'ok';
+}
+
+window.renderExpiryTab = function() {
+  const filter   = (document.getElementById('exp-filter') || {}).value || 'all';
+  const list     = document.getElementById('expiry-list');
+  if (!list) return;
+
+  // inv is the global inventory array loaded from Firebase Realtime DB
+  const source = (typeof inv !== 'undefined' ? inv : []);
+
+  let expired = 0, warn = 0, ok = 0, none = 0;
+  source.forEach(function(item) {
+    const s = _expiryStatus(item.expiry);
+    if (s === 'expired') expired++;
+    else if (s === 'warn') warn++;
+    else if (s === 'ok')  ok++;
+    else                  none++;
+  });
+
+  const se = document.getElementById('exp-stat-expired');
+  const sw = document.getElementById('exp-stat-soon');
+  const so = document.getElementById('exp-stat-ok');
+  const sn = document.getElementById('exp-stat-none');
+  if (se) se.textContent = expired;
+  if (sw) sw.textContent = warn;
+  if (so) so.textContent = ok;
+  if (sn) sn.textContent = none;
+
+  const filtered = source.filter(function(item) {
+    if (filter === 'all') return true;
+    return _expiryStatus(item.expiry) === filter;
+  });
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">📅</div><p>אין פריטים להצגה</p></div>';
+    return;
+  }
+
+  const STATUS_META = {
+    expired: { label: '❌ פג תוקף',    color: 'var(--c-red)',         bg: 'rgba(211,47,47,.08)'  },
+    warn:    { label: '⚠️ פג בקרוב',   color: 'var(--c-orange,#e65100)', bg: 'rgba(230,81,0,.08)'  },
+    ok:      { label: '✅ תקין',        color: 'var(--c-green-light,#388e3c)', bg: 'rgba(56,142,60,.08)' },
+    none:    { label: '⬜ ללא תוקף',   color: 'var(--text-muted)',     bg: 'transparent'          },
+  };
+
+  const sorted = filtered.slice().sort(function(a, b) {
+    const order = { expired: 0, warn: 1, ok: 2, none: 3 };
+    return order[_expiryStatus(a.expiry)] - order[_expiryStatus(b.expiry)];
+  });
+
+  let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+  sorted.forEach(function(item) {
+    const s   = _expiryStatus(item.expiry);
+    const meta = STATUS_META[s];
+    const exp  = item.expiry ? new Date(item.expiry).toLocaleDateString('he-IL') : '—';
+    const batch = item.batch ? `<span style="font-size:.75em;color:var(--text-muted);margin-right:8px;">לוט: ${item.batch}</span>` : '';
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;background:${meta.bg};border:1px solid ${meta.color}30;gap:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:.92em;color:var(--text-primary,#1a1a2e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
+        <div style="font-size:.78em;color:var(--text-muted);margin-top:2px;">${item.category || '—'} ${batch}</div>
+      </div>
+      <div style="text-align:left;flex-shrink:0;">
+        <div style="font-size:.82em;font-weight:700;color:${meta.color};">${meta.label}</div>
+        <div style="font-size:.78em;color:var(--text-muted);">${exp}</div>
+      </div>
+      <button class="btn btn-blue sm w-auto" style="flex-shrink:0;font-size:.78em;padding:4px 10px;" onclick="openExpiryModal('${item.id}','${(item.name||'').replace(/'/g,"\\'")}')">✏️ ערוך</button>
+    </div>`;
+  });
+  html += '</div>';
+  list.innerHTML = html;
+};
+
+window.exportExpiryCsv = function() {
+  const source = (typeof inv !== 'undefined' ? inv : []);
+  const STATUS_LABEL = { expired: 'פג תוקף', warn: 'פג בקרוב', ok: 'תקין', none: 'ללא תוקף' };
+  const rows = [['שם פריט', 'קטגוריה', 'כמות', 'תאריך תוקף', 'לוט/אצווה', 'סטטוס']];
+  source.forEach(function(item) {
+    rows.push([
+      item.name || '',
+      item.category || '',
+      item.qty != null ? item.qty : '',
+      item.expiry || '',
+      item.batch  || '',
+      STATUS_LABEL[_expiryStatus(item.expiry)] || ''
+    ]);
+  });
+  const csv = rows.map(function(r) {
+    return r.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+  }).join('\n');
+  const BOM = '\uFEFF';
+  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'expiry_report.csv'; a.click();
+  URL.revokeObjectURL(url);
+};
+
+window.sendExpiryReportToDiscord = async function() {
+  if (!_dc || !_dc.webhookUrl) {
+    alert('לא הוגדר Webhook של Discord. הגדר אותו בלשונית הגדרות Discord.');
+    return;
+  }
+  const source = (typeof inv !== 'undefined' ? inv : []);
+  const expired = source.filter(function(i) { return _expiryStatus(i.expiry) === 'expired'; });
+  const warn    = source.filter(function(i) { return _expiryStatus(i.expiry) === 'warn'; });
+
+  const siteTitle = (typeof CFG !== 'undefined' && CFG.headerText) ? CFG.headerText : 'מד"א';
+  const mention   = _dc.mentionRole ? `<@&${_dc.mentionRole}> ` : '';
+
+  let desc = '';
+  if (expired.length) {
+    desc += '**❌ פג תוקף:**\n' + expired.map(function(i) {
+      return `• ${i.name} — ${i.expiry ? new Date(i.expiry).toLocaleDateString('he-IL') : '—'}`;
+    }).join('\n') + '\n\n';
+  }
+  if (warn.length) {
+    desc += '**⚠️ פג בקרוב (30 יום):**\n' + warn.map(function(i) {
+      return `• ${i.name} — ${i.expiry ? new Date(i.expiry).toLocaleDateString('he-IL') : '—'}`;
+    }).join('\n');
+  }
+  if (!desc) desc = '✅ אין פריטים שפג תוקפם או עומדים לפוג בקרוב.';
+
+  const payload = {
+    content: mention,
+    embeds: [{
+      title: `📅 דוח תוקף — ${siteTitle}`,
+      description: desc,
+      color: expired.length ? 0xD32F2F : (warn.length ? 0xF57F17 : 0x2E7D32),
+      footer: { text: new Date().toLocaleString('he-IL') }
+    }]
+  };
+
+  try {
+    const res = await fetch(_dc.webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      alert('הדוח נשלח ל-Discord בהצלחה!');
+    } else {
+      alert('שגיאה בשליחה ל-Discord: ' + res.status);
+    }
+  } catch (err) {
+    console.error('Discord expiry report error:', err);
+    alert('שגיאה בשליחה ל-Discord.');
+  }
+};
+
 function changeStation() {
   sessionStorage.removeItem('mda_station');
   sessionStorage.removeItem('mda_firebase_for');
