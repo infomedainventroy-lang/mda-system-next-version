@@ -2203,6 +2203,7 @@ if (sessionStorage.getItem('mda_station')) {
       <button class="tab-btn" onclick="showTab('tab-deliveries',this)">🚚 משלוחים</button>
       <button class="tab-btn" onclick="showTab('tab-settings',this)">⚙️ הגדרות</button>
       <button class="tab-btn" id="tab-support-btn" onclick="showTab('tab-support',this)">💬 תמיכה</button>
+      <button class="tab-btn" onclick="showTab('tab-expiry',this)">📅 תוקף מוצרים</button>
       <button class="tab-btn tab-logout" onclick="logout()">↩ יציאה</button>
     </nav>
 
@@ -3068,7 +3069,7 @@ if (sessionStorage.getItem('mda_station')) {
           </div>
         </div>
       </div>
-
+      <div id="tab-expiry">
     </div><!-- /content admin -->
   </div><!-- /scr-admin -->
 
@@ -4174,6 +4175,12 @@ function showApp(screenId) {
   ['scr-admin','scr-user'].forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById(screenId).classList.remove('hidden');
   if (screenId === 'scr-admin') setTimeout(updateStats, 200);
+  if (screenId === 'scr-admin') {
+  loadExpiryProducts();
+  // populate exp-name-list datalist
+  const dl = document.getElementById('exp-name-list');
+  if (dl) dl.innerHTML = (inv||[]).map(i=>`<option value="${i.name}">`).join('');
+}
 }
 
 async function logout() {
@@ -7922,6 +7929,156 @@ function setChatQuick(text) {
 function _cwGetDb() {
   // Use the main db (already inited for the selected station)
   return typeof db !== 'undefined' ? db : null;
+}
+  /* ================================================================
+   EXPIRY PRODUCTS SYSTEM
+   ================================================================ */
+const EXPIRY_PATH = 'expiry_products';
+let _expiryProducts = [];
+let _expiryFilter = 'all';
+
+async function loadExpiryProducts() {
+  try {
+    const snap = await db.ref(EXPIRY_PATH).once('value');
+    const data = snap.val() || {};
+    _expiryProducts = Object.entries(data).map(([id, v]) => ({ id, ...v }));
+    renderExpiryList();
+    _scheduleExpiryCheck();
+  } catch(e) { console.warn('expiry load error:', e); }
+}
+
+async function addExpiryProduct() {
+  const name = (document.getElementById('exp-name')?.value || '').trim();
+  const date = document.getElementById('exp-date')?.value;
+  if (!name) { showToast('⚠️ הזן שם מוצר', 'warning'); return; }
+  if (!date) { showToast('⚠️ בחר תאריך תפוגה', 'warning'); return; }
+  const product = {
+    name,
+    category: (document.getElementById('exp-cat')?.value || '').trim(),
+    qty: parseInt(document.getElementById('exp-qty')?.value) || 1,
+    expiryDate: date,
+    warnDays: parseInt(document.getElementById('exp-warn-days')?.value) || 7,
+    notes: (document.getElementById('exp-notes')?.value || '').trim(),
+    addedAt: Date.now(),
+    addedBy: window.curU || 'מנהל',
+  };
+  try {
+    await db.ref(EXPIRY_PATH).push(product);
+    showToast('✅ מוצר נוסף בהצלחה!');
+    ['exp-name','exp-cat','exp-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('exp-qty').value = '';
+    document.getElementById('exp-warn-days').value = '7';
+    document.getElementById('exp-date').value = '';
+    loadExpiryProducts();
+  } catch(e) { showToast('❌ שגיאה: '+e.message, 'error'); }
+}
+
+async function deleteExpiryProduct(id) {
+  const ok = await asyncConfirm('מחיקת מוצר', 'למחוק מוצר זה מרשימת התוקף?');
+  if (!ok) return;
+  await db.ref(EXPIRY_PATH + '/' + id).remove();
+  showToast('🗑️ מוצר נמחק');
+  loadExpiryProducts();
+}
+
+function setExpiryFilter(f, el) {
+  _expiryFilter = f;
+  document.querySelectorAll('#expf-all,#expf-expired,#expf-soon,#expf-ok').forEach(b => b.classList.remove('active-chip'));
+  if (el) el.classList.add('active-chip');
+  renderExpiryList();
+}
+
+function _expiryStatus(product) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const exp = new Date(product.expiryDate); exp.setHours(0,0,0,0);
+  const diffDays = Math.round((exp - now) / 86400000);
+  if (diffDays < 0) return { status:'expired', diffDays, label:'פג תוקף', color:'var(--c-red)' };
+  if (diffDays <= (product.warnDays || 7)) return { status:'soon', diffDays, label:`נשארו ${diffDays} ימים`, color:'var(--c-orange)' };
+  return { status:'ok', diffDays, label:`${diffDays} ימים`, color:'var(--c-green)' };
+}
+
+function renderExpiryList() {
+  const search = (document.getElementById('exp-search')?.value || '').toLowerCase();
+  let list = _expiryProducts.filter(p => {
+    if (search && !p.name.toLowerCase().includes(search) && !(p.category||'').toLowerCase().includes(search)) return false;
+    if (_expiryFilter === 'all') return true;
+    return _expiryStatus(p).status === _expiryFilter;
+  });
+  list.sort((a,b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+
+  const expired = _expiryProducts.filter(p => _expiryStatus(p).status === 'expired').length;
+  const soon    = _expiryProducts.filter(p => _expiryStatus(p).status === 'soon').length;
+  const ok      = _expiryProducts.filter(p => _expiryStatus(p).status === 'ok').length;
+  document.getElementById('exp-stat-expired').textContent = expired;
+  document.getElementById('exp-stat-soon').textContent    = soon;
+  document.getElementById('exp-stat-ok').textContent      = ok;
+  document.getElementById('exp-stat-total').textContent   = _expiryProducts.length;
+
+  const container = document.getElementById('expiry-list');
+  if (!list.length) { container.innerHTML = '<div class="empty-state"><div class="es-icon">✅</div><p>אין מוצרים להצגה</p></div>'; return; }
+
+  container.innerHTML = list.map(p => {
+    const { status, diffDays, label, color } = _expiryStatus(p);
+    const icon = status==='expired' ? '🚨' : status==='soon' ? '⚠️' : '✅';
+    const bg = status==='expired' ? 'var(--c-red-pale)' : status==='soon' ? 'var(--c-orange-pale)' : 'var(--c-green-pale)';
+    const expDateFmt = new Date(p.expiryDate).toLocaleDateString('he-IL');
+    return `<div class="card" style="border-right:4px solid ${color};background:${bg};margin-bottom:10px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:.97em;color:var(--text);margin-bottom:3px;">${icon} ${esc(p.name)}</div>
+          ${p.category ? `<div style="font-size:.78em;color:var(--text-muted);margin-bottom:2px;">📁 ${esc(p.category)}</div>` : ''}
+          <div style="font-size:.8em;color:${color};font-weight:700;">📆 תוקף: ${expDateFmt} · ${label}</div>
+          <div style="font-size:.76em;color:var(--text-muted);margin-top:3px;">כמות: ${p.qty || 1}${p.notes ? ' · '+esc(p.notes) : ''}</div>
+        </div>
+        <button class="btn btn-red sm w-auto" onclick="deleteExpiryProduct('${p.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function checkExpiryAndAlert() {
+  if (!_dc.webhookUrl) { showToast('⚠️ הגדר Discord Webhook תחילה בטאב הגדרות', 'warning', 4000); return; }
+  const expired = _expiryProducts.filter(p => _expiryStatus(p).status === 'expired');
+  const soon    = _expiryProducts.filter(p => _expiryStatus(p).status === 'soon');
+  if (!expired.length && !soon.length) { showToast('✅ אין מוצרים שפג תוקפם או קרובים לפגיעה!', 'success'); return; }
+
+  const siteTitle = CFG?.headerText || 'מד"א';
+  const fields = [];
+  if (expired.length) {
+    fields.push({ name:'🚨 פג תוקף ('+expired.length+')', value: expired.slice(0,10).map(p=>`• **${p.name}** — ${new Date(p.expiryDate).toLocaleDateString('he-IL')}`).join('\n'), inline:false });
+  }
+  if (soon.length) {
+    fields.push({ name:'⚠️ קרוב לפגיעה ('+soon.length+')', value: soon.slice(0,10).map(p=>{const {diffDays}=_expiryStatus(p);return `• **${p.name}** — נשארו ${diffDays} ימים`;}).join('\n'), inline:false });
+  }
+  try {
+    const mention = _dc.mentionRole ? `<@&${_dc.mentionRole}> ` : '';
+    const res = await fetch(_dc.webhookUrl, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        content: mention + '📅 התראת תוקף מוצרים!',
+        username: siteTitle + ' · תוקף',
+        avatar_url: CFG?.logoUrl || undefined,
+        embeds:[{ title:'📅 דוח תוקף מוצרים — '+siteTitle, color:0xD32F2F, fields, footer:{text:siteTitle+' · '+new Date().toLocaleDateString('he-IL')}, timestamp:new Date().toISOString() }]
+      })
+    });
+    if (res.ok || res.status===204) showToast('📢 התראת תוקף נשלחה ל-Discord!', 'success');
+    else showToast('❌ שגיאה בשליחה: '+res.status, 'error');
+  } catch(e) { showToast('❌ שגיאה: '+e.message,'error'); }
+}
+
+// Auto check on login
+function _scheduleExpiryCheck() {
+  const now = new Date();
+  const expired = _expiryProducts.filter(p => _expiryStatus(p).status === 'expired');
+  const soon    = _expiryProducts.filter(p => _expiryStatus(p).status === 'soon');
+  if ((expired.length || soon.length) && _dc.webhookUrl) {
+    const lastCheck = localStorage.getItem('mda_expiry_check_' + CURRENT_SITE);
+    const today = now.toISOString().slice(0,10);
+    if (lastCheck !== today) {
+      localStorage.setItem('mda_expiry_check_' + CURRENT_SITE, today);
+      setTimeout(() => checkExpiryAndAlert(), 5000);
+    }
+  }
 }
 
 /* ================================================================
