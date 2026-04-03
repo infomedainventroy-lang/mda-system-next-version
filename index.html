@@ -4585,8 +4585,8 @@ function buildAdminItem(i) {
         <button class="btn-icon edit" title="שנה קטגוריה">📁</button>
         <button class="btn-icon edit" title="שנה סף מינימום">🎯</button>
         <button class="btn-icon edit img-btn" title="תמונת מוצר">🖼️</button>
-        /* הוסף לאחר כפתור ה-bcBtn.onclick */ const expiryBtn = wrap.querySelectorAll('.btn-icon')[6]; // or use a dedicated selector /* ---- OR: הוסף ישירות ב-innerHTML של ai-actions ---- */ /* בתוך template literal של buildAdminItem, ב-ai-actions div: */ <button class="btn-icon edit" title="תוקף מוצר" onclick="openExpiryModal('${i.id}','${esc(i.name)}')">📅</button> /* ---- ובתוך ai-cat div הוסף הצגת תוקף קיים ---- */ ${i.expiry ? `<span class="barcode-tag ${_getExpiryCls(i.expiry)}">📅 ${_formatExpiry(i.expiry)}</span>` : ''}
-      </div>
+        <button class="btn-icon edit" title="תוקף מוצר" onclick="openExpiryModal('${i.id}', \`${esc(i.name)}\`)">📅</button>
+        </div>
     </div>
     <div class="ai-row-2">
       <div class="ai-delta-row">
@@ -4813,7 +4813,11 @@ async function addItem() {
     document.getElementById('n-name')?.focus();
   } catch (err) { console.error(err); showToast('שגיאה בהוספת פריט', 'error'); }
 }
-
+${i.expiry ? `
+  <span class="barcode-tag" style="background-color: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-size: 0.85em;">
+    📅 ${i.expiry}
+  </span>` 
+: ''}
 /* ================================================================
    DELETE ALL INVENTORY
    ================================================================ */
