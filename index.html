@@ -8462,5 +8462,79 @@ function _cwRunStep(val) {
     </div>
   </div>
 </div>
+</div>
+  <script>
+// משתנה גלובלי שיזכור איזה מוצר אנחנו עורכים
+let currentEditingItemId = null;
+
+// פונקציה לפתיחת המודל
+window.openExpiryModal = function(itemId, itemName) {
+  currentEditingItemId = itemId;
+  
+  const nameElem = document.getElementById('modalProductName');
+  const modalElem = document.getElementById('expiryModal');
+  
+  if (nameElem) nameElem.textContent = `עדכון תוקף עבור: ${itemName}`;
+  if (modalElem) modalElem.style.display = 'flex';
+};
+
+// הרצה של ההגדרות והלחיצות רק אחרי שהדף נטען
+document.addEventListener('DOMContentLoaded', () => {
+  
+  const saveBtn = document.getElementById('saveExpiryBtn');
+  const closeBtn = document.getElementById('closeExpiryBtn');
+  const modal = document.getElementById('expiryModal');
+
+  // כפתור ביטול
+  if (closeBtn) {
+    closeBtn.onclick = function() {
+      modal.style.display = 'none';
+    };
+  }
+
+  // סגירה בלחיצה מחוץ לחלון
+  window.onclick = function(event) {
+    if (event.target === modal) {
+      modal.style.display = 'none';
+    }
+  };
+
+  // כפתור שמירה ל-Firebase
+  if (saveBtn) {
+    saveBtn.onclick = async function() {
+      const expiryValue = document.getElementById('expiryDateTime').value;
+      
+      if (!expiryValue) {
+        alert("בבקשה בחר תאריך ושעה תקינים!");
+        return;
+      }
+
+      try {
+        // משיכת פונקציות Firestore בצורה מודולרית שתואמת לוורסל
+        const firebaseModule = await import('https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js');
+        const { getFirestore, doc, updateDoc } = firebaseModule;
+        
+        const db = getFirestore();
+        // עדכון ישיר ב-Collection שנקרא products
+        const itemRef = doc(db, 'products', currentEditingItemId); 
+        
+        await updateDoc(itemRef, {
+          expiry: expiryValue
+        });
+        
+        alert("התוקף עודכן בהצלחה!");
+        modal.style.display = 'none';
+        
+        // רענון קל של הדף כדי לראות את הנתונים החדשים
+        location.reload();
+        
+      } catch (error) {
+        console.error("שגיאה בעדכון בסיס הנתונים:", error);
+        alert("אירעה שגיאה בשמירה. פתח את ה-Console לצפייה בשגיאה.");
+      }
+    };
+  }
+});
+</script>
 </body>
 </html>
