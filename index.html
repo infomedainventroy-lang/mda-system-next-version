@@ -8463,7 +8463,7 @@ function _cwRunStep(val) {
   </div>
 </div>
 </div>
-  <script>
+<script>
 // משתנה גלובלי שיזכור איזה מוצר אנחנו עורכים
 let currentEditingItemId = null;
 
@@ -8501,7 +8501,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // כפתור שמירה ל-Firebase
   if (saveBtn) {
-    saveBtn.onclick = async function() {
+    saveBtn.onclick = function() {
       const expiryValue = document.getElementById('expiryDateTime').value;
       
       if (!expiryValue) {
@@ -8510,27 +8510,30 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        // משיכת פונקציות Firestore בצורה מודולרית שתואמת לוורסל
-        const firebaseModule = await import('https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js');
-        const { getFirestore, doc, updateDoc } = firebaseModule;
-        
-        const db = getFirestore();
-        // עדכון ישיר ב-Collection שנקרא products
-        const itemRef = doc(db, 'products', currentEditingItemId); 
-        
-        await updateDoc(itemRef, {
-          expiry: expiryValue
-        });
-        
-        alert("התוקף עודכן בהצלחה!");
-        modal.style.display = 'none';
-        
-        // רענון קל של הדף כדי לראות את הנתונים החדשים
-        location.reload();
+        // שימוש ב-SDK הגלובלי שכבר קיים אצלך באתר (גרסה 8)
+        if (typeof firebase !== 'undefined') {
+          const db = firebase.firestore();
+          
+          db.collection('products').doc(currentEditingItemId).update({
+            expiry: expiryValue
+          })
+          .then(() => {
+            alert("התוקף עודכן בהצלחה!");
+            modal.style.display = 'none';
+            location.reload();
+          })
+          .catch((error) => {
+            console.error("שגיאה בעדכון Firebase:", error);
+            alert("אירעה שגיאה בשמירה.");
+          });
+          
+        } else {
+          alert("שגיאה: Firebase לא מוגדר כראוי באתר.");
+        }
         
       } catch (error) {
-        console.error("שגיאה בעדכון בסיס הנתונים:", error);
-        alert("אירעה שגיאה בשמירה. פתח את ה-Console לצפייה בשגיאה.");
+        console.error("שגיאה כללית:", error);
+        alert("אירעה שגיאה. בדוק את ה-Console.");
       }
     };
   }
