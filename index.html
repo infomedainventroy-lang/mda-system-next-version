@@ -4592,6 +4592,7 @@ function buildAdminItem(i) {
         <button class="btn-icon edit" title="שנה סף מינימום">🎯</button>
         <button class="btn-icon edit img-btn" title="תמונת מוצר">🖼️</button>
         <button class="btn-icon edit" title="תוקף מוצר" onclick="openExpiryModal('${i.id}', \`${esc(i.name)}\`)">📅</button>
+        window.openExpiryModal = openExpiryModal;
         </div>
     </div>
     <div class="ai-row-2">
