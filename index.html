@@ -7859,29 +7859,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 });
-  try {
-    // מניח שאתה משתמש ב-Firestore מודולרי. שנה את 'products' לשם הטבלה שלך במידת הצורך
-    const { getFirestore, doc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js');
-    
-    const db = getFirestore(); // ודא ש-Firebase מאותחל אצלך
-    const itemRef = doc(db, 'products', currentEditingItemId); 
-    
-    // שמירת הערך במסד הנתונים
-    await updateDoc(itemRef, {
-      expiry: expiryValue
-    });
-    
-    alert("התוקף עודכן בהצלחה!");
-    
-    // סגירת החלון ורענון (או עדכון ה-UI ללא רענון)
-    document.getElementById('expiryModal').style.display = 'none';
-    location.reload(); // רענון מהיר כדי לראות את השינוי
-    
-  } catch (error) {
-    console.error("שגיאה בעדכון בסיס הנתונים:", error);
-    alert("אירעה שגיאה בשמירה. בדוק את ה-Console");
-  }
-};
 function changeStation() {
   sessionStorage.removeItem('mda_station');
   sessionStorage.removeItem('mda_firebase_for');
