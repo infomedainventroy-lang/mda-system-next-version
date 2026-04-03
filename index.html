@@ -4592,7 +4592,6 @@ function buildAdminItem(i) {
         <button class="btn-icon edit" title="שנה סף מינימום">🎯</button>
         <button class="btn-icon edit img-btn" title="תמונת מוצר">🖼️</button>
         <button class="btn-icon edit" title="תוקף מוצר" onclick="openExpiryModal('${i.id}', \`${esc(i.name)}\`)">📅</button>
-        window.openExpiryModal = openExpiryModal;
         </div>
     </div>
     <div class="ai-row-2">
@@ -7738,7 +7737,17 @@ function selectStation(stationKey) {
     if (loginEl) loginEl.style.display = '';
   }
 })();
-
+window.openExpiryModal = function(itemId, itemName) {
+    const newExpiry = prompt(`הזן תאריך תוקף חדש עבור ${itemName} (למשל: 12/2026):`);
+    
+    if (newExpiry !== null) {
+        // כאן אתה צריך לקרוא לפונקציה שמעדכנת את בסיס הנתונים שלך (למשל Firebase)
+        console.log(`מעדכן תוקף עבור פריט ${itemId} לתאריך: ${newExpiry}`);
+        
+        // דוגמה קטנה אם יש לך פונקציית עדכון:
+        // updateItemExpiryInDB(itemId, newExpiry);
+    }
+};
 function changeStation() {
   sessionStorage.removeItem('mda_station');
   sessionStorage.removeItem('mda_firebase_for');
