@@ -7792,71 +7792,83 @@ function selectStation(stationKey) {
 // משתנה גלובלי שיזכור איזה מוצר אנחנו עורכים
 let currentEditingItemId = null;
 
-// חשיפת הפונקציה לחלון כדי שהכפתור ברשימה יוכל לפתוח אותה
+// פתיחת המודל - נקראת מהכפתור ברשימת המוצרים
 window.openExpiryModal = function(itemId, itemName) {
   currentEditingItemId = itemId;
-  
-  const nameElem = document.getElementById('modalProductName');
+  const nameElem = document.getElementById('expiry-modal-name');
+  const idElem   = document.getElementById('expiry-item-id');
   const modalElem = document.getElementById('expiryModal');
-  
-  if (nameElem) nameElem.textContent = `עדכון תוקף עבור: ${itemName}`;
+  if (nameElem)  nameElem.textContent = itemName || '';
+  if (idElem)    idElem.value = itemId || '';
   if (modalElem) modalElem.style.display = 'flex';
 };
 
-// הרצה של שאר ההגדרות רק אחרי שהדף נטען במלואו
-document.addEventListener('DOMContentLoaded', () => {
-  
-  const saveBtn = document.getElementById('saveExpiryBtn');
-  const closeBtn = document.getElementById('closeExpiryBtn');
-  const modal = document.getElementById('expiryModal');
+// סגירת המודל
+window.closeExpiryModal = function() {
+  const modalElem = document.getElementById('expiryModal');
+  if (modalElem) modalElem.style.display = 'none';
+};
 
-  // כפתור ביטול
-  if (closeBtn) {
-    closeBtn.onclick = function() {
-      modal.style.display = 'none';
-    };
+// שמירת תוקף ל-Firebase
+window.saveExpiry = function() {
+  const expiryValue = document.getElementById('expiry-date-input').value;
+  const batchValue  = document.getElementById('expiry-batch-input').value;
+
+  if (!expiryValue) {
+    alert("בבקשה בחר תאריך תקין!");
+    return;
   }
 
-  // סגירה בלחיצה מחוץ לחלון
-  window.onclick = function(event) {
-    if (event.target === modal) {
-      modal.style.display = 'none';
-    }
-  };
+  if (typeof firebase !== 'undefined') {
+    const db = firebase.firestore();
+    db.collection('products').doc(currentEditingItemId).update({
+      expiry: expiryValue,
+      batch:  batchValue || ''
+    })
+    .then(() => {
+      alert("התוקף עודכן בהצלחה!");
+      window.closeExpiryModal();
+      location.reload();
+    })
+    .catch((error) => {
+      console.error("שגיאה בעדכון Firebase:", error);
+      alert("אירעה שגיאה בשמירה בבסיס הנתונים.");
+    });
+  } else {
+    alert("שגיאה: Firebase לא מוגדר כראוי באתר.");
+  }
+};
 
-  // כפתור שמירה ל-Firebase
-  if (saveBtn) {
-    saveBtn.onclick = async function() {
-      const expiryValue = document.getElementById('expiryDateTime').value;
-      
-      if (!expiryValue) {
-        alert("בבקשה בחר תאריך ושעה תקינים!");
-        return;
-      }
+// מחיקת תוקף
+window.clearExpiry = function() {
+  if (!currentEditingItemId) return;
+  if (!confirm("למחוק את תאריך התוקף עבור מוצר זה?")) return;
 
-      try {
-        // משיכת פונקציות Firestore
-        const { getFirestore, doc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js');
-        
-        const db = getFirestore();
-        // ודא ששם ה-Collection שלך הוא אכן products
-        const itemRef = doc(db, 'products', currentEditingItemId); 
-        
-        await updateDoc(itemRef, {
-          expiry: expiryValue
-        });
-        
-        alert("התוקף עודכן בהצלחה!");
-        modal.style.display = 'none';
-        
-        // רענון קל של הדף כדי לראות את הנתונים החדשים
-        location.reload();
-        
-      } catch (error) {
-        console.error("שגיאה בעדכון בסיס הנתונים:", error);
-        alert("אירעה שגיאה בשמירה. פתח את ה-Console לצפייה בשגיאה.");
-      }
-    };
+  if (typeof firebase !== 'undefined') {
+    const db = firebase.firestore();
+    db.collection('products').doc(currentEditingItemId).update({
+      expiry: firebase.firestore.FieldValue.delete(),
+      batch:  firebase.firestore.FieldValue.delete()
+    })
+    .then(() => {
+      alert("התוקף נמחק בהצלחה!");
+      window.closeExpiryModal();
+      location.reload();
+    })
+    .catch((error) => {
+      console.error("שגיאה במחיקת Firebase:", error);
+      alert("אירעה שגיאה במחיקה.");
+    });
+  } else {
+    alert("שגיאה: Firebase לא מוגדר כראוי באתר.");
+  }
+};
+
+// סגירה בלחיצה מחוץ למודל
+window.addEventListener('click', function(event) {
+  const modal = document.getElementById('expiryModal');
+  if (modal && event.target === modal) {
+    modal.style.display = 'none';
   }
 });
 function changeStation() {
@@ -8440,81 +8452,5 @@ function _cwRunStep(val) {
   </div>
 </div>
 </div>
-<script>
-// משתנה גלובלי שיזכור איזה מוצר אנחנו עורכים
-let currentEditingItemId = null;
-
-// פונקציה לפתיחת המודל
-window.openExpiryModal = function(itemId, itemName) {
-  currentEditingItemId = itemId;
-  
-  const nameElem = document.getElementById('modalProductName');
-  const modalElem = document.getElementById('expiryModal');
-  
-  if (nameElem) nameElem.textContent = `עדכון תוקף עבור: ${itemName}`;
-  if (modalElem) modalElem.style.display = 'flex';
-};
-
-// הרצה של ההגדרות והלחיצות רק אחרי שהדף נטען
-document.addEventListener('DOMContentLoaded', () => {
-  
-  const saveBtn = document.getElementById('saveExpiryBtn');
-  const closeBtn = document.getElementById('closeExpiryBtn');
-  const modal = document.getElementById('expiryModal');
-
-  // כפתור ביטול
-  if (closeBtn) {
-    closeBtn.onclick = function() {
-      modal.style.display = 'none';
-    };
-  }
-
-  // סגירה בלחיצה מחוץ לחלון
-  window.onclick = function(event) {
-    if (event.target === modal) {
-      modal.style.display = 'none';
-    }
-  };
-
-  // כפתור שמירה ל-Firebase
-  if (saveBtn) {
-    saveBtn.onclick = function() {
-      const expiryValue = document.getElementById('expiryDateTime').value;
-      
-      if (!expiryValue) {
-        alert("בבקשה בחר תאריך ושעה תקינים!");
-        return;
-      }
-
-      try {
-        // שימוש ב-SDK הגלובלי שכבר קיים אצלך באתר
-        if (typeof firebase !== 'undefined') {
-          const db = firebase.firestore();
-          
-          db.collection('products').doc(currentEditingItemId).update({
-            expiry: expiryValue
-          })
-          .then(() => {
-            alert("התוקף עודכן בהצלחה!");
-            modal.style.display = 'none';
-            location.reload();
-          })
-          .catch((error) => {
-            console.error("שגיאה בעדכון Firebase:", error);
-            alert("אירעה שגיאה בשמירה בבסיס הנתונים.");
-          });
-          
-        } else {
-          alert("שגיאה: Firebase לא מוגדר כראוי באתר.");
-        }
-        
-      } catch (error) {
-        console.error("שגיאה כללית:", error);
-        alert("אירעה שגיאה. בדוק את ה-Console.");
-      }
-    };
-  }
-});
-</script>
 </body>
 </html>
