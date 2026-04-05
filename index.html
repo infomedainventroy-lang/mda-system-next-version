@@ -12,8 +12,8 @@
 <script>
 // Inline PWA manifest
 const _pwaManifest = {
-  name: 'מערכת מלאי מד"א',
-  short_name: 'מלאי מד"א',
+  name: 'מערכת מלאי מדא',
+  short_name: 'מלאי מדא',
   description: 'מערכת ניהול מלאי מגן דוד אדום',
   start_url: '/',  // valid absolute path
   display: 'standalone',
@@ -32,7 +32,7 @@ document.getElementById('pwa-manifest').href = URL.createObjectURL(_blob);
   const APP_VERSION = "1.21";
   const APP_BUILD_TS = 1774618219022;
 </script>
-<title id="page-title">מערכת מלאי מד"א</title>
+<title id="page-title">מערכת מלאי מדא</title>
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2011,7 +2011,7 @@ tr:hover td { background: var(--bg); }
     background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.12) 3px,rgba(0,0,0,.12) 4px);"></div>
   <div id="sp-logo">
     <img id="sp-logo-img" src="" alt="לוגו">
-    <div class="sp-t1" id="splash-title">מערכת ניהול מלאי מד"א</div>
+    <div class="sp-t1" id="splash-title">מערכת ניהול מלאי מדא</div>
     <div class="sp-t2">מגן דוד אדום</div>
   </div>
   <div id="sp-wipe-t" style="position:absolute;left:0;right:0;height:50%;background:#000;top:0;transform-origin:top;transform:scaleY(0);z-index:20;pointer-events:none;"></div>
@@ -2042,19 +2042,19 @@ if (sessionStorage.getItem('mda_station')) {
     <div class="station-card" onclick="selectStation('hodhasharon')">
       <img src="https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system@main/Hod_Hasharon_photo.png" alt="הוד השרון">
       <span class="sc-name">הוד השרון</span>
-      <span class="sc-sub">מד"א הוד השרון</span>
+      <span class="sc-sub">מדא הוד השרון</span>
       <div class="sc-arrow">←</div>
     </div>
     <div class="station-card" onclick="selectStation('nave')">
       <img src="https://cdn.jsdelivr.net/gh/infomedainventroy-lang/Nave_Yamin@main/Neve-Yamin.png" alt="נווה ימין">
       <span class="sc-name">נווה ימין</span>
-      <span class="sc-sub">מד"א נווה ימין</span>
+      <span class="sc-sub">מדא נווה ימין</span>
       <div class="sc-arrow">←</div>
     </div>
     <div class="station-card" onclick="selectStation('karnei')">
       <img src="https://cdn.jsdelivr.net/gh/infomedainventroy-lang/Karnei_Shomron-@main/קרני%20שומרון.png" alt="קרני שומרון">
       <span class="sc-name">קרני שומרון</span>
-      <span class="sc-sub">מד"א קרני שומרון</span>
+      <span class="sc-sub">מדא קרני שומרון</span>
       <div class="sc-arrow">←</div>
     </div>
   </div>
@@ -2185,7 +2185,7 @@ if (sessionStorage.getItem('mda_station')) {
     <div class="header-logo">
       <img id="header-logo" src="" alt="לוגו">
     </div>
-    <div class="header-title" id="site-header">מד"א מלאי</div>
+    <div class="header-title" id="site-header">מדא מלאי</div>
     <div class="header-user-pill" id="header-user"></div>
   </div>
 
@@ -2558,8 +2558,8 @@ if (sessionStorage.getItem('mda_station')) {
             <input type="text" id="n-barcode" class="app-input" placeholder="📦 ברקוד (אופציונלי)" autocomplete="off" style="flex:1;margin-bottom:0;">
           </div>
           <div class="input-row" style="margin-top:0;">
-            <input type="text" id="n-madanet-id"   class="app-input" placeholder='מזהה מד"אנט (אופציונלי)' autocomplete="off" style="width:160px;margin-bottom:0;">
-            <input type="text" id="n-madanet-name" class="app-input" placeholder='שם מד"אנט (אופציונלי)'  autocomplete="off" style="flex:1;margin-bottom:0;">
+            <input type="text" id="n-madanet-id"   class="app-input" placeholder='מזהה מדאנט (אופציונלי)' autocomplete="off" style="width:160px;margin-bottom:0;">
+            <input type="text" id="n-madanet-name" class="app-input" placeholder='שם מדאנט (אופציונלי)'  autocomplete="off" style="flex:1;margin-bottom:0;">
           </div>
           <button class="btn btn-blue" style="margin-top:10px;" onclick="addItem()">➕ הוסף למלאי</button>
         </div>
@@ -2577,7 +2577,7 @@ if (sessionStorage.getItem('mda_station')) {
             <div class="ip-text" id="ip-text">מייבא...</div>
           </div>
           <div style="font-size:.76em;color:var(--text-muted);margin-top:6px;">
-            פורמט CSV: קטגוריה, שם, כמות, מינימום, ברקוד, מזהה מד"אנט, שם מד"אנט
+            פורמט CSV: קטגוריה, שם, כמות, מינימום, ברקוד, מזהה מדאנט, שם מדאנט
           </div>
         </div>
 
@@ -3242,9 +3242,9 @@ sessionStorage.setItem('mda_firebase_for', CURRENT_SITE);
 
 const SITE_CONFIG = {
   karnei: {
-    title:      'מערכת מלאי מד"א קרני שומרון',
+    title:      'מערכת מלאי מדא קרני שומרון',
     logoUrl:    'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/Karnei_Shomron-@main/קרני%20שומרון.png',
-    headerText: 'מד"א קרני שומרון',
+    headerText: 'מדא קרני שומרון',
     firebase: {
       apiKey: "AIzaSyD9ApZOKj7aRUmcAG8MVncsCitOOJBH-cs",
       authDomain:  "meda-inventory-karnei-shomron.firebaseapp.com",
@@ -3256,9 +3256,9 @@ const SITE_CONFIG = {
     }
   },
   nave: {
-    title:      'מערכת מלאי מד"א נווה ימין',
+    title:      'מערכת מלאי מדא נווה ימין',
     logoUrl:    'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/Nave_Yamin@main/Neve-Yamin.png',
-    headerText: 'מד"א נווה ימין',
+    headerText: 'מדא נווה ימין',
     firebase: {
       apiKey: "AIzaSyBfpldPI5gydNrrF0UaJJUkCKhejJiQq3U",
       authDomain: "meda-inventory-neve-yamin.firebaseapp.com",
@@ -3270,9 +3270,9 @@ const SITE_CONFIG = {
     }
   },
   hodhasharon: {
-    title:      'מערכת מלאי מד"א הוד השרון',
+    title:      'מערכת מלאי מדא הוד השרון',
     logoUrl:    'https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system@main/Hod_Hasharon_photo.png',
-    headerText: 'מד"א הוד השרון',
+    headerText: 'מדא הוד השרון',
     firebase: {
       apiKey: "AIzaSyCe4yRcJF9_3HXze3HGCwKMLNUjDdlORRM",
       authDomain: "mda-inventory.firebaseapp.com",
@@ -3341,7 +3341,7 @@ document.addEventListener('DOMContentLoaded', () => {
     splash.style.display = 'block';
     if (logoImg) logoImg.src = CFG.logoUrl || "https://cdn.jsdelivr.net/gh/infomedainventroy-lang/mda-system-next-version@main/main_logo.png";
     const splashTitle = document.getElementById('splash-title');
-    if (splashTitle) splashTitle.textContent = CFG.headerText || 'מערכת ניהול מלאי מד"א';
+    if (splashTitle) splashTitle.textContent = CFG.headerText || 'מערכת ניהול מלאי מדא';
 
     let W = canvas.width  = window.innerWidth;
     let H = canvas.height = window.innerHeight;
@@ -4876,7 +4876,7 @@ async function handleCsvUpload(input) {
 }
 
 function downloadInv() {
-  let csv = '\uFEFFשם,קטגוריה,כמות,מינימום,ברקוד,מזהה מד"אנט,שם מד"אנט\n';
+  let csv = '\uFEFFשם,קטגוריה,כמות,מינימום,ברקוד,מזהה מדאנט,שם מדאנט\n';
   inv.forEach(i => {
     csv += [csvSafe(i.name), csvSafe(i.category), i.qty??0, i.minQty??'', csvSafe(i.barcode||''), csvSafe(i.madanet_id||''), csvSafe(i.madanet_name||'')].join(',') + '\n';
   });
@@ -5300,7 +5300,7 @@ function _doMonthlyPDF() {
   const categories = Object.keys(catMap).sort((a,b) => a.localeCompare(b, 'he'));
 
   // ── Build HTML for print window ──
-  const siteName = (typeof CFG !== 'undefined' && CFG.headerText) ? CFG.headerText : 'מד"א';
+  const siteName = (typeof CFG !== 'undefined' && CFG.headerText) ? CFG.headerText : 'מדא';
 
   let tableRows = '';
   categories.forEach(cat => {
@@ -5556,9 +5556,9 @@ ${logoUrl ? `<link rel="icon" type="image/png" href="${logoUrl}">` : ''}
     <table>
       <thead>
         <tr>
-          <th>מזהה<br>מד"אנט</th>
+          <th>מזהה<br>מדאנט</th>
           <th class="th-name">שם</th>
-          <th class="th-name">שם מד"אנט</th>
+          <th class="th-name">שם מדאנט</th>
           <th>כמות<br>תחילת חודש</th>
           <th>שימוש<br>חודשי</th>
           <th>הוספה<br>חודשית</th>
@@ -5572,7 +5572,7 @@ ${logoUrl ? `<link rel="icon" type="image/png" href="${logoUrl}">` : ''}
   </div>
 
   <div class="report-footer">
-    * שורות בהדגשה אדומה = כמות מתחת לתקן · הופק אוטומטית ע"י מערכת מד"א מלאי
+    * שורות בהדגשה אדומה = כמות מתחת לתקן · הופק אוטומטית ע"י מערכת מדא מלאי
   </div>
 </div>
 </body>
@@ -6439,7 +6439,7 @@ async function registerBiometric() {
     const credential = await navigator.credentials.create({
       publicKey: {
         challenge: randomChallenge(),
-        rp: { name: 'מד"א מלאי', id: rpId },
+        rp: { name: 'מדא מלאי', id: rpId },
         user: {
           id:          userIdBytes,
           name:        window.curU || userId,
@@ -6791,7 +6791,7 @@ async function testDcWebhook() {
 
   showToast('📡 שולח הודעת בדיקה ל-Discord...', 'info', 2500);
 
-  const siteTitle = CFG?.headerText || 'מד"א';
+  const siteTitle = CFG?.headerText || 'מדא';
   const alerts = [
     _dc.alertOut   ? '🚨 אזל'    : '',
     _dc.alertLow   ? '⚠️ נמוך'   : '',
@@ -6869,7 +6869,7 @@ async function _dcFlushBatch() {
   if (!_dcBatchQueue.length || !_dc.webhookUrl) return;
 
   const items    = _dcBatchQueue.splice(0);
-  const siteTitle = CFG?.headerText || 'מד"א';
+  const siteTitle = CFG?.headerText || 'מדא';
 
   const META = {
     out:   { color: 0xD32F2F, emoji: '🚨', title: 'פריט אזל מהמלאי!'   },
@@ -7101,7 +7101,7 @@ function _nextTimeLabel(type) {
 
 async function sendScheduledReport(period) {
   if (!_dc.webhookUrl) return;
-  const siteTitle = CFG?.headerText || 'מד"א';
+  const siteTitle = CFG?.headerText || 'מדא';
   const now       = new Date();
 
   // Period label
@@ -7973,9 +7973,9 @@ setInterval(() => {
         <input type="text" id="eim-barcode" class="modal-input" style="width:100%;">
       </div>
     </div>
-    <label style="font-size:.82em;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">מזהה מד"אנט</label>
+    <label style="font-size:.82em;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">מזהה מדאנט</label>
     <input type="text" id="eim-madanet-id" class="modal-input" style="width:100%;margin-bottom:10px;">
-    <label style="font-size:.82em;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">שם מד"אנט</label>
+    <label style="font-size:.82em;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px;">שם מדאנט</label>
     <input type="text" id="eim-madanet-name" class="modal-input" style="width:100%;margin-bottom:16px;">
     <div style="display:flex;gap:8px;">
       <button class="btn btn-blue" onclick="saveEditItem()" style="flex:1;">💾 שמור שינויים</button>
@@ -8015,7 +8015,7 @@ setInterval(() => {
       <div class="chat-hd-left">
         <div class="chat-hd-icon">💬</div>
         <div>
-          <div class="chat-hd-title" id="chatWidgetTitle">מוקד תמיכה מד"א</div>
+          <div class="chat-hd-title" id="chatWidgetTitle">מוקד תמיכה מדא</div>
           <div class="chat-hd-sub" id="chatWidgetSub">
             <div class="chat-online-dot"></div>
             <span id="chatWidgetSubText">בוט חכם · 24/7</span>
@@ -8166,8 +8166,8 @@ function _cwStartBot() {
   _cwTempTicket = {};
   _cwRenderedKeys = new Set();
   
-  const stationName = (window.SITE_CONFIG && _cwStationKey) ? (window.SITE_CONFIG[_cwStationKey]?.headerText || 'מד"א') : 'מד"א';
-  document.getElementById('chatWidgetTitle').textContent = 'מוקד תמיכה מד"א';
+  const stationName = (window.SITE_CONFIG && _cwStationKey) ? (window.SITE_CONFIG[_cwStationKey]?.headerText || 'מדא') : 'מדא';
+  document.getElementById('chatWidgetTitle').textContent = 'מוקד תמיכה מדא';
   const subTextEl = document.getElementById('chatWidgetSubText');
   if (subTextEl) subTextEl.textContent = stationName + ' · תמיכה 24/7';
   document.getElementById('chatWidgetMsgs').innerHTML = '';
@@ -8332,7 +8332,7 @@ function _cwNotifyAdmin(ticket) {
   const ticketId = (_cwCurrentId||'').slice(-6).toUpperCase();
   const stationName = (window.SITE_CONFIG && ticket.station && window.SITE_CONFIG[ticket.station])
     ? window.SITE_CONFIG[ticket.station].headerText
-    : (ticket.station || 'מד"א מרחב');
+    : (ticket.station || 'מדא מרחב');
 
   const params = {
     TO_NAME:       'מנהל מוקד',
@@ -8362,7 +8362,7 @@ function _cwSendReplyEmail(toEmail, message, subject) {
 
   const stationName = (window.SITE_CONFIG && _cwStationKey && window.SITE_CONFIG[_cwStationKey])
     ? window.SITE_CONFIG[_cwStationKey].headerText
-    : 'מד"א מרחב';
+    : 'מדא מרחב';
 
   const params = {
     TO_NAME:       toEmail,
