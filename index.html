@@ -2057,12 +2057,6 @@ if (sessionStorage.getItem('mda_station')) {
       <span class="sc-sub">מד"א קרני שומרון</span>
       <div class="sc-arrow">←</div>
     </div>
-    <div class="station-card" onclick="selectStation('test')" style="border:2px dashed rgba(255,200,0,.4);">
-      <img src="https://github.com/infomedainventroy-lang/mda-system-next-version/blob/main/main_logo.png?raw=true" alt="test" style="opacity:.7;">
-      <span class="sc-name">Test</span>
-      <span class="sc-sub">סביבת פיתוח</span>
-      <div class="sc-arrow" style="background:rgba(255,200,0,.3);border-color:rgba(255,200,0,.4);">←</div>
-    </div>
   </div>
 </div>
 
@@ -2207,7 +2201,6 @@ if (sessionStorage.getItem('mda_station')) {
       <button id="tab-logs-btn" class="tab-btn" onclick="showTab('tab-logs',this)">📜 לוגים</button>
       <button id="tab-alerts-btn" class="tab-btn" onclick="showTab('tab-alerts',this)">🚨 התראות</button>
       <button class="tab-btn" onclick="showTab('tab-deliveries',this)">🚚 משלוחים</button>
-      <button class="tab-btn" onclick="showTab('tab-expiry',this)">⏳ תוקף מוצרים</button>
       <button class="tab-btn" onclick="showTab('tab-settings',this)">⚙️ הגדרות</button>
       <button class="tab-btn" id="tab-support-btn" onclick="showTab('tab-support',this)">💬 תמיכה</button>
       <button class="tab-btn tab-logout" onclick="logout()">↩ יציאה</button>
@@ -2415,6 +2408,7 @@ if (sessionStorage.getItem('mda_station')) {
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-green w-auto sm" onclick="downloadReportCSV()">📥 ייצא CSV</button>
         <button class="btn btn-blue w-auto sm" onclick="downloadReportPDF()">🖨️ הדפס</button>
+        <button class="btn w-auto sm" style="background:linear-gradient(135deg,#6a1b9a,#8e24aa);color:white;border:none;" onclick="generateMonthlyInventoryPDF()">📄 סיכום חודשי</button>
       </div>
     </div>
 
@@ -2869,116 +2863,6 @@ if (sessionStorage.getItem('mda_station')) {
         </div>
       </div>
 
-      <!-- EXPIRY PRODUCTS TAB -->
-      <div id="tab-expiry" class="tab-pane hidden">
-        <style>
-          .expiry-card-item {
-            background: var(--surface);
-            border: 1.5px solid var(--border);
-            border-radius: var(--r-md);
-            padding: 14px 16px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: var(--tr);
-            position: relative;
-            overflow: hidden;
-          }
-          .expiry-card-item.exp-ok    { border-right: 4px solid var(--c-green-light); }
-          .expiry-card-item.exp-warn  { border-right: 4px solid var(--c-gold); background: linear-gradient(135deg, #fffde7 0%, var(--surface) 100%); }
-          .expiry-card-item.exp-near  { border-right: 4px solid var(--c-orange); background: linear-gradient(135deg, #fff3e0 0%, var(--surface) 100%); }
-          .expiry-card-item.exp-out   { border-right: 4px solid var(--c-red); background: linear-gradient(135deg, #ffebee 0%, var(--surface) 100%); animation: expBlink 2s infinite; }
-          @keyframes expBlink { 0%,100%{border-right-color:var(--c-red)} 50%{border-right-color:#ff8a80} }
-          [data-theme="dark"] .expiry-card-item.exp-warn { background: linear-gradient(135deg,#2d2600 0%,var(--surface) 100%); }
-          [data-theme="dark"] .expiry-card-item.exp-near { background: linear-gradient(135deg,#2d1e0d 0%,var(--surface) 100%); }
-          [data-theme="dark"] .expiry-card-item.exp-out  { background: linear-gradient(135deg,#1e0a0a 0%,var(--surface) 100%); }
-          .expiry-badge {
-            padding: 3px 10px; border-radius: var(--r-full);
-            font-size: .72em; font-weight: 800; white-space: nowrap;
-          }
-          .exp-badge-ok   { background: var(--c-green-pale);  color: var(--c-green); }
-          .exp-badge-warn { background: #fffde7; color: #f57f17; }
-          .exp-badge-near { background: var(--c-orange-pale); color: var(--c-orange); }
-          .exp-badge-out  { background: var(--c-red-pale);    color: var(--c-red); }
-          .expiry-add-form {
-            background: var(--bg);
-            border: 1.5px solid var(--border);
-            border-radius: var(--r-md);
-            padding: 16px;
-            margin-bottom: 14px;
-          }
-          .exp-form-row {
-            display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 10px;
-          }
-          .exp-form-row label { font-size: .78em; font-weight: 700; color: var(--text-soft); display: block; margin-bottom: 4px; }
-          .exp-input {
-            padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--r-sm);
-            font-family: 'Heebo', sans-serif; font-size: 14px; background: var(--surface);
-            color: var(--text); outline: none; width: 100%;
-          }
-          .exp-input:focus { border-color: var(--c-blue); }
-          [data-theme="dark"] .exp-input { background: var(--surface); border-color: var(--border); color: var(--text); }
-          .exp-filter-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
-        </style>
-
-        <!-- Add/edit form -->
-        <div class="card">
-          <div class="card-title">⏳ ניהול תוקף מוצרים</div>
-          <p style="font-size:.82em;color:var(--text-soft);margin-bottom:14px;line-height:1.6;">
-            הגדר מוצרים עם תוקף — המערכת תשלח התראה לDisrord כשהתוקף מתקרב (&lt;30 יום) ו/או פג.
-          </p>
-
-          <div class="expiry-add-form">
-            <div style="font-size:.84em;font-weight:800;color:var(--text);margin-bottom:12px;">➕ הוסף / עדכן מוצר עם תוקף</div>
-            <input type="hidden" id="exp-edit-id">
-            <div class="exp-form-row">
-              <div style="flex:2;min-width:140px;">
-                <label>שם המוצר</label>
-                <input type="text" id="exp-name" class="exp-input" placeholder="למשל: אספירין 500mg">
-              </div>
-              <div style="flex:1;min-width:100px;">
-                <label>קטגוריה</label>
-                <input type="text" id="exp-cat" class="exp-input" placeholder="תרופות...">
-              </div>
-            </div>
-            <div class="exp-form-row">
-              <div style="flex:1;min-width:130px;">
-                <label>תאריך תפוגה</label>
-                <input type="date" id="exp-date" class="exp-input">
-              </div>
-              <div style="flex:1;min-width:80px;">
-                <label>כמות</label>
-                <input type="number" id="exp-qty" class="exp-input" placeholder="1" min="0">
-              </div>
-              <div style="flex:2;min-width:140px;">
-                <label>הערות</label>
-                <input type="text" id="exp-notes" class="exp-input" placeholder="אצוות, מיקום...">
-              </div>
-            </div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn btn-blue w-auto" onclick="saveExpiryProduct()">💾 שמור מוצר</button>
-              <button class="btn btn-ghost w-auto" onclick="clearExpiryForm()" id="exp-cancel-btn" style="display:none;">ביטול עריכה</button>
-              <button class="btn w-auto sm" style="background:#5865f2;color:white;" onclick="checkAndSendExpiryAlerts(true)">📢 בדוק ושלח התראות</button>
-            </div>
-          </div>
-
-          <!-- Filter row -->
-          <div class="exp-filter-row">
-            <button class="chip active-chip" data-ef="all"    onclick="setExpiryFilter('all',this)">הכל</button>
-            <button class="chip chip-red"    data-ef="out"    onclick="setExpiryFilter('out',this)">🚨 פג תוקף</button>
-            <button class="chip"             data-ef="near"   onclick="setExpiryFilter('near',this)" style="background:#fff3e0;color:var(--c-orange);border-color:var(--c-orange);">⚠️ פחות מ-7 ימים</button>
-            <button class="chip"             data-ef="warn"   onclick="setExpiryFilter('warn',this)" style="background:#fffde7;color:#f57f17;border-color:#f57f17;">⏳ פחות מ-30 ימים</button>
-            <button class="chip"             data-ef="ok"     onclick="setExpiryFilter('ok',this)" style="background:var(--c-green-pale);color:var(--c-green);border-color:var(--c-green-light);">✅ תקין</button>
-          </div>
-
-          <div id="expiry-count" style="font-size:.78em;color:var(--text-muted);font-weight:600;padding:0 2px 8px;"></div>
-          <div id="expiry-list">
-            <div class="empty-state"><div class="es-icon">⏳</div><p>לחץ "בדוק ושלח התראות" לבדיקה, או הוסף מוצר למעלה</p></div>
-          </div>
-        </div>
-      </div><!-- /tab-expiry -->
-
       <!-- SETTINGS -->
       <div id="tab-settings" class="tab-pane hidden">
         <div class="card">
@@ -3352,7 +3236,7 @@ const _savedStation = sessionStorage.getItem('mda_station');
 const CURRENT_SITE = (_savedStation && (function(){
   const valid = ['hodhasharon','nave','karnei'];
   return valid.includes(_savedStation) ? _savedStation : null;
-})()) || 'test';
+})()) || 'hodhasharon';
 // Mark which Firebase we inited for (for consistency check)
 sessionStorage.setItem('mda_firebase_for', CURRENT_SITE);
 
@@ -3369,20 +3253,6 @@ const SITE_CONFIG = {
       storageBucket: "meda-inventory-karnei-shomron.firebasestorage.app",
       messagingSenderId: "695234364436",
       appId: "1:1081567938760:web:6093630be0672fdc01bdfd"
-    }
-  },
-  test: {
-    title:      'מערכת מלאי מד"א test ',
-    logoUrl:    'https://github.com/infomedainventroy-lang/mda-system-next-version/blob/main/main_logo.png?raw=true',
-    headerText: 'מד"א test',
-    firebase: {
-      apiKey: "AIzaSyD9JAMl1_bjL-DeX_ql3e8URQAFRhc-anA",
-      authDomain:  "test-7c7c0.firebaseapp.com",
-      databaseURL: "https://test-7c7c0-default-rtdb.firebaseio.com",
-      projectId: "test-7c7c0",
-  storageBucket: "test-7c7c0.firebasestorage.app",
-  messagingSenderId: "465210569707",
-  appId: "1:465210569707:web:a43079b35bdb502de65fae"    
     }
   },
   nave: {
@@ -3839,7 +3709,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
     const navBtns = document.querySelectorAll('#admin-nav .tab-btn:not(.tab-logout)');
-    const tabIds  = ['tab-dash','tab-reports','tab-inv','tab-team','tab-logs','tab-alerts','tab-deliveries','tab-expiry','tab-settings'];
+    const tabIds  = ['tab-dash','tab-reports','tab-inv','tab-team','tab-logs','tab-alerts','tab-deliveries','tab-settings'];
 
     if (e.key >= '1' && e.key <= '7' && !e.ctrlKey && !e.metaKey) {
       const idx = parseInt(e.key) - 1;
@@ -5341,6 +5211,355 @@ function downloadReportPDF() {
   window.print();
 }
 
+/* ── Monthly Inventory Summary PDF ── */
+function generateMonthlyInventoryPDF() {
+  // ── Ask for month/year ──
+  const now = new Date();
+  const defaultMonth = now.getMonth() + 1;
+  const defaultYear  = now.getFullYear();
+
+  // Build a small modal to pick month/year
+  const existing = document.getElementById('monthly-pdf-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'monthly-pdf-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(13,27,42,.75);backdrop-filter:blur(8px);z-index:9900;display:flex;align-items:center;justify-content:center;padding:16px;';
+
+  const MONTH_NAMES_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  let monthOpts = MONTH_NAMES_HE.map((m,i) => `<option value="${i+1}" ${i+1===defaultMonth?'selected':''}>${m}</option>`).join('');
+  let yearOpts  = [defaultYear-1, defaultYear, defaultYear+1].map(y => `<option value="${y}" ${y===defaultYear?'selected':''}>${y}</option>`).join('');
+
+  modal.innerHTML = `
+    <div style="background:var(--surface);border-radius:var(--r-lg);padding:28px 24px 22px;width:100%;max-width:360px;box-shadow:var(--sh-xl);animation:slideUp .25s cubic-bezier(.34,1.56,.64,1) both;">
+      <h3 style="font-size:1.05em;font-weight:800;color:var(--c-navy);margin-bottom:18px;display:flex;align-items:center;gap:8px;">📄 יצירת סיכום חודשי</h3>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:.8em;font-weight:700;color:var(--text-soft);display:block;margin-bottom:5px;">חודש</label>
+        <select id="mpdf-month" class="app-select" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'Heebo',sans-serif;font-size:14px;background:var(--surface);color:var(--text);">${monthOpts}</select>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="font-size:.8em;font-weight:700;color:var(--text-soft);display:block;margin-bottom:5px;">שנה</label>
+        <select id="mpdf-year" class="app-select" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'Heebo',sans-serif;font-size:14px;background:var(--surface);color:var(--text);">${yearOpts}</select>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="_doMonthlyPDF()" style="flex:1;padding:12px;background:linear-gradient(135deg,#6a1b9a,#8e24aa);color:white;border:none;border-radius:var(--r-sm);font-family:'Heebo',sans-serif;font-size:.95em;font-weight:800;cursor:pointer;">📄 צור PDF</button>
+        <button onclick="document.getElementById('monthly-pdf-modal').remove()" style="flex:1;padding:12px;background:var(--border);color:var(--text);border:none;border-radius:var(--r-sm);font-family:'Heebo',sans-serif;font-size:.95em;font-weight:700;cursor:pointer;">ביטול</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function _doMonthlyPDF() {
+  const selMonth = parseInt(document.getElementById('mpdf-month').value, 10);
+  const selYear  = parseInt(document.getElementById('mpdf-year').value,  10);
+  document.getElementById('monthly-pdf-modal').remove();
+
+  const MONTH_NAMES_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  const monthLabel = MONTH_NAMES_HE[selMonth - 1] + ' ' + selYear;
+
+  // ── Time range for selected month ──
+  const fromDate = new Date(selYear, selMonth - 1, 1, 0, 0, 0, 0);
+  const toDate   = new Date(selYear, selMonth,     0, 23, 59, 59, 999);
+  const fromTS   = fromDate.getTime();
+  const toTS     = toDate.getTime();
+
+  // ── Per-item stats from logs ──
+  const itemStats = {}; // itemName → { additions, usage, firstBefore }
+  const monthLogs = logs.filter(l => l.timestamp >= fromTS && l.timestamp <= toTS);
+
+  monthLogs.forEach(l => {
+    const key    = l.item || l.itemName || l.itemId || '';
+    if (!key) return;
+    if (!itemStats[key]) itemStats[key] = { additions: 0, usage: 0, firstTS: Infinity, firstBefore: null };
+    const s      = itemStats[key];
+    const action = l.action || 'take';
+    const amount = Number.isFinite(l.amount) ? l.amount : Math.abs(l.delta || 0);
+
+    if (action === 'add' || (action === 'manual' && (l.delta || 0) > 0)) {
+      s.additions += amount;
+    } else if (action === 'take' || action === 'sub' || (action === 'manual' && (l.delta || 0) < 0)) {
+      s.usage += amount;
+    }
+    // Track earliest log to get start-of-month qty
+    if ((l.timestamp || 0) < s.firstTS) {
+      s.firstTS     = l.timestamp;
+      s.firstBefore = l.qty_before ?? null;
+    }
+  });
+
+  // ── Group inventory by category ──
+  const catMap = {};
+  [...inv].forEach(item => {
+    const cat = (item.category || 'כללי').trim();
+    if (!catMap[cat]) catMap[cat] = [];
+    catMap[cat].push(item);
+  });
+
+  // Sort categories
+  const categories = Object.keys(catMap).sort((a,b) => a.localeCompare(b, 'he'));
+
+  // ── Build HTML for print window ──
+  const siteName = (typeof CFG !== 'undefined' && CFG.name) ? CFG.name : 'מד"א';
+
+  let tableRows = '';
+  categories.forEach(cat => {
+    // Category header row
+    tableRows += `<tr class="cat-row"><td colspan="9">${cat}</td></tr>`;
+    catMap[cat].forEach(item => {
+      const stats      = itemStats[item.name] || {};
+      const additions  = stats.additions || 0;
+      const usage      = stats.usage     || 0;
+      const currentQty = item.qty ?? 0;
+      // Start of month qty: if we have a log for this item, use firstBefore; else estimate
+      let startQty;
+      if (stats.firstBefore != null) {
+        startQty = stats.firstBefore;
+      } else {
+        // No logs this month — assume current qty (no change)
+        startQty = currentQty;
+      }
+      const madanetId  = item.madanet_id  || item.barcode || '';
+      const minQty     = item.minQty != null ? item.minQty : '';
+      const expiry     = item.expiry || '';
+      const notes      = item.notes  || '';
+
+      // Highlight if below min
+      const isCritical = item.minQty != null && currentQty < item.minQty;
+      const rowStyle   = isCritical ? ' class="low-row"' : '';
+
+      tableRows += `<tr${rowStyle}>
+        <td class="cell-id">${madanetId}</td>
+        <td class="cell-name">${item.name}</td>
+        <td class="cell-num">${minQty}</td>
+        <td class="cell-num">${startQty}</td>
+        <td class="cell-num">${usage || ''}</td>
+        <td class="cell-num">${additions || ''}</td>
+        <td class="cell-num bold ${isCritical?'red':''}">${currentQty}</td>
+        <td class="cell-exp">${expiry}</td>
+        <td class="cell-notes">${notes}</td>
+      </tr>`;
+    });
+  });
+
+  const totalItems    = inv.length;
+  const totalAdditions= Object.values(itemStats).reduce((s,v)=>s+v.additions,0);
+  const totalUsage    = Object.values(itemStats).reduce((s,v)=>s+v.usage,0);
+  const lowItems      = inv.filter(i => i.minQty != null && i.qty < i.minQty).length;
+
+  const html = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>סיכום מלאי חודשי – ${monthLabel} – ${siteName}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800;900&display=swap');
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family: 'Heebo', Arial, sans-serif;
+    direction: rtl;
+    background: #f4f6f9;
+    color: #1a202c;
+    font-size: 11px;
+  }
+  .page-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+  /* ── Header ── */
+  .report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #0d1b2a 0%, #1e3a5f 100%);
+    color: white;
+    padding: 18px 22px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+  }
+  .report-header h1 { font-size: 1.3em; font-weight: 900; }
+  .report-header .subtitle { font-size: .82em; opacity: .75; margin-top: 3px; }
+  .report-header .logo {
+    font-size: 2.4em;
+    background: rgba(255,255,255,.12);
+    border-radius: 50%;
+    width: 56px; height: 56px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  /* ── Summary bar ── */
+  .summary-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .sum-card {
+    flex: 1;
+    background: white;
+    border-radius: 10px;
+    padding: 12px 14px;
+    border: 1px solid #e1e6ed;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,.06);
+  }
+  .sum-num { font-size: 1.6em; font-weight: 900; display: block; line-height: 1; }
+  .sum-lbl { font-size: .7em; opacity: .6; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-top: 3px; }
+  .sum-card.danger .sum-num { color: #d32f2f; }
+  /* ── Table ── */
+  .table-wrap {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e1e6ed;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10.5px;
+  }
+  thead tr {
+    background: linear-gradient(135deg, #0d1b2a 0%, #152538 100%);
+    color: white;
+  }
+  thead th {
+    padding: 9px 7px;
+    font-weight: 800;
+    font-size: .85em;
+    text-align: center;
+    white-space: nowrap;
+    border-left: 1px solid rgba(255,255,255,.12);
+  }
+  thead th:first-child { border-left: none; }
+  thead th.th-name { text-align: right; }
+  tbody tr { border-bottom: 1px solid #f0f2f5; }
+  tbody tr:hover { background: #f8f9fc; }
+  tbody td { padding: 6px 7px; vertical-align: middle; }
+  .cell-id    { color: #6a7485; font-size: .85em; white-space: nowrap; }
+  .cell-name  { font-weight: 600; min-width: 150px; }
+  .cell-num   { text-align: center; font-weight: 700; font-size: 1em; }
+  .cell-exp   { text-align: center; color: #6a7485; font-size: .85em; white-space: nowrap; }
+  .cell-notes { color: #6a7485; font-size: .85em; }
+  .bold       { font-weight: 900; }
+  .red        { color: #d32f2f; }
+  /* Category rows */
+  .cat-row td {
+    background: linear-gradient(90deg, #1e3a5f 0%, #2a5080 100%);
+    color: white;
+    font-weight: 800;
+    font-size: .92em;
+    padding: 7px 12px;
+    letter-spacing: .03em;
+  }
+  /* Low stock */
+  .low-row { background: #fff5f5 !important; }
+  .low-row .cell-name { color: #b71c1c; }
+  /* Footer */
+  .report-footer {
+    text-align: center;
+    margin-top: 14px;
+    color: #8a96a8;
+    font-size: .78em;
+  }
+  /* Print button (hidden on print) */
+  .print-btn {
+    position: fixed;
+    top: 18px; left: 18px;
+    padding: 11px 22px;
+    background: linear-gradient(135deg,#6a1b9a,#8e24aa);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Heebo', sans-serif;
+    font-size: .95em;
+    font-weight: 800;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: 0 4px 14px rgba(106,27,154,.4);
+  }
+  .print-btn:hover { transform: scale(1.04); }
+  @media print {
+    body { background: white; }
+    .print-btn { display: none !important; }
+    .page-wrap { padding: 8px; }
+    .report-header { border-radius: 0; }
+    .table-wrap { box-shadow: none; border: 1px solid #ccc; }
+    table { font-size: 9px; }
+    tbody td { padding: 4px 5px; }
+    thead th { padding: 6px 5px; }
+    .sum-card { box-shadow: none; }
+    @page { size: A4 landscape; margin: 8mm; }
+  }
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">🖨️ שמור / הדפס PDF</button>
+<div class="page-wrap">
+
+  <div class="report-header">
+    <div>
+      <h1>📋 סיכום מלאי חודשי — ${monthLabel}</h1>
+      <div class="subtitle">${siteName} · הופק ב-${new Date().toLocaleDateString('he-IL')}</div>
+    </div>
+    <div class="logo">🚑</div>
+  </div>
+
+  <div class="summary-bar">
+    <div class="sum-card">
+      <span class="sum-num">${totalItems}</span>
+      <span class="sum-lbl">סוגי פריטים</span>
+    </div>
+    <div class="sum-card">
+      <span class="sum-num">${totalUsage}</span>
+      <span class="sum-lbl">שימוש חודשי</span>
+    </div>
+    <div class="sum-card">
+      <span class="sum-num">${totalAdditions}</span>
+      <span class="sum-lbl">הוספות</span>
+    </div>
+    <div class="sum-card danger">
+      <span class="sum-num">${lowItems}</span>
+      <span class="sum-lbl">מלאי נמוך</span>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>מקט</th>
+          <th class="th-name">שם</th>
+          <th>תקן</th>
+          <th>כמות<br>תחילת חודש</th>
+          <th>שימוש<br>חודשי</th>
+          <th>הוספה<br>חודשית</th>
+          <th>כמות<br>נוכחית</th>
+          <th>תאריך פג<br>תוקף</th>
+          <th>הערות</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRows}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="report-footer">
+    * שורות בהדגשה אדומה = כמות מתחת לתקן · הופק אוטומטית ע"י מערכת מד"א מלאי
+  </div>
+</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) {
+    showToast('⚠️ אנא אפשר חלונות קופצים בדפדפן', 'warning');
+    return;
+  }
+  win.document.write(html);
+  win.document.close();
+}
+
 /* ================================================================
    LOGS
    ================================================================ */
@@ -6689,9 +6908,9 @@ async function _dcFlushBatch() {
         embed.thumbnail = { url: CFG.logoUrl };
       }
       // Mention role for all alert types
-      const MENTION_TAG = _dc.mentionRole ? `<@&${_dc.mentionRole}>` : '';
+      const MENTION_TAG = '<@&1483800391660339303>';
       const MENTION_LABELS = { out: '🚨 דרוש מילוי!', low: '⚠️ מלאי נמוך!', add: '✅ מלאי עודכן', take: '📤 ציוד יצא', order: '🛒 הזמנה חדשה' };
-      if (!content && MENTION_TAG) content = MENTION_TAG + ' ' + (MENTION_LABELS[type] || '');
+      if (!content) content = MENTION_TAG + ' ' + (MENTION_LABELS[type] || '');
       embeds.push(embed);
 
     } else {
@@ -6709,9 +6928,9 @@ async function _dcFlushBatch() {
         timestamp:   new Date().toISOString(),
       });
       // Mention role for all alert types
-      const MENTION_TAG2 = _dc.mentionRole ? `<@&${_dc.mentionRole}>` : '';
+      const MENTION_TAG2 = '<@&1483800391660339303>';
       const MENTION_LABELS2 = { out: '🚨 דרוש מילוי!', low: '⚠️ מלאי נמוך!', add: '✅ מלאי עודכן', take: '📤 ציוד יצא', order: '🛒 הזמנה חדשה' };
-      if (!content && MENTION_TAG2) content = MENTION_TAG2 + ' ' + (MENTION_LABELS2[type] || '');
+      if (!content) content = MENTION_TAG2 + ' ' + (MENTION_LABELS2[type] || '');
     }
   });
 
@@ -8346,317 +8565,9 @@ function _cwRunStep(val) {
   }
 })();
 
-/* ================================================================
-   EXPIRY PRODUCTS MANAGEMENT
-   ================================================================ */
-const EXPIRY_PATH = () => 'expiry/' + (typeof CURRENT_SITE !== 'undefined' ? CURRENT_SITE : 'default');
-let _expiryItems = [];      // loaded from Firebase
-let _expiryFilter = 'all';  // current filter
-let _expiryAlertSent = {};  // throttle: key → timestamp
-
-/* ── Load expiry items from Firebase ── */
-function loadExpiryItems() {
-  if (!db) return;
-  db.ref(EXPIRY_PATH()).on('value', snap => {
-    _expiryItems = [];
-    snap.forEach(c => {
-      const v = c.val();
-      if (v) _expiryItems.push({ id: c.key, ...v });
-    });
-    renderExpiryList();
-    // Auto-check on load (silent)
-    checkAndSendExpiryAlerts(false);
-  });
-}
-
-/* ── Determine status from expiry date ── */
-function _expiryStatus(dateStr) {
-  if (!dateStr) return { cls: 'exp-ok', badge: 'exp-badge-ok', label: '✅ ללא תאריך', days: Infinity };
-  const now     = new Date(); now.setHours(0,0,0,0);
-  const exp     = new Date(dateStr); exp.setHours(0,0,0,0);
-  const diffMs  = exp - now;
-  const days    = Math.round(diffMs / 86400000);
-  if (days < 0)  return { cls:'exp-out',  badge:'exp-badge-out',  label:`🚨 פג לפני ${Math.abs(days)} יום`, days };
-  if (days <= 7) return { cls:'exp-near', badge:'exp-badge-near', label:`⚠️ פג בעוד ${days} יום`, days };
-  if (days <= 30)return { cls:'exp-warn', badge:'exp-badge-warn', label:`⏳ ${days} יום`, days };
-  return { cls:'exp-ok', badge:'exp-badge-ok', label:`✅ ${days} יום`, days };
-}
-
-/* ── Set filter ── */
-function setExpiryFilter(f, btn) {
-  _expiryFilter = f;
-  document.querySelectorAll('[data-ef]').forEach(b => b.classList.remove('active-chip'));
-  if (btn) btn.classList.add('active-chip');
-  renderExpiryList();
-}
-
-/* ── Render list ── */
-function renderExpiryList() {
-  const list = document.getElementById('expiry-list');
-  const count = document.getElementById('expiry-count');
-  if (!list) return;
-
-  // Sort: expired first, then by days ascending
-  const sorted = [..._expiryItems].sort((a,b) => {
-    const da = _expiryStatus(a.expiryDate).days;
-    const db2 = _expiryStatus(b.expiryDate).days;
-    return da - db2;
-  });
-
-  const filtered = sorted.filter(item => {
-    const st = _expiryStatus(item.expiryDate);
-    if (_expiryFilter === 'out')  return st.days < 0;
-    if (_expiryFilter === 'near') return st.days >= 0 && st.days <= 7;
-    if (_expiryFilter === 'warn') return st.days > 7 && st.days <= 30;
-    if (_expiryFilter === 'ok')   return st.days > 30;
-    return true;
-  });
-
-  if (count) count.textContent = `מציג ${filtered.length} מתוך ${_expiryItems.length} מוצרים`;
-
-  if (!filtered.length) {
-    list.innerHTML = '<div class="empty-state"><div class="es-icon">✅</div><p>אין מוצרים בסינון זה</p></div>';
-    return;
-  }
-
-  list.innerHTML = filtered.map(item => {
-    const st = _expiryStatus(item.expiryDate);
-    const expFormatted = item.expiryDate
-      ? new Date(item.expiryDate).toLocaleDateString('he-IL', {year:'numeric',month:'long',day:'numeric'})
-      : '—';
-    return `<div class="expiry-card-item ${st.cls}">
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:800;font-size:.95em;color:var(--text);margin-bottom:3px;">${esc(item.name||'')}</div>
-        ${item.category ? `<div style="font-size:.75em;color:var(--text-muted);margin-bottom:4px;">📁 ${esc(item.category)}</div>` : ''}
-        <div style="font-size:.78em;color:var(--text-soft);">📅 ${expFormatted}${item.qty ? ` · 📦 ${item.qty} יח'` : ''}${item.notes ? ` · ${esc(item.notes)}` : ''}</div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
-        <span class="expiry-badge ${st.badge}">${st.label}</span>
-        <div style="display:flex;gap:5px;">
-          <button onclick="editExpiryProduct('${item.id}')" style="padding:4px 10px;border:1px solid var(--border);border-radius:var(--r-xs);background:var(--surface);color:var(--text-soft);cursor:pointer;font-size:.75em;font-family:'Heebo',sans-serif;">✏️ עריכה</button>
-          <button onclick="deleteExpiryProduct('${item.id}','${esc(item.name||'')}')" style="padding:4px 10px;border:1px solid var(--c-red-pale);border-radius:var(--r-xs);background:var(--c-red-pale);color:var(--c-red);cursor:pointer;font-size:.75em;font-family:'Heebo',sans-serif;">🗑️</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-/* ── Save (add or edit) ── */
-async function saveExpiryProduct() {
-  const name  = (document.getElementById('exp-name')?.value  || '').trim();
-  const cat   = (document.getElementById('exp-cat')?.value   || '').trim();
-  const date  = (document.getElementById('exp-date')?.value  || '').trim();
-  const qty   = parseInt(document.getElementById('exp-qty')?.value || '0', 10);
-  const notes = (document.getElementById('exp-notes')?.value || '').trim();
-  const editId= (document.getElementById('exp-edit-id')?.value || '').trim();
-
-  if (!name) return showToast('נא להזין שם מוצר', 'error');
-  if (!date) return showToast('נא לבחור תאריך תפוגה', 'error');
-
-  const data = { name, category: cat, expiryDate: date, qty: isNaN(qty)?0:qty, notes, updatedAt: Date.now() };
-
-  try {
-    if (editId) {
-      await db.ref(EXPIRY_PATH() + '/' + editId).update(data);
-      showToast('✅ מוצר עודכן');
-    } else {
-      data.createdAt = Date.now();
-      await db.ref(EXPIRY_PATH()).push(data);
-      showToast('✅ מוצר נוסף');
-    }
-    clearExpiryForm();
-  } catch(e) {
-    showToast('שגיאה: ' + (e.message||e), 'error');
-  }
-}
-
-/* ── Edit ── */
-function editExpiryProduct(id) {
-  const item = _expiryItems.find(i => i.id === id);
-  if (!item) return;
-  document.getElementById('exp-edit-id').value = id;
-  document.getElementById('exp-name').value    = item.name || '';
-  document.getElementById('exp-cat').value     = item.category || '';
-  document.getElementById('exp-date').value    = item.expiryDate || '';
-  document.getElementById('exp-qty').value     = item.qty || '';
-  document.getElementById('exp-notes').value   = item.notes || '';
-  document.getElementById('exp-cancel-btn').style.display = '';
-  document.getElementById('exp-name').focus();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-/* ── Clear form ── */
-function clearExpiryForm() {
-  ['exp-edit-id','exp-name','exp-cat','exp-date','exp-qty','exp-notes'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
-  const cancelBtn = document.getElementById('exp-cancel-btn');
-  if (cancelBtn) cancelBtn.style.display = 'none';
-}
-
-/* ── Delete ── */
-async function deleteExpiryProduct(id, name) {
-  if (!await asyncConfirm('מחיקה', `למחוק "${name}" מרשימת תוקף?`)) return;
-  await db.ref(EXPIRY_PATH() + '/' + id).remove();
-  showToast('✓ נמחק');
-}
-
-/* ── Check & send Discord alerts ── */
-async function checkAndSendExpiryAlerts(manual) {
-  if (!_dc || !_dc.webhookUrl) {
-    if (manual) showToast('⚠️ Discord Webhook לא מוגדר — הגדר בטאב הגדרות', 'warning', 4000);
-    return;
-  }
-
-  const now = Date.now();
-  const THROTTLE = manual ? 0 : 60 * 60 * 1000; // 1 hour throttle for auto, none for manual
-  let sent = 0, issues = [];
-
-  for (const item of _expiryItems) {
-    const st = _expiryStatus(item.expiryDate);
-    const needsAlert = st.days < 0 || st.days <= 30;
-    if (!needsAlert) continue;
-
-    const throttleKey = 'exp_' + item.id + '_' + (st.days < 0 ? 'out' : st.days <= 7 ? 'near' : 'warn');
-    if (!manual && _expiryAlertSent[throttleKey] && now - _expiryAlertSent[throttleKey] < THROTTLE) continue;
-    _expiryAlertSent[throttleKey] = now;
-    issues.push({ item, st });
-  }
-
-  if (!issues.length) {
-    if (manual) showToast('✅ אין מוצרים שדורשים התראה', 'success');
-    return;
-  }
-
-  // Build embed
-  const siteTitle = (typeof CFG !== 'undefined' && CFG?.headerText) ? CFG.headerText : 'מד"א';
-  const color = issues.some(i => i.st.days < 0) ? 0xD32F2F : issues.some(i => i.st.days <= 7) ? 0xE65100 : 0xF57F17;
-
-  const fields = issues.slice(0,20).map(({ item, st }) => ({
-    name: (st.days < 0 ? '🚨' : st.days <= 7 ? '⚠️' : '⏳') + ' ' + (item.name || '?'),
-    value: `תאריך: **${item.expiryDate || '—'}** | ${st.label}${item.category ? ' | ' + item.category : ''}${item.qty ? ' | ' + item.qty + ' יח\'' : ''}`,
-    inline: false
-  }));
-
-  if (issues.length > 20) fields.push({ name: '...ועוד', value: `${issues.length - 20} מוצרים נוספים`, inline: false });
-
-  try {
-    const res = await fetch(_dc.webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username:   siteTitle + ' · תוקף מוצרים',
-        avatar_url: (typeof CFG !== 'undefined' && CFG?.logoUrl) ? CFG.logoUrl : undefined,
-        content:    (_dc.mentionRole ? `<@&${_dc.mentionRole}> ` : '') + '⏳ **התראת תוקף מוצרים!**',
-        embeds: [{
-          title: '⏳ מוצרים עם תוקף בבעיה — ' + siteTitle,
-          description: `נמצאו **${issues.length}** מוצרים הדורשים טיפול`,
-          color,
-          fields,
-          footer: { text: siteTitle + ' · ' + new Date().toLocaleString('he-IL') },
-          timestamp: new Date().toISOString()
-        }]
-      })
-    });
-    if (res.ok || res.status === 204) {
-      sent++;
-      if (manual) showToast(`✅ נשלחה התראה על ${issues.length} מוצרים ל-Discord`);
-    } else {
-      const body = await res.text().catch(()=>'');
-      if (manual) showToast('❌ Discord שגיאה ' + res.status + ': ' + body.slice(0,60), 'error', 5000);
-    }
-  } catch(e) {
-    if (manual) showToast('❌ שגיאת רשת: ' + (e.message||e), 'error', 5000);
-  }
-}
-
-/* ── Hook into loadData / showApp to init expiry ── */
-(function() {
-  const origShowApp = window.showApp;
-  if (typeof origShowApp === 'function') {
-    window.showApp = function(screenId) {
-      origShowApp(screenId);
-      if (screenId === 'scr-admin') {
-        loadExpiryItems();
-      }
-    };
-  }
-})();
-
-/* ── Hook into showTab to load expiry when tab is shown ── */
-(function() {
-  const origShowTab = window.showTab;
-  if (typeof origShowTab === 'function') {
-    window.showTab = function(tabId, btn) {
-      origShowTab(tabId, btn);
-      if (tabId === 'tab-expiry' && db) loadExpiryItems();
-    };
-  }
-})();
-
-/* ================================================================
-   DISCORD BUG FIXES
-   ================================================================ */
-
-/* Fix 1: mentionRole — store/read correctly (was sometimes undefined) */
-const _origSaveDcSettings = window.saveDcSettings;
-if (typeof _origSaveDcSettings === 'function') {
-  window.saveDcSettings = async function() {
-    // ensure role field is trimmed and not undefined
-    const roleEl = document.getElementById('dc-role');
-    if (roleEl && !roleEl.value) roleEl.value = '';
-    return _origSaveDcSettings.apply(this, arguments);
-  };
-}
-
-/* Fix 2: mention tag — use configurable role from _dc instead of hardcoded ID */
-// Patch _dcFlushBatch to read from _dc.mentionRole
-const _origFlushBatch = window._dcFlushBatch;
-// Override sendDiscordAlert with improved version that uses _dc.mentionRole
-const _origSendDiscordAlert = window.sendDiscordAlert;
-
-/* Fix 3: Ensure _dcUpdateStatusUI is called when URL field is edited */
-document.addEventListener('DOMContentLoaded', function() {
-  const urlEl = document.getElementById('dc-webhook-url');
-  if (urlEl) {
-    urlEl.addEventListener('input', function() {
-      if (typeof _dcUpdateStatusUI === 'function') _dcUpdateStatusUI();
-    });
-  }
-  // Fix 4: load discord settings on admin screen init (sometimes missed)
-  // Already done via loadDiscordSettings() in loadData but make sure on tab switch too
-  const dcCard = document.getElementById('dc-settings-card');
-  if (dcCard) {
-    const obs = new MutationObserver(() => {
-      const tabSettings = document.getElementById('tab-settings');
-      if (tabSettings && !tabSettings.classList.contains('hidden')) {
-        if (typeof loadDiscordSettings === 'function' && _dc && !_dc.webhookUrl) {
-          loadDiscordSettings();
-        }
-      }
-    });
-    const settingsTab = document.getElementById('tab-settings');
-    if (settingsTab) obs.observe(settingsTab, { attributes: true, attributeFilter: ['class'] });
-  }
-
-  // Fix 5: set today's date as default in expiry form
-  const expDateEl = document.getElementById('exp-date');
-  if (expDateEl && !expDateEl.value) {
-    // Default to 1 year from now
-    const d = new Date(); d.setFullYear(d.getFullYear() + 1);
-    expDateEl.value = d.toISOString().split('T')[0];
-  }
-});
-
-/* Fix 6: Scheduled daily expiry check — check every hour */
-setInterval(function() {
-  if (typeof checkAndSendExpiryAlerts === 'function') {
-    checkAndSendExpiryAlerts(false);
-  }
-}, 60 * 60 * 1000); // every hour
+// Station/Firebase init handled by CURRENT_SITE at top of main JS + reload on station change
 
 </script>
-
 
 
 <!-- ================================================================
