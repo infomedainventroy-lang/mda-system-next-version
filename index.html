@@ -5300,7 +5300,7 @@ function _doMonthlyPDF() {
   const categories = Object.keys(catMap).sort((a,b) => a.localeCompare(b, 'he'));
 
   // ── Build HTML for print window ──
-  const siteName = (typeof CFG !== 'undefined' && CFG.name) ? CFG.name : 'מד"א';
+  const siteName = (typeof CFG !== 'undefined' && CFG.headerText) ? CFG.headerText : 'מד"א';
 
   let tableRows = '';
   categories.forEach(cat => {
@@ -5319,10 +5319,9 @@ function _doMonthlyPDF() {
         // No logs this month — assume current qty (no change)
         startQty = currentQty;
       }
-      const madanetId  = item.madanet_id  || item.barcode || '';
-      const minQty     = item.minQty != null ? item.minQty : '';
-      const expiry     = item.expiry || '';
-      const notes      = item.notes  || '';
+      const madanetId   = item.madanet_id   || item.barcode || '';
+      const madanetName = item.madanet_name  || '';
+      const minQty      = item.minQty != null ? item.minQty : '';
 
       // Highlight if below min
       const isCritical = item.minQty != null && currentQty < item.minQty;
@@ -5331,13 +5330,12 @@ function _doMonthlyPDF() {
       tableRows += `<tr${rowStyle}>
         <td class="cell-id">${madanetId}</td>
         <td class="cell-name">${item.name}</td>
+        <td class="cell-madaname">${madanetName}</td>
         <td class="cell-num">${minQty}</td>
         <td class="cell-num">${startQty}</td>
         <td class="cell-num">${usage || ''}</td>
         <td class="cell-num">${additions || ''}</td>
         <td class="cell-num bold ${isCritical?'red':''}">${currentQty}</td>
-        <td class="cell-exp">${expiry}</td>
-        <td class="cell-notes">${notes}</td>
       </tr>`;
     });
   });
@@ -5380,6 +5378,17 @@ function _doMonthlyPDF() {
   }
   .report-header h1 { font-size: 1.3em; font-weight: 900; }
   .report-header .subtitle { font-size: .82em; opacity: .75; margin-top: 3px; }
+  .station-badge {
+    display: inline-block;
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 20px;
+    padding: 3px 14px;
+    font-size: .82em;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: .04em;
+  }
   .report-header .logo {
     font-size: 2.4em;
     background: rgba(255,255,255,.12);
@@ -5437,6 +5446,7 @@ function _doMonthlyPDF() {
   tbody td { padding: 6px 7px; vertical-align: middle; }
   .cell-id    { color: #6a7485; font-size: .85em; white-space: nowrap; }
   .cell-name  { font-weight: 600; min-width: 150px; }
+  .cell-madaname { color: #4a5568; font-size: .88em; min-width: 120px; }
   .cell-num   { text-align: center; font-weight: 700; font-size: 1em; }
   .cell-exp   { text-align: center; color: #6a7485; font-size: .85em; white-space: nowrap; }
   .cell-notes { color: #6a7485; font-size: .85em; }
@@ -5498,8 +5508,9 @@ function _doMonthlyPDF() {
 
   <div class="report-header">
     <div>
+      <div class="station-badge">${siteName}</div>
       <h1>📋 סיכום מלאי חודשי — ${monthLabel}</h1>
-      <div class="subtitle">${siteName} · הופק ב-${new Date().toLocaleDateString('he-IL')}</div>
+      <div class="subtitle">הופק ב-${new Date().toLocaleDateString('he-IL')}</div>
     </div>
     <div class="logo">🚑</div>
   </div>
@@ -5529,13 +5540,12 @@ function _doMonthlyPDF() {
         <tr>
           <th>מקט</th>
           <th class="th-name">שם</th>
+          <th class="th-name">שם מדא-נט</th>
           <th>תקן</th>
           <th>כמות<br>תחילת חודש</th>
           <th>שימוש<br>חודשי</th>
           <th>הוספה<br>חודשית</th>
           <th>כמות<br>נוכחית</th>
-          <th>תאריך פג<br>תוקף</th>
-          <th>הערות</th>
         </tr>
       </thead>
       <tbody>
