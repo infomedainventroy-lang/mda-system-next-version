@@ -5319,9 +5319,8 @@ function _doMonthlyPDF() {
         // No logs this month — assume current qty (no change)
         startQty = currentQty;
       }
-      const madanetId   = item.madanet_id   || item.barcode || '';
+      const madanetId   = item.madanet_id   || '';
       const madanetName = item.madanet_name  || '';
-      const minQty      = item.minQty != null ? item.minQty : '';
 
       // Highlight if below min
       const isCritical = item.minQty != null && currentQty < item.minQty;
@@ -5331,7 +5330,6 @@ function _doMonthlyPDF() {
         <td class="cell-id">${madanetId}</td>
         <td class="cell-name">${item.name}</td>
         <td class="cell-madaname">${madanetName}</td>
-        <td class="cell-num">${minQty}</td>
         <td class="cell-num">${startQty}</td>
         <td class="cell-num">${usage || ''}</td>
         <td class="cell-num">${additions || ''}</td>
@@ -5345,11 +5343,15 @@ function _doMonthlyPDF() {
   const totalUsage    = Object.values(itemStats).reduce((s,v)=>s+v.usage,0);
   const lowItems      = inv.filter(i => i.minQty != null && i.qty < i.minQty).length;
 
+  const logoUrl  = (typeof CFG !== 'undefined' && CFG.logoUrl)  ? CFG.logoUrl  : '';
+  const siteUrl  = window.location.href;
+
   const html = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>סיכום מלאי חודשי – ${monthLabel} – ${siteName}</title>
+<title>${siteName} — סיכום מלאי ${monthLabel}</title>
+${logoUrl ? `<link rel="icon" type="image/png" href="${logoUrl}">` : ''}
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800;900&display=swap');
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -5390,12 +5392,15 @@ function _doMonthlyPDF() {
     letter-spacing: .04em;
   }
   .report-header .logo {
-    font-size: 2.4em;
-    background: rgba(255,255,255,.12);
+    width: 60px; height: 60px;
     border-radius: 50%;
-    width: 56px; height: 56px;
+    background: rgba(255,255,255,.12);
     display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
   }
+  .report-header .logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .report-header .logo-emoji { font-size: 2em; }
   /* ── Summary bar ── */
   .summary-bar {
     display: flex;
@@ -5444,14 +5449,12 @@ function _doMonthlyPDF() {
   tbody tr { border-bottom: 1px solid #f0f2f5; }
   tbody tr:hover { background: #f8f9fc; }
   tbody td { padding: 6px 7px; vertical-align: middle; }
-  .cell-id    { color: #6a7485; font-size: .85em; white-space: nowrap; }
-  .cell-name  { font-weight: 600; min-width: 150px; }
-  .cell-madaname { color: #4a5568; font-size: .88em; min-width: 120px; }
-  .cell-num   { text-align: center; font-weight: 700; font-size: 1em; }
-  .cell-exp   { text-align: center; color: #6a7485; font-size: .85em; white-space: nowrap; }
-  .cell-notes { color: #6a7485; font-size: .85em; }
-  .bold       { font-weight: 900; }
-  .red        { color: #d32f2f; }
+  .cell-id      { color: #6a7485; font-size: .85em; white-space: nowrap; text-align: center; }
+  .cell-name    { font-weight: 600; min-width: 150px; }
+  .cell-madaname{ color: #4a5568; font-size: .88em; min-width: 120px; }
+  .cell-num     { text-align: center; font-weight: 700; font-size: 1em; }
+  .bold         { font-weight: 900; }
+  .red          { color: #d32f2f; }
   /* Category rows */
   .cat-row td {
     background: linear-gradient(90deg, #1e3a5f 0%, #2a5080 100%);
@@ -5471,26 +5474,32 @@ function _doMonthlyPDF() {
     color: #8a96a8;
     font-size: .78em;
   }
-  /* Print button (hidden on print) */
-  .print-btn {
+  /* Action buttons bar (hidden on print) */
+  .action-bar {
     position: fixed;
-    top: 18px; left: 18px;
-    padding: 11px 22px;
-    background: linear-gradient(135deg,#6a1b9a,#8e24aa);
-    color: white;
+    top: 14px; left: 14px;
+    display: flex; gap: 8px;
+    z-index: 999;
+  }
+  .action-btn {
+    padding: 10px 18px;
     border: none;
     border-radius: 8px;
     font-family: 'Heebo', sans-serif;
-    font-size: .95em;
+    font-size: .9em;
     font-weight: 800;
     cursor: pointer;
-    z-index: 999;
-    box-shadow: 0 4px 14px rgba(106,27,154,.4);
+    box-shadow: 0 4px 12px rgba(0,0,0,.22);
+    transition: transform .15s;
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
   }
-  .print-btn:hover { transform: scale(1.04); }
+  .action-btn:hover { transform: scale(1.04); }
+  .btn-print { background: linear-gradient(135deg,#6a1b9a,#8e24aa); color: white; }
+  .btn-back  { background: linear-gradient(135deg,#1a6eb5,#1565c0); color: white; }
   @media print {
     body { background: white; }
-    .print-btn { display: none !important; }
+    .action-bar { display: none !important; }
     .page-wrap { padding: 8px; }
     .report-header { border-radius: 0; }
     .table-wrap { box-shadow: none; border: 1px solid #ccc; }
@@ -5503,7 +5512,12 @@ function _doMonthlyPDF() {
 </style>
 </head>
 <body>
-<button class="print-btn" onclick="window.print()">🖨️ שמור / הדפס PDF</button>
+
+<div class="action-bar">
+  <button class="action-btn btn-print" onclick="window.print()">🖨️ שמור / הדפס PDF</button>
+  <a class="action-btn btn-back" href="${siteUrl}" target="_blank">🏠 חזרה למערכת</a>
+</div>
+
 <div class="page-wrap">
 
   <div class="report-header">
@@ -5512,7 +5526,11 @@ function _doMonthlyPDF() {
       <h1>📋 סיכום מלאי חודשי — ${monthLabel}</h1>
       <div class="subtitle">הופק ב-${new Date().toLocaleDateString('he-IL')}</div>
     </div>
-    <div class="logo">🚑</div>
+    <div class="logo">
+      ${logoUrl
+        ? `<img src="${logoUrl}" alt="${siteName}" onerror="this.parentElement.innerHTML='<span class=logo-emoji>🚑</span>'">`
+        : '<span class="logo-emoji">🚑</span>'}
+    </div>
   </div>
 
   <div class="summary-bar">
@@ -5538,10 +5556,9 @@ function _doMonthlyPDF() {
     <table>
       <thead>
         <tr>
-          <th>מקט</th>
+          <th>מזהה<br>מד"אנט</th>
           <th class="th-name">שם</th>
-          <th class="th-name">שם מדא-נט</th>
-          <th>תקן</th>
+          <th class="th-name">שם מד"אנט</th>
           <th>כמות<br>תחילת חודש</th>
           <th>שימוש<br>חודשי</th>
           <th>הוספה<br>חודשית</th>
